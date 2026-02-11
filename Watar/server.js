@@ -1660,7 +1660,7 @@ app.get('/reports', requireAuth, (req, res) => {
 
             <!-- Statistics Cards -->
             <div class="row mb-4">
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-users fa-2x text-primary mb-2"></i>
@@ -1669,7 +1669,7 @@ app.get('/reports', requireAuth, (req, res) => {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
@@ -1678,7 +1678,7 @@ app.get('/reports', requireAuth, (req, res) => {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
@@ -1687,7 +1687,7 @@ app.get('/reports', requireAuth, (req, res) => {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-percentage fa-2x text-info mb-2"></i>

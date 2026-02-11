@@ -184,20 +184,20 @@
                     <nav class="nav flex-column">
 
                         <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
-                        <a class="nav-link text-white" href="/">Dashboard</a>
+                        <a class="nav-link text-white <%= currentUrl == '/dashboard' ? 'active' : '' %>"" href="/">Dashboard</a>
                         <% } %>
 
-                        <a class="nav-link text-white" href="/students">Students</a>
+                        <a class="nav-link text-white <%= currentUrl == '/students' ? 'active' : '' %>"" href="/students">Students</a>
 
                         <% if (typeof user !== 'undefined' && ['manager', 'reception'].includes(user.role)) { %>
-                        <a class="nav-link text-white" href="/classes">Classes</a>
+                        <a class="nav-link text-white <%= currentUrl == '/classes' ? 'active' : '' %>"" href="/classes">Classes</a>
                         <% } %>
 
-                        <a class="nav-link text-white" href="/attendance">Attendance</a>
-                        <a class="nav-link text-white" href="/attendance/summary">Session Summary</a>
-                        <a class="nav-link text-white" href="/reports">Reports</a>
-                        <a class="nav-link text-white" href="/cash">Cash Management</a>
-                        <a class="nav-link text-white" href="/users">User Management</a>
+                        <a class="nav-link text-white <%= currentUrl == '/attendance' ? 'active' : '' %>"" href="/attendance">Attendance</a>
+                        <a class="nav-link text-white <%= currentUrl == '/attendance/summary' ? 'active' : '' %>"" href="/attendance/summary">Session Summary</a>
+                        <a class="nav-link text-white <%= currentUrl == '/reports' ? 'active' : '' %>"" href="/reports">Reports</a>
+                        <a class="nav-link text-white <%= currentUrl == '/cash' ? 'active' : '' %>"" href="/cash">Cash Management</a>
+                        <a class="nav-link text-white <%= currentUrl == '/users' ? 'active' : '' %>"" href="/users">User Management</a>
 
                         <hr class="text-white-50">
 

@@ -256,7 +256,15 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
             FROM attendance a
             JOIN sessions s ON a.session_id = s.id
             WHERE s.session_date >= date('now', '-30 days')
-        `
+        `,
+        
+        getalltransactions: `SELECT ct.*, cc.name as category_name, cc.type as category_type
+        FROM cash_transactions ct
+        LEFT JOIN cash_categories cc ON ct.category_code = cc.code
+        ORDER BY ct.transaction_date DESC, ct.created_at DESC`,
+
+        getallcategories: `SELECT * FROM cash_categories WHERE is_active = 1 ORDER BY type, name`
+
     };
     
     // Execute all queries
@@ -283,32 +291,63 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                         if (attendanceRate && attendanceRate[0] && attendanceRate[0].total_records > 0) {
                             attendancePercentage = Math.round((attendanceRate[0].present_count / attendanceRate[0].total_records) * 100);
                         }
-                        
-                        // Render dashboard view as a string
-                        res.render('dashboard', { 
-                            user, 
-                            stats: basicStats[0] || { 
-                                total_students: 0, 
-                                inactive_students: 0,
-                                graduated_students: 0,
-                                total_classes: 0, 
-                                total_trainers: 0, 
-                                today_attendance: 0 
-                            },
-                            studentsByMonth: studentsByMonth || [],
-                            studentsByInstrument: studentsByInstrument || [],
-                            recentAttendance: recentAttendance || [],
-                            attendancePercentage: attendancePercentage
-                        }, (err, html) => {
+                        // Get all transactions
+                        db.all(queries.getalltransactions, (err, transactions) => {
                             if (err) {
-                                console.error(err);
-                                return res.status(500).send('Render error');
+                                console.error('Error fetching transactions:', err);
+                                return res.status(500).send('Database error');
                             }
                             
-                            // Wrap in layout
-                            res.render('layout', {
-                                body: html,
-                                user: user
+                            // Get all categories
+                            db.all(queries.getallcategories, (err, categories) => {
+                                if (err) {
+                                    console.error('Error fetching categories:', err);
+                                    return res.status(500).send('Database error');
+                                }
+                                
+                                // Calculate totals
+                                const totalIncome = transactions
+                                    .filter(t => t.type === 'income')
+                                    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                                
+                                const totalExpense = transactions
+                                    .filter(t => t.type === 'expense')
+                                    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                                
+                                const balance = totalIncome - totalExpense;
+                                
+                                // Render dashboard view as a string
+                                res.render('dashboard', { 
+                                    user, 
+                                    transactions,
+                                    categories,
+                                    totalIncome,
+                                    totalExpense,
+                                    balance,
+                                    stats: basicStats[0] || { 
+                                        total_students: 0, 
+                                        inactive_students: 0,
+                                        graduated_students: 0,
+                                        total_classes: 0, 
+                                        total_trainers: 0, 
+                                        today_attendance: 0 
+                                    },
+                                    studentsByMonth: studentsByMonth || [],
+                                    studentsByInstrument: studentsByInstrument || [],
+                                    recentAttendance: recentAttendance || [],
+                                    attendancePercentage: attendancePercentage
+                                }, (err, html) => {
+                                    if (err) {
+                                        console.error(err);
+                                        return res.status(500).send('Render error');
+                                    }
+                                    
+                                    // Wrap in layout
+                                    res.render('layout', {
+                                        body: html,
+                                        user: user
+                                    });
+                                });
                             });
                         });
                     });

@@ -1,0 +1,175 @@
+<%- include('layout', { body: `
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-chalkboard-teacher text-primary me-2"></i>Classes Management</h1>
+            ${user.role === 'manager' ? `
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClassModal">
+                <i class="fas fa-plus me-2"></i>Add New Class
+            </button>
+            ` : ''}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>All Classes (${classes.length})</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Class Name</th>
+                                <th>Level</th>
+                                <th>Trainer</th>
+                                <th>Schedule</th>
+                                <th>Students</th>
+                                <th>Capacity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${classes.map(cls => `
+                            <tr>
+                                <td>
+                                    <i class="fas fa-chalkboard text-primary me-2"></i>
+                                    ${cls.name}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">${cls.level}</span>
+                                </td>
+                                <td>${cls.trainer_name || 'Not Assigned'}</td>
+                                <td>
+                                    ${cls.schedule_day ? `
+                                        <i class="fas fa-calendar me-1"></i>${cls.schedule_day}<br>
+                                        <i class="fas fa-clock me-1"></i>${cls.schedule_time || 'TBD'}
+                                    ` : 'Not Scheduled'}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">${cls.student_count} students</span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar ${cls.student_count >= cls.max_students ? 'bg-danger' : cls.student_count >= cls.max_students * 0.8 ? 'bg-warning' : 'bg-success'}" 
+                                             style="width: ${(cls.student_count / cls.max_students) * 100}%">
+                                            ${cls.student_count}/${cls.max_students}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    ${user.role === 'manager' ? `
+                                    <button class="btn btn-sm btn-outline-primary" onclick="manageStudents(${cls.id})">
+                                        <i class="fas fa-users"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    ` : ''}
+                                    <a href="/attendance?class_id=${cls.id}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+${user.role === 'manager' ? `
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Class</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/classes" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Class Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="level" class="form-label">Level</label>
+                        <select class="form-control" id="level" name="level" required>
+                            <option value="Level One">Level One</option>
+                            <option value="Level Two">Level Two</option>
+                            <option value="Level Three">Level Three</option>
+                            <option value="Level Four">Level Four</option>
+                            <option value="Level Five">Level Five</option>
+                            <option value="Level Six">Level Six</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="trainer_id" class="form-label">Trainer</label>
+                        <select class="form-control" id="trainer_id" name="trainer_id">
+                            <option value="">Select Trainer</option>
+                            ${trainers.map(trainer => `
+                                <option value="${trainer.id}">${trainer.full_name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schedule_day" class="form-label">Day</label>
+                                <select class="form-control" id="schedule_day" name="schedule_day">
+                                    <option value="">Select Day</option>
+                                    <option value="Sunday">Sunday</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schedule_time" class="form-label">Time</label>
+                                <input type="time" class="form-control" id="schedule_time" name="schedule_time">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duration_minutes" class="form-label">Duration (minutes)</label>
+                                <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" value="60">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_students" class="form-label">Max Students</label>
+                                <input type="number" class="form-control" id="max_students" name="max_students" value="10">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+` : ''}
+
+<script>
+function manageStudents(classId) {
+    // This will be implemented later for student assignment
+    alert('Student management for class ' + classId + ' will be implemented soon!');
+}
+</script>
+` }) %>

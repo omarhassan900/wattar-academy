@@ -1,0 +1,237 @@
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-music text-primary me-2"></i>
+            Welcome back, <%= user.full_name %>!
+        </h1>
+    </div>
+</div>
+
+<!-- Main Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                <h3 class="card-title"><%= stats.total_students %></h3>
+                <p class="card-text text-muted">Active Students</p>
+                <small class="text-muted">
+                    <%= stats.inactive_students %> inactive, <%= stats.graduated_students %> graduated
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="fas fa-chalkboard-teacher fa-3x text-info mb-3"></i>
+                <h3 class="card-title"><%= stats.total_classes %></h3>
+                <p class="card-text text-muted">Active Classes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="fas fa-user-tie fa-3x text-warning mb-3"></i>
+                <h3 class="card-title"><%= stats.total_trainers %></h3>
+                <p class="card-text text-muted">Active Trainers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="fas fa-percentage fa-3x text-success mb-3"></i>
+                <h3 class="card-title"><%= attendancePercentage %>%</h3>
+                <p class="card-text text-muted">Attendance Rate</p>
+                <small class="text-muted">Last 30 days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Details Row -->
+<div class="row mb-4">
+    <!-- Students by Month -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Students by Month</h5>
+            </div>
+            <div class="card-body">
+                <% if (studentsByMonth && studentsByMonth.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Students</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% 
+                                const maxCount = Math.max(...studentsByMonth.map(m => m.count));
+                                studentsByMonth.forEach(month => { 
+                                    const percentage = (month.count / maxCount) * 100;
+                                %>
+                                <tr>
+                                    <td><strong><%= month.current_level %></strong></td>
+                                    <td><span class="badge bg-info"><%= month.count %></span></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                 style="width: <%= percentage %>%" 
+                                                 aria-valuenow="<%= month.count %>" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="<%= maxCount %>">
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted text-center">No student data available</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students by Instrument -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-music me-2"></i>Top Instruments</h5>
+            </div>
+            <div class="card-body">
+                <% if (studentsByInstrument && studentsByInstrument.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Instrument</th>
+                                    <th>Students</th>
+                                    <th>Distribution</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% 
+                                const totalInstrumentStudents = studentsByInstrument.reduce((sum, inst) => sum + inst.count, 0);
+                                studentsByInstrument.forEach(instrument => { 
+                                    const percentage = (instrument.count / totalInstrumentStudents) * 100;
+                                %>
+                                <tr>
+                                    <td><strong><%= instrument.instrument %></strong></td>
+                                    <td><span class="badge bg-success"><%= instrument.count %></span></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: <%= percentage %>%">
+                                                <%= Math.round(percentage) %>%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted text-center">No instrument data available</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Attendance and Quick Actions Row -->
+<div class="row">
+    <!-- Recent Attendance Trend -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Recent Attendance (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                <% if (recentAttendance && recentAttendance.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Students Present</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% recentAttendance.forEach(day => { %>
+                                <tr>
+                                    <td><%= new Date(day.date).toLocaleDateString('en-GB', {weekday: 'short', day: '2-digit', month: 'short'}) %></td>
+                                    <td><strong><%= day.students_present %></strong> students</td>
+                                    <td>
+                                        <% if (day.students_present > 0) { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Recorded
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-minus"></i> No data
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted text-center py-4">No recent attendance data</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/attendance" class="btn btn-primary btn-lg">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Mark Attendance
+                    </a>
+                    <% if (user.role !== 'trainer') { %>
+                    <a href="/students" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Manage Students
+                    </a>
+                    <% } %>
+                    <a href="/reports" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-line me-2"></i>
+                        View Reports
+                    </a>
+                    <% if (user.role === 'manager') { %>
+                    <a href="/classes" class="btn btn-outline-primary">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>
+                        Manage Classes
+                    </a>
+                    <% } %>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="alert alert-info mb-0">
+                    <strong><i class="fas fa-user-shield me-2"></i>Your Role:</strong> 
+                    <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,735 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-users text-primary me-2"></i>Students Management</h1>
+            <% if (user.role === 'manager' || user.role === 'reception') { %>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <i class="fas fa-user-plus me-2"></i>Add New Student
+            </button>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>All Students (<span id="studentCount"><%= students.length %></span>)</h5>
+            </div>
+            <div class="card-body">
+                <!-- Filters Section -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="text" id="searchStudent" class="form-control" placeholder="🔍 Search by name...">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="levelFilter" class="form-select">
+                            <option value="">All Levels</option>
+                            <option value="Month 1">Month 1</option>
+                            <option value="Month 2">Month 2</option>
+                            <option value="Month 3">Month 3</option>
+                            <option value="Month 4">Month 4</option>
+                            <option value="Month 5">Month 5</option>
+                            <option value="Month 6">Month 6</option>
+                            <option value="Month 7">Month 7</option>
+                            <option value="Month 8">Month 8</option>
+                            <option value="Month 9">Month 9</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="instrumentFilter" class="form-select">
+                            <option value="">All Instruments</option>
+                            <% if (instruments && instruments.length > 0) { %>
+                                <% instruments.forEach(instrument => { %>
+                                    <option value="<%= instrument %>"><%= instrument %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="statusFilter" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="graduated">Graduated</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button id="clearFilters" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear Filters
+                        </button>
+                    </div>
+                </div>
+                
+                <% if (students.length === 0) { %>
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Students Found</h4>
+                    <p class="text-muted">Start by adding your first student to the academy.</p>
+                    <% if (user.role === 'manager' || user.role === 'reception') { %>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                        <i class="fas fa-user-plus me-2"></i>Add First Student
+                    </button>
+                    <% } %>
+                </div>
+                <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>National ID</th>
+                                <th>Phone</th>
+                                <th>Instrument</th>
+                                <th>Trainer</th>
+                                <th>Level</th>
+                                <th>Start Date</th>
+                                <th>Status</th>
+                                <% if (user.role === 'manager' || user.role === 'reception') { %>
+                                <th>Actions</th>
+                                <% } %>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <% students.forEach(student => { %>
+                            <tr class="student-row" 
+                                data-name="<%= student.name.toLowerCase() %>"
+                                data-level="<%= student.current_level.toLowerCase() %>"
+                                data-instrument="<%= (student.instrument || '').toLowerCase() %>"
+                                data-status="<%= student.status.toLowerCase() %>"
+                                data-student-id="<%= student.id %>"
+                                data-student-name="<%= student.name %>"
+                                data-student-national-id="<%= student.national_id || '' %>"
+                                data-student-phone="<%= student.phone || '' %>"
+                                data-student-parent-phone="<%= student.parent_phone || '' %>"
+                                data-student-email="<%= student.email || '' %>"
+                                data-student-level="<%= student.current_level %>"
+                                data-student-start-date="<%= student.start_date %>"
+                                data-student-instrument="<%= student.instrument || '' %>"
+                                data-student-status="<%= student.status %>"
+                                data-student-address="<%= student.address || '' %>"
+                                data-student-dob="<%= student.date_of_birth || '' %>"
+                                data-student-emergency-contact="<%= student.emergency_contact || '' %>"
+                                data-student-emergency-phone="<%= student.emergency_phone || '' %>"
+                                data-student-trainer-id="<%= student.trainer_id || '' %>"
+                                data-student-trainer-name="<%= student.trainer_name || '' %>">
+                                <td>
+                                    <i class="fas fa-user-circle text-primary me-2"></i>
+                                    <strong><%= student.name %></strong>
+                                </td>
+                                <td><%= student.national_id || 'N/A' %></td>
+                                <td><%= student.phone || 'N/A' %></td>
+                                <td>
+                                    <% if (student.instrument) { %>
+                                        <span class="badge bg-success"><i class="fas fa-music me-1"></i><%= student.instrument %></span>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (student.trainer_name) { %>
+                                        <span class="badge bg-info"><i class="fas fa-user-tie me-1"></i><%= student.trainer_name %></span>
+                                    <% } else { %>
+                                        <span class="text-muted">No Trainer</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info"><%= student.current_level %></span>
+                                </td>
+                                <td><%= new Date(student.start_date).toLocaleDateString() %></td>
+                                <td>
+                                    <% if (student.status === 'active') { %>
+                                        <span class="badge bg-success">Active</span>
+                                    <% } else if (student.status === 'inactive') { %>
+                                        <span class="badge bg-warning">Inactive</span>
+                                    <% } else if (student.status === 'graduated') { %>
+                                        <span class="badge bg-secondary">Graduated</span>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary"><%= student.status %></span>
+                                    <% } %>
+                                </td>
+                                <% if (user.role === 'manager' || user.role === 'reception') { %>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1 edit-student-btn" 
+                                            title="Edit Student">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info view-student-btn" 
+                                            title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                                <% } %>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (user.role === 'manager' || user.role === 'reception') { %>
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>Add New Student
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/students" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Student Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="national_id" class="form-label">National ID</label>
+                                <input type="text" class="form-control" id="national_id" name="national_id">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="phone" name="phone">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="parent_phone" class="form-label">Parent Phone</label>
+                                <input type="text" class="form-control" id="parent_phone" name="parent_phone">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="instrument" class="form-label">Instrument</label>
+                                <input type="text" class="form-control" id="instrument" name="instrument" placeholder="e.g., Piano, Guitar, Violin">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="trainer_id" class="form-label">Trainer *</label>
+                                <select class="form-control" id="trainer_id" name="trainer_id" required>
+                                    <option value="">Select Trainer</option>
+                                    <% if (typeof trainers !== 'undefined' && trainers) { %>
+                                        <% trainers.forEach(trainer => { %>
+                                            <option value="<%= trainer.id %>"><%= trainer.name %> (<%= trainer.specialization %>)</option>
+                                        <% }); %>
+                                    <% } %>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="current_level" class="form-label">Level *</label>
+                                <select class="form-control" id="current_level" name="current_level" required>
+                                    <option value="Month 1">Month 1</option>
+                                    <option value="Month 2">Month 2</option>
+                                    <option value="Month 3">Month 3</option>
+                                    <option value="Month 4">Month 4</option>
+                                    <option value="Month 5">Month 5</option>
+                                    <option value="Month 6">Month 6</option>
+                                    <option value="Month 7">Month 7</option>
+                                    <option value="Month 8">Month 8</option>
+                                    <option value="Month 9">Month 9</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="emergency_contact" class="form-label">Emergency Contact Name</label>
+                                <input type="text" class="form-control" id="emergency_contact" name="emergency_contact">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="emergency_phone" class="form-label">Emergency Contact Phone</label>
+                                <input type="text" class="form-control" id="emergency_phone" name="emergency_phone">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Start Date *</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Add Student
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Student
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editStudentForm" method="POST">
+                <input type="hidden" id="edit_student_id" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_name" class="form-label">Student Name *</label>
+                                <input type="text" class="form-control" id="edit_name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_national_id" class="form-label">National ID</label>
+                                <input type="text" class="form-control" id="edit_national_id" name="national_id">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_phone" class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="edit_phone" name="phone">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_parent_phone" class="form-label">Parent Phone</label>
+                                <input type="text" class="form-control" id="edit_parent_phone" name="parent_phone">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="edit_email" name="email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="edit_date_of_birth" name="date_of_birth">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="edit_address" class="form-label">Address</label>
+                                <textarea class="form-control" id="edit_address" name="address" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_instrument" class="form-label">Instrument</label>
+                                <input type="text" class="form-control" id="edit_instrument" name="instrument" placeholder="e.g., Piano, Guitar, Violin">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_trainer_id" class="form-label">Trainer *</label>
+                                <select class="form-control" id="edit_trainer_id" name="trainer_id" required>
+                                    <option value="">Select Trainer</option>
+                                    <% if (typeof trainers !== 'undefined' && trainers) { %>
+                                        <% trainers.forEach(trainer => { %>
+                                            <option value="<%= trainer.id %>"><%= trainer.name %> (<%= trainer.specialization %>)</option>
+                                        <% }); %>
+                                    <% } %>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_current_level" class="form-label">Level *</label>
+                                <select class="form-control" id="edit_current_level" name="current_level" required>
+                                    <option value="Month 1">Month 1</option>
+                                    <option value="Month 2">Month 2</option>
+                                    <option value="Month 3">Month 3</option>
+                                    <option value="Month 4">Month 4</option>
+                                    <option value="Month 5">Month 5</option>
+                                    <option value="Month 6">Month 6</option>
+                                    <option value="Month 7">Month 7</option>
+                                    <option value="Month 8">Month 8</option>
+                                    <option value="Month 9">Month 9</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_emergency_contact" class="form-label">Emergency Contact Name</label>
+                                <input type="text" class="form-control" id="edit_emergency_contact" name="emergency_contact">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_emergency_phone" class="form-label">Emergency Contact Phone</label>
+                                <input type="text" class="form-control" id="edit_emergency_phone" name="emergency_phone">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_status" class="form-label">Status *</label>
+                                <select class="form-control" id="edit_status" name="status" required>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="graduated">Graduated</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_start_date" class="form-label">Start Date *</label>
+                                <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Student Modal -->
+<div class="modal fade" id="viewStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-circle me-2"></i>Student Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Personal Information Section -->
+                <div class="mb-4">
+                    <h6 class="text-primary border-bottom pb-2 mb-3">
+                        <i class="fas fa-id-card me-2"></i>Personal Information
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Full Name</label>
+                            <p class="mb-0 fw-bold" id="view_name"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">National ID</label>
+                            <p class="mb-0" id="view_national_id"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Date of Birth</label>
+                            <p class="mb-0" id="view_date_of_birth"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Email</label>
+                            <p class="mb-0" id="view_email"></p>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="text-muted small">Address</label>
+                            <p class="mb-0" id="view_address"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information Section -->
+                <div class="mb-4">
+                    <h6 class="text-primary border-bottom pb-2 mb-3">
+                        <i class="fas fa-phone me-2"></i>Contact Information
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Student Phone</label>
+                            <p class="mb-0" id="view_phone"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Parent Phone</label>
+                            <p class="mb-0" id="view_parent_phone"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Emergency Contact</label>
+                            <p class="mb-0" id="view_emergency_contact"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Emergency Phone</label>
+                            <p class="mb-0" id="view_emergency_phone"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information Section -->
+                <div class="mb-3">
+                    <h6 class="text-primary border-bottom pb-2 mb-3">
+                        <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Instrument</label>
+                            <p class="mb-0"><span class="badge bg-success" id="view_instrument"></span></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Trainer</label>
+                            <p class="mb-0"><span class="badge bg-info" id="view_trainer"></span></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Current Level</label>
+                            <p class="mb-0"><span class="badge bg-info" id="view_level"></span></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Status</label>
+                            <p class="mb-0"><span class="badge" id="view_status"></span></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Start Date</label>
+                            <p class="mb-0" id="view_start_date"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<script>
+// Set today's date as default for start date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const startDateInput = document.getElementById('start_date');
+    if (startDateInput) {
+        startDateInput.value = today;
+    }
+    
+    // Edit Student Button Handler
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-student-btn')) {
+            const row = e.target.closest('.student-row');
+            const id = row.getAttribute('data-student-id');
+            const name = row.getAttribute('data-student-name');
+            const national_id = row.getAttribute('data-student-national-id');
+            const phone = row.getAttribute('data-student-phone');
+            const parent_phone = row.getAttribute('data-student-parent-phone');
+            const email = row.getAttribute('data-student-email');
+            const level = row.getAttribute('data-student-level');
+            const start_date = row.getAttribute('data-student-start-date');
+            const instrument = row.getAttribute('data-student-instrument');
+            const status = row.getAttribute('data-student-status');
+            const address = row.getAttribute('data-student-address');
+            const dob = row.getAttribute('data-student-dob');
+            const emergency_contact = row.getAttribute('data-student-emergency-contact');
+            const emergency_phone = row.getAttribute('data-student-emergency-phone');
+            const trainer_id = row.getAttribute('data-student-trainer-id');
+            
+            document.getElementById('edit_student_id').value = id;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_national_id').value = national_id;
+            document.getElementById('edit_phone').value = phone;
+            document.getElementById('edit_parent_phone').value = parent_phone;
+            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_current_level').value = level;
+            document.getElementById('edit_start_date').value = start_date;
+            document.getElementById('edit_instrument').value = instrument;
+            document.getElementById('edit_status').value = status;
+            document.getElementById('edit_address').value = address;
+            document.getElementById('edit_date_of_birth').value = dob;
+            document.getElementById('edit_emergency_contact').value = emergency_contact;
+            document.getElementById('edit_emergency_phone').value = emergency_phone;
+            document.getElementById('edit_trainer_id').value = trainer_id;
+            
+            // Set form action
+            document.getElementById('editStudentForm').action = '/students/' + id + '/edit';
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
+            modal.show();
+        }
+    });
+    
+    // View Student Button Handler
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.view-student-btn')) {
+            const row = e.target.closest('.student-row');
+            const name = row.getAttribute('data-student-name');
+            const national_id = row.getAttribute('data-student-national-id');
+            const phone = row.getAttribute('data-student-phone');
+            const parent_phone = row.getAttribute('data-student-parent-phone');
+            const email = row.getAttribute('data-student-email');
+            const level = row.getAttribute('data-student-level');
+            const start_date = row.getAttribute('data-student-start-date');
+            const instrument = row.getAttribute('data-student-instrument');
+            const status = row.getAttribute('data-student-status');
+            const address = row.getAttribute('data-student-address');
+            const dob = row.getAttribute('data-student-dob');
+            const emergency_contact = row.getAttribute('data-student-emergency-contact');
+            const emergency_phone = row.getAttribute('data-student-emergency-phone');
+            const trainer_name = row.getAttribute('data-student-trainer-name');
+            
+            document.getElementById('view_name').textContent = name;
+            document.getElementById('view_national_id').textContent = national_id || 'N/A';
+            document.getElementById('view_phone').textContent = phone || 'N/A';
+            document.getElementById('view_parent_phone').textContent = parent_phone || 'N/A';
+            document.getElementById('view_email').textContent = email || 'N/A';
+            document.getElementById('view_address').textContent = address || 'N/A';
+            document.getElementById('view_date_of_birth').textContent = dob ? new Date(dob).toLocaleDateString() : 'N/A';
+            document.getElementById('view_emergency_contact').textContent = emergency_contact || 'N/A';
+            document.getElementById('view_emergency_phone').textContent = emergency_phone || 'N/A';
+            document.getElementById('view_instrument').textContent = instrument || 'N/A';
+            document.getElementById('view_trainer').textContent = trainer_name || 'No Trainer';
+            document.getElementById('view_level').textContent = level;
+            document.getElementById('view_start_date').textContent = new Date(start_date).toLocaleDateString();
+            
+            // Set status badge color
+            const statusBadge = document.getElementById('view_status');
+            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            statusBadge.className = 'badge';
+            if (status === 'active') {
+                statusBadge.classList.add('bg-success');
+            } else if (status === 'inactive') {
+                statusBadge.classList.add('bg-warning');
+            } else if (status === 'graduated') {
+                statusBadge.classList.add('bg-secondary');
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('viewStudentModal'));
+            modal.show();
+        }
+    });
+    
+    // Filter functionality
+    const searchInput = document.getElementById('searchStudent');
+    const levelFilter = document.getElementById('levelFilter');
+    const instrumentFilter = document.getElementById('instrumentFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    
+    function filterStudents() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const levelValue = levelFilter.value.toLowerCase();
+        const instrumentValue = instrumentFilter.value.toLowerCase();
+        const statusValue = statusFilter.value.toLowerCase();
+        
+        const rows = document.querySelectorAll('.student-row');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const name = row.getAttribute('data-name');
+            const level = row.getAttribute('data-level');
+            const instrument = row.getAttribute('data-instrument');
+            const status = row.getAttribute('data-status');
+            
+            const nameMatch = !searchTerm || name.includes(searchTerm);
+            const levelMatch = !levelValue || level.includes(levelValue);
+            const instrumentMatch = !instrumentValue || instrument.includes(instrumentValue);
+            const statusMatch = !statusValue || status === statusValue;
+            
+            if (nameMatch && levelMatch && instrumentMatch && statusMatch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update count
+        document.getElementById('studentCount').textContent = visibleCount + ' of ' + rows.length;
+    }
+    
+    // Add event listeners
+    if (searchInput) searchInput.addEventListener('input', filterStudents);
+    if (levelFilter) levelFilter.addEventListener('change', filterStudents);
+    if (instrumentFilter) instrumentFilter.addEventListener('change', filterStudents);
+    if (statusFilter) statusFilter.addEventListener('change', filterStudents);
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            levelFilter.value = '';
+            instrumentFilter.value = '';
+            statusFilter.value = '';
+            filterStudents();
+        });
+    }
+});
+</script>

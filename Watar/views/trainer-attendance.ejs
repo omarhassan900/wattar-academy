@@ -1,0 +1,194 @@
+<%- include('layout', { body: `
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-calendar-check text-primary me-2"></i>My Classes - Attendance</h1>
+            <div>
+                <input type="date" id="attendanceDate" class="form-control d-inline-block" style="width: auto;" value="${date}">
+            </div>
+        </div>
+    </div>
+</div>
+
+${classes.map(classData => `
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-chalkboard me-2"></i>
+                    ${classData.class_name}
+                    <span class="badge bg-info ms-2">${classData.students.length} students</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="/attendance" method="POST">
+                    <input type="hidden" name="date" value="${date}">
+                    <input type="hidden" name="class_id" value="${classData.class_id}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-success btn-sm me-2" onclick="markAllPresent('class_${classData.class_id}')">
+                                <i class="fas fa-check-double me-1"></i>Mark All Present
+                            </button>
+                            <button type="button" class="btn btn-warning btn-sm" onclick="clearAll('class_${classData.class_id}')">
+                                <i class="fas fa-times me-1"></i>Clear All
+                            </button>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Attendance
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Level</th>
+                                    <th>Present</th>
+                                    <th>Late</th>
+                                    <th>Excused</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${classData.students.map(student => `
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-user-circle text-primary me-2"></i>
+                                        ${student.name}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">${student.current_level}</span>
+                                    </td>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input attendance-checkbox class_${classData.class_id}" 
+                                                   type="radio" 
+                                                   name="attendance[${student.id}]" 
+                                                   value="present"
+                                                   id="present_${student.id}"
+                                                   ${student.attendance_status === 'present' ? 'checked' : ''}>
+                                            <label class="form-check-label" for="present_${student.id}">
+                                                Present
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input attendance-checkbox class_${classData.class_id}" 
+                                                   type="radio" 
+                                                   name="attendance[${student.id}]" 
+                                                   value="late"
+                                                   id="late_${student.id}"
+                                                   ${student.attendance_status === 'late' ? 'checked' : ''}>
+                                            <label class="form-check-label" for="late_${student.id}">
+                                                Late
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input attendance-checkbox class_${classData.class_id}" 
+                                                   type="radio" 
+                                                   name="attendance[${student.id}]" 
+                                                   value="excused"
+                                                   id="excused_${student.id}"
+                                                   ${student.attendance_status === 'excused' ? 'checked' : ''}>
+                                            <label class="form-check-label" for="excused_${student.id}">
+                                                Excused
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge status-badge-${student.id} ${
+                                            student.attendance_status === 'present' ? 'bg-success' : 
+                                            student.attendance_status === 'late' ? 'bg-warning' :
+                                            student.attendance_status === 'excused' ? 'bg-info' : 'bg-danger'
+                                        }">
+                                            ${student.attendance_status === 'present' ? 'Present' : 
+                                              student.attendance_status === 'late' ? 'Late' :
+                                              student.attendance_status === 'excused' ? 'Excused' : 'Absent'}
+                                        </span>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+`).join('')}
+
+${classes.length === 0 ? `
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chalkboard fa-4x text-muted mb-3"></i>
+                <h4>No Classes Assigned</h4>
+                <p class="text-muted">You don't have any classes assigned yet. Please contact the manager.</p>
+            </div>
+        </div>
+    </div>
+</div>
+` : ''}
+
+<script>
+function markAllPresent(className) {
+    document.querySelectorAll('.' + className + '[value="present"]').forEach(radio => {
+        radio.checked = true;
+        updateStatusBadge(radio);
+    });
+}
+
+function clearAll(className) {
+    document.querySelectorAll('.' + className).forEach(radio => {
+        radio.checked = false;
+    });
+    // Update all status badges to absent
+    document.querySelectorAll('.' + className + '[value="present"]').forEach(radio => {
+        const studentId = radio.name.match(/\\[(\\d+)\\]/)[1];
+        const badge = document.querySelector('.status-badge-' + studentId);
+        badge.className = 'badge status-badge-' + studentId + ' bg-danger';
+        badge.textContent = 'Absent';
+    });
+}
+
+function updateStatusBadge(radio) {
+    const studentId = radio.name.match(/\\[(\\d+)\\]/)[1];
+    const badge = document.querySelector('.status-badge-' + studentId);
+    
+    if (radio.value === 'present') {
+        badge.className = 'badge status-badge-' + studentId + ' bg-success';
+        badge.textContent = 'Present';
+    } else if (radio.value === 'late') {
+        badge.className = 'badge status-badge-' + studentId + ' bg-warning';
+        badge.textContent = 'Late';
+    } else if (radio.value === 'excused') {
+        badge.className = 'badge status-badge-' + studentId + ' bg-info';
+        badge.textContent = 'Excused';
+    }
+}
+
+// Update status badges when radio buttons change
+document.querySelectorAll('.attendance-checkbox').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.checked) {
+            updateStatusBadge(this);
+        }
+    });
+});
+
+// Handle date change
+document.getElementById('attendanceDate').addEventListener('change', function() {
+    window.location.href = '/attendance?date=' + this.value;
+});
+</script>
+` }) %>

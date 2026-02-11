@@ -1,0 +1,427 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-calendar-check text-primary me-2"></i>Session Attendance Management</h1>
+                <% if (typeof totalStudents !== 'undefined') { %>
+                <small class="text-muted">Showing <%= students.length %> of <%= totalStudents %> students (Page <%= currentPage %> of <%= totalPages %>)</small>
+                <% } %>
+            </div>
+            <div>
+                <a href="/attendance/export-csv" class="btn btn-success btn-lg me-2">
+                    <i class="fas fa-file-csv me-2"></i>Export to CSV
+                </a>
+                <button type="button" class="btn btn-primary btn-lg" onclick="saveAllAttendance()">
+                    <i class="fas fa-save me-2"></i>Save All Attendance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (students && students.length > 0) { %>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Active Students - Session Attendance
+                </h5>
+                <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= currentPage - 1 %>">Previous</a>
+                        </li>
+                        <% for (let p = 1; p <= totalPages; p++) { %>
+                            <% if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) { %>
+                                <li class="page-item <%= p === currentPage ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= p %>"><%= p %></a>
+                                </li>
+                            <% } else if (p === currentPage - 3 || p === currentPage + 3) { %>
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            <% } %>
+                        <% } %>
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= currentPage + 1 %>">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+                <% } %>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" method="GET" action="/attendance">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" name="search" id="studentSearch" 
+                                       placeholder="Search students..." 
+                                       value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="month" id="monthFilter">
+                                <option value="">All Months</option>
+                                <% for (let m = 1; m <= 9; m++) { %>
+                                    <option value="Month <%= m %>" <%= (typeof monthFilter !== 'undefined' && monthFilter === `Month ${m}`) ? 'selected' : '' %>>
+                                        Month <%= m %>
+                                    </option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="instrument" id="instrumentFilter">
+                                <option value="">All Instruments</option>
+                                <% if (instruments && instruments.length > 0) { %>
+                                    <% instruments.forEach(inst => { %>
+                                        <option value="<%= inst %>" <%= (typeof instrumentFilter !== 'undefined' && instrumentFilter === inst) ? 'selected' : '' %>>
+                                            <%= inst %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="status" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'active') ? 'selected' : '' %>>Active</option>
+                                <option value="inactive" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'inactive') ? 'selected' : '' %>>Inactive</option>
+                                <option value="graduated" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'graduated') ? 'selected' : '' %>>Graduated</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 150px;">Student Name</th>
+                                    <th style="width: 100px;">Month</th>
+                                    <th style="width: 100px;">Instrument</th>
+                                    <th style="width: 80px;">Status</th>
+                                    <th style="width: 100px;">Phone</th>
+                                    <th class="text-center" style="width: 80px;">Session 1</th>
+                                    <th class="text-center" style="width: 80px;">Session 2</th>
+                                    <th class="text-center" style="width: 80px;">Session 3</th>
+                                    <th class="text-center" style="width: 80px;">Session 4</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% students.forEach(student => { %>
+                                <tr class="student-row" 
+                                    data-student-name="<%= student.name.toLowerCase() %>" 
+                                    data-month="<%= student.current_level.toLowerCase() %>"
+                                    data-instrument="<%= (student.instrument || '').toLowerCase() %>"
+                                    data-status="<%= student.status.toLowerCase() %>">
+                                    <td>
+                                        <i class="fas fa-user-circle text-primary me-1"></i>
+                                        <strong><%= student.name %></strong>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm month-selector" 
+                                                data-student-id="<%= student.id %>" 
+                                                onchange="changeStudentMonth(this)">
+                                            <% for (let m = 1; m <= 9; m++) { %>
+                                                <option value="Month <%= m %>" <%= student.current_level === `Month ${m}` ? 'selected' : '' %>>
+                                                    <%= m %>
+                                                </option>
+                                            <% } %>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success"><%= student.instrument || 'N/A' %></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge <%= student.status === 'active' ? 'bg-success' : student.status === 'inactive' ? 'bg-warning' : 'bg-secondary' %>">
+                                            <%= student.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted"><%= student.phone || 'N/A' %></small>
+                                    </td>
+                                    <% for (let sessionNum = 1; sessionNum <= 4; sessionNum++) { %>
+                                        <% 
+                                        const sessionData = student.sessions.find(s => s.session_number === sessionNum);
+                                        const sessionId = sessionData ? sessionData.session_id : null;
+                                        const attendanceStatus = sessionData ? sessionData.attendance_status : null;
+                                        const sessionDate = sessionData ? sessionData.session_date : null;
+                                        %>
+                                        <td class="text-center">
+                                            <% if (sessionId) { %>
+                                                <div class="session-controls" data-session="<%= sessionId %>" data-student-id="<%= student.id %>">
+                                                    <div class="btn-group btn-group-sm mb-1" role="group">
+                                                        <input type="radio" class="btn-check" 
+                                                               name="att_<%= student.id %>_<%= sessionId %>" 
+                                                               value="attended" 
+                                                               id="att_<%= student.id %>_<%= sessionId %>"
+                                                               <%= attendanceStatus === 'present' || attendanceStatus === 'attended' ? 'checked' : '' %>>
+                                                        <label class="btn btn-outline-success" 
+                                                               for="att_<%= student.id %>_<%= sessionId %>" title="Present">
+                                                            <i class="fas fa-check"></i>
+                                                        </label>
+
+                                                        <input type="radio" class="btn-check" 
+                                                               name="att_<%= student.id %>_<%= sessionId %>" 
+                                                               value="absent" 
+                                                               id="abs_<%= student.id %>_<%= sessionId %>"
+                                                               <%= attendanceStatus === 'absent' ? 'checked' : '' %>>
+                                                        <label class="btn btn-outline-danger" 
+                                                               for="abs_<%= student.id %>_<%= sessionId %>" title="Absent">
+                                                            <i class="fas fa-times"></i>
+                                                        </label>
+                                                        
+                                                        <% if (attendanceStatus) { %>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm clear-attendance-btn" 
+                                                                title="Clear attendance"
+                                                                onclick="clearAttendance(<%= student.id %>, <%= sessionId %>)">
+                                                            <i class="fas fa-eraser"></i>
+                                                        </button>
+                                                        <% } %>
+                                                    </div>
+                                                    <% if (attendanceStatus && sessionDate) { %>
+                                                        <div class="small text-muted" style="font-size: 0.7rem;">
+                                                            <%= new Date(sessionDate).toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit'}) %>
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-muted small">-</span>
+                                            <% } %>
+                                        </td>
+                                    <% } %>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" 
+                                               name="student_notes[<%= student.id %>]" 
+                                               placeholder="Notes..."
+                                               value="<%= student.general_notes || '' %>">
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Instructions:</strong> Mark attended/absent for each session. Session dates are automatically set to today's date when you save.
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<% } else { %>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Active Students Found</h4>
+                <p class="text-muted">Add students to start tracking attendance.</p>
+                <a href="/students" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-2"></i>Add Students
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<script>
+// Save all attendance
+function saveAllAttendance() {
+    const attendanceData = [];
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get all session controls
+    document.querySelectorAll('.session-controls').forEach(control => {
+        const sessionId = control.getAttribute('data-session');
+        
+        // Find checked radio button in this control
+        const checkedRadio = control.querySelector('input[type="radio"]:checked');
+        
+        if (checkedRadio) {
+            // Extract student ID from the radio name (format: att_STUDENTID_SESSIONID)
+            const match = checkedRadio.name.match(/att_(\d+)_(\d+)/);
+            if (match) {
+                const studentId = match[1];
+                const sessId = match[2];
+                
+                attendanceData.push({
+                    student_id: studentId,
+                    session_id: sessId,
+                    status: checkedRadio.value,
+                    date: today
+                });
+            }
+        }
+    });
+    
+    if (attendanceData.length === 0) {
+        alert('Please mark attendance for at least one student');
+        return;
+    }
+    
+    // Show loading indicator
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    button.disabled = true;
+    
+    // Send data to server
+    fetch('/attendance/save-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            attendance: attendanceData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            button.innerHTML = '<i class="fas fa-check"></i> Saved!';
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-success');
+            
+            // Reload page to show updated data
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            alert('Error saving attendance: ' + (data.error || 'Unknown error'));
+            button.innerHTML = originalHTML;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving attendance');
+        button.innerHTML = originalHTML;
+        button.disabled = false;
+    });
+}
+
+// Clear attendance for a specific student and session
+function clearAttendance(studentId, sessionId) {
+    if (!confirm('Clear attendance for this session?')) {
+        return;
+    }
+    
+    fetch('/attendance/clear', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            student_id: studentId,
+            session_id: sessionId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload page to show updated data
+            window.location.reload();
+        } else {
+            alert('Error clearing attendance: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error clearing attendance');
+    });
+}
+
+// Auto-submit form when filters change
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const monthFilter = document.getElementById('monthFilter');
+    const instrumentFilter = document.getElementById('instrumentFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('studentSearch');
+    
+    // Auto-submit on filter change
+    if (monthFilter) monthFilter.addEventListener('change', () => filterForm.submit());
+    if (instrumentFilter) instrumentFilter.addEventListener('change', () => filterForm.submit());
+    if (statusFilter) statusFilter.addEventListener('change', () => filterForm.submit());
+    
+    // Debounced search submission
+    let searchTimeout;
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterForm.submit();
+            }, 500); // Wait 500ms after user stops typing
+        });
+    }
+});
+
+// Add visual feedback for attendance changes
+document.addEventListener('change', function(e) {
+    if (e.target.type === 'radio' && e.target.name.includes('att_')) {
+        const row = e.target.closest('tr');
+        if (e.target.value === 'attended') {
+            row.style.backgroundColor = '#d4edda';
+        } else {
+            row.style.backgroundColor = '#f8d7da';
+        }
+        
+        // Remove background after 2 seconds
+        setTimeout(() => {
+            row.style.backgroundColor = '';
+        }, 2000);
+    }
+});
+
+// Change student month and reload page
+function changeStudentMonth(selectElement) {
+    const studentId = selectElement.getAttribute('data-student-id');
+    const newMonth = selectElement.value;
+    
+    // Show loading indicator
+    selectElement.disabled = true;
+    
+    // Update student's month
+    fetch('/api/update-student-month', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            student_id: studentId,
+            month: newMonth
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload page to show new sessions
+            window.location.reload();
+        } else {
+            alert('Error updating month: ' + (data.error || 'Unknown error'));
+            selectElement.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating month');
+        selectElement.disabled = false;
+    });
+}
+</script>

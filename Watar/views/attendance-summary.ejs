@@ -1,0 +1,157 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-chart-bar text-primary me-2"></i>Session Attendance Summary</h1>
+            <div>
+                <label for="levelFilter" class="form-label mb-0 me-2">Filter by Level:</label>
+                <select id="levelFilter" class="form-select d-inline-block" style="width: auto;">
+                    <option value="">All Levels</option>
+                    <% levels.forEach(level => { %>
+                        <option value="<%= level %>" <%= selectedLevel === level ? 'selected' : '' %>><%= level %></option>
+                    <% }); %>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (levelSummary && levelSummary.length > 0) { %>
+    <% levelSummary.forEach(level => { %>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-layer-group me-2"></i><%= level.level %>
+                    </h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-info fs-6">
+                            <i class="fas fa-users me-1"></i><%= level.totalStudents %> Students
+                        </span>
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle me-1"></i><%= level.completedSessions %>/4 Sessions
+                        </span>
+                        <span class="badge bg-primary fs-6">
+                            <i class="fas fa-percentage me-1"></i><%= level.overallAttendanceRate %>% Overall
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <% level.sessions.forEach(session => { %>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="card h-100 <%= session.hasAttendance ? 'border-success' : 'border-secondary' %>">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-calendar-day me-2"></i>Session <%= session.sessionNumber %>
+                                    </h6>
+                                    
+                                    <% if (session.sessionDate) { %>
+                                        <p class="text-muted small mb-2">
+                                            <i class="fas fa-clock me-1"></i>
+                                            <%= new Date(session.sessionDate).toLocaleDateString() %>
+                                        </p>
+                                    <% } %>
+                                    
+                                    <% if (session.hasAttendance) { %>
+                                        <div class="mb-3">
+                                            <div class="progress mb-2" style="height: 8px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: <%= session.attendanceRate %>%"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between small">
+                                                <span class="text-success">
+                                                    <i class="fas fa-check me-1"></i><%= session.attendedCount %>
+                                                </span>
+                                                <span class="text-danger">
+                                                    <i class="fas fa-times me-1"></i><%= session.absentCount %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="badge bg-success mb-2">
+                                            <%= session.attendanceRate %>% Attendance
+                                        </div>
+                                        
+                                        <div class="mt-2">
+                                            <a href="/attendance?level=<%= encodeURIComponent(level.level) %>&session=<%= session.sessionId %>" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </a>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="text-muted mb-3">
+                                            <i class="fas fa-clock fa-2x mb-2"></i>
+                                            <p class="small">Not Started</p>
+                                        </div>
+                                        
+                                        <a href="/attendance?level=<%= encodeURIComponent(level.level) %>&session=<%= session.sessionId %>" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-play me-1"></i>Start Session
+                                        </a>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                    </div>
+                    
+                    <% if (level.completedSessions > 0) { %>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <strong><%= level.completedSessions %></strong>
+                                        <br><small>Sessions Completed</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong><%= level.totalAttendance %></strong>
+                                        <br><small>Total Attended</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong><%= level.totalPossibleAttendance %></strong>
+                                        <br><small>Total Possible</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong><%= level.overallAttendanceRate %>%</strong>
+                                        <br><small>Overall Rate</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% }); %>
+<% } else { %>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Session Data Available</h4>
+                    <p class="text-muted">Start marking attendance to see session summaries here.</p>
+                    <a href="/attendance" class="btn btn-primary">
+                        <i class="fas fa-calendar-check me-2"></i>Mark Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<script>
+// Handle level filter change
+document.getElementById('levelFilter').addEventListener('change', function() {
+    const level = this.value;
+    if (level) {
+        window.location.href = '/attendance/summary?level=' + encodeURIComponent(level);
+    } else {
+        window.location.href = '/attendance/summary';
+    }
+});
+</script>

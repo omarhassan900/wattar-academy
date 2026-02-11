@@ -1,0 +1,170 @@
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-bar text-primary me-2"></i>
+            Reports & Analytics
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h4><%= stats.length %></h4>
+                <p class="text-muted">Active Students</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
+                <h4><%= stats.reduce((sum, s) => sum + s.total_sessions, 0) %></h4>
+                <p class="text-muted">Total Sessions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                <h4>85%</h4>
+                <p class="text-muted">Avg Attendance</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-trophy fa-2x text-warning mb-2"></i>
+                <h4><%= stats.filter(s => s.total_sessions > 10).length %></h4>
+                <p class="text-muted">Regular Students</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Student Attendance Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Level</th>
+                                <th>Total Sessions</th>
+                                <th>Start Date</th>
+                                <th>Attendance Rate</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% stats.forEach(student => { 
+                                const startDate = new Date(student.start_date);
+                                const today = new Date();
+                                const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+                                const expectedSessions = Math.floor(daysSinceStart / 7); // Assuming weekly sessions
+                                const attendanceRate = expectedSessions > 0 ? Math.round((student.total_sessions / expectedSessions) * 100) : 0;
+                            %>
+                            <tr>
+                                <td>
+                                    <i class="fas fa-user-circle text-primary me-2"></i>
+                                    <%= student.name %>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info"><%= student.level %></span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary"><%= student.total_sessions %></span>
+                                </td>
+                                <td><%= new Date(student.start_date).toLocaleDateString() %></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar <%= attendanceRate >= 80 ? 'bg-success' : attendanceRate >= 60 ? 'bg-warning' : 'bg-danger' %>" 
+                                             style="width: <%= Math.min(attendanceRate, 100) %>%">
+                                            <%= attendanceRate %>%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <% if (attendanceRate >= 80) { %>
+                                        <span class="badge bg-success">Excellent</span>
+                                    <% } else if (attendanceRate >= 60) { %>
+                                        <span class="badge bg-warning">Good</span>
+                                    <% } else if (attendanceRate >= 40) { %>
+                                        <span class="badge bg-info">Fair</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">Needs Attention</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Level Distribution</h5>
+            </div>
+            <div class="card-body">
+                <% 
+                const levelCounts = {};
+                stats.forEach(s => {
+                    levelCounts[s.level] = (levelCounts[s.level] || 0) + 1;
+                });
+                %>
+                <% Object.entries(levelCounts).forEach(([level, count]) => { %>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><%= level %></span>
+                    <span class="badge bg-primary"><%= count %> students</span>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportData()">
+                        <i class="fas fa-download me-2"></i>Export to CSV
+                    </button>
+                    <button class="btn btn-outline-success" onclick="printReport()">
+                        <i class="fas fa-print me-2"></i>Print Report
+                    </button>
+                    <a href="/attendance" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-check me-2"></i>Mark Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportData() {
+    alert('Export functionality will be implemented soon!');
+}
+
+function printReport() {
+    window.print();
+}
+</script>

@@ -26,7 +26,10 @@ app.use(session({
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
-
+app.use((req, res, next) => {
+    res.locals.currentUrl = req.originalUrl;
+    next();
+});
 // Authentication middleware
 const requireAuth = (req, res, next) => {
     if (req.session.user) {
@@ -262,9 +265,19 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
         FROM cash_transactions ct
         LEFT JOIN cash_categories cc ON ct.category_code = cc.code
         ORDER BY ct.transaction_date DESC, ct.created_at DESC`,
-
-        getallcategories: `SELECT * FROM cash_categories WHERE is_active = 1 ORDER BY type, name`
-
+        
+        getallcategories: `SELECT * FROM cash_categories WHERE is_active = 1 ORDER BY type, name`,
+        monthlyFinance: `
+            SELECT 
+                strftime('%m', transaction_date) as month,
+                SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
+                SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
+            FROM cash_transactions
+            WHERE transaction_date >= date('now','start of year')
+            GROUP BY month
+            ORDER BY month
+        `,
+        
     };
     
     // Execute all queries
@@ -315,7 +328,30 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     .reduce((sum, t) => sum + parseFloat(t.amount), 0);
                                 
                                 const balance = totalIncome - totalExpense;
-                                
+                        db.all(queries.monthlyFinance, (err, monthlyFinance) => {
+                            if (err) {
+                                console.error('Error fetching monthly finance:', err);
+                                return res.status(500).send('Database error');
+                            }
+
+                            // Prepare 12 months structure
+                            const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            
+                            const incomeData = Array(12).fill(0);
+                            const expenseData = Array(12).fill(0);
+
+                            monthlyFinance.forEach(row => {
+                                const index = parseInt(row.month) - 1;
+                                incomeData[index] = row.total_income || 0;
+                                expenseData[index] = row.total_expense || 0;
+                            });
+
+                            const financeChartData = {
+                                labels: monthLabels,
+                                income: incomeData,
+                                expenses: expenseData
+                            };
+                                console.log(studentsByMonth);
                                 // Render dashboard view as a string
                                 res.render('dashboard', { 
                                     user, 
@@ -324,6 +360,7 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     totalIncome,
                                     totalExpense,
                                     balance,
+                                    financeChartData,
                                     stats: basicStats[0] || { 
                                         total_students: 0, 
                                         inactive_students: 0,
@@ -345,9 +382,11 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     // Wrap in layout
                                     res.render('layout', {
                                         body: html,
-                                        user: user
+                                        user: user,
+                                        activemenu: 'dashboard' 
                                     });
                                 });
+                            });
                             });
                         });
                     });
@@ -424,7 +463,8 @@ app.get('/students', requireAuth, (req, res) => {
                 // Wrap in layout
                 res.render('layout', {
                     body: html,
-                    user: user
+                    user: user,
+                    activemenu: 'students' 
                 });
             });
         });

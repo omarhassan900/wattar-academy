@@ -9,7 +9,7 @@
 
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card text-center mb-2">
             <div class="card-body">
                 <i class="fas fa-users fa-2x text-primary mb-2"></i>
                 <h4><%= stats.length %></h4>
@@ -18,7 +18,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card text-center mb-2">
             <div class="card-body">
                 <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
                 <h4><%= stats.reduce((sum, s) => sum + s.total_sessions, 0) %></h4>
@@ -27,7 +27,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card text-center mb-2">
             <div class="card-body">
                 <i class="fas fa-percentage fa-2x text-info mb-2"></i>
                 <h4>85%</h4>
@@ -36,7 +36,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card text-center mb-2">
             <div class="card-body">
                 <i class="fas fa-trophy fa-2x text-warning mb-2"></i>
                 <h4><%= stats.filter(s => s.total_sessions > 10).length %></h4>

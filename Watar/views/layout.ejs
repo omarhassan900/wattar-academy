@@ -86,9 +86,9 @@
 
         <!-- Desktop Sidebar -->
         <div class="col-lg-2 d-none d-lg-block sidebar">
-            <div class="p-3">
+            <div>
 
-                <h4 class="text-white mb-4">
+                <h4 class="text-white mb-4 mt-4">
                     <i class="fas fa-music me-2"></i>
                     Wattar Academy
                 </h4>
@@ -110,38 +110,38 @@
                 <nav class="nav flex-column">
 
                     <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
-                    <a class="nav-link" href="/">
+                    <a class="nav-link  <%= currentUrl == '/dashboard' ? 'active' : '' %>" href="/">
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                     </a>
                     <% } %>
 
-                    <a class="nav-link" href="/students">
+                    <a class="nav-link <%= currentUrl == '/students' ? 'active' : '' %>" href="/students">
                         <i class="fas fa-users me-2"></i>Students
                     </a>
 
                     <% if (typeof user !== 'undefined' && ['manager', 'reception'].includes(user.role)) { %>
-                    <a class="nav-link" href="/classes">
+                    <a class="nav-link <%= currentUrl == '/classes' ? 'active' : '' %>" href="/classes">
                         <i class="fas fa-chalkboard-teacher me-2"></i>Classes
                     </a>
                     <% } %>
 
-                    <a class="nav-link" href="/attendance">
+                    <a class="nav-link <%= currentUrl == '/attendance' ? 'active' : '' %>" href="/attendance">
                         <i class="fas fa-calendar-check me-2"></i>Attendance
                     </a>
 
-                    <a class="nav-link" href="/attendance/summary">
+                    <a class="nav-link <%= currentUrl == '/attendance/summary' ? 'active' : '' %>" href="/attendance/summary">
                         <i class="fas fa-chart-line me-2"></i>Session Summary
                     </a>
 
-                    <a class="nav-link" href="/reports">
+                    <a class="nav-link <%= currentUrl == '/reports' ? 'active' : '' %>" href="/reports">
                         <i class="fas fa-chart-bar me-2"></i>Reports
                     </a>
 
-                    <a class="nav-link" href="/cash">
+                    <a class="nav-link <%= currentUrl == '/cash' ? 'active' : '' %>" href="/cash">
                         <i class="fas fa-money-bill-wave me-2"></i>Cash Management
                     </a>
 
-                    <a class="nav-link" href="/users">
+                    <a class="nav-link <%= currentUrl == '/users' ? 'active' : '' %>" href="/users">
                         <i class="fas fa-user-cog me-2"></i>User Management
                     </a>
 
@@ -165,7 +165,7 @@
             </div>
 
             <div class="offcanvas-body p-0">
-                <div class="p-3">
+                <div>
 
                     <% if (typeof user !== 'undefined') { %>
                     <div class="user-info mb-4">

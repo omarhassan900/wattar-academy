@@ -20,10 +20,10 @@
             <div class="card-body">
                 <!-- Filters Section -->
                 <div class="row mb-3">
-                    <div class="col-md-3">
+                    <div class="col-md-3  mb-2">
                         <input type="text" id="searchStudent" class="form-control" placeholder="🔍 Search by name...">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-2  mb-2">
                         <select id="levelFilter" class="form-select">
                             <option value="">All Levels</option>
                             <option value="Month 1">Month 1</option>
@@ -37,7 +37,7 @@
                             <option value="Month 9">Month 9</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-2 mb-2">
                         <select id="instrumentFilter" class="form-select">
                             <option value="">All Instruments</option>
                             <% if (instruments && instruments.length > 0) { %>
@@ -47,7 +47,7 @@
                             <% } %>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-2  mb-2">
                         <select id="statusFilter" class="form-select">
                             <option value="">All Status</option>
                             <option value="active">Active</option>

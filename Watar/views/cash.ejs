@@ -11,7 +11,7 @@
 
 <!-- Summary Cards -->
 <div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-4 mb-2">
         <div class="card bg-success text-white">
             <div class="card-body">
                 <h6 class="card-title"><i class="fas fa-arrow-down me-2"></i>Total Income</h6>
@@ -19,7 +19,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4  mb-2">
         <div class="card bg-danger text-white">
             <div class="card-body">
                 <h6 class="card-title"><i class="fas fa-arrow-up me-2"></i>Total Expenses</h6>
@@ -27,7 +27,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4  mb-2">
         <div class="card <%= balance >= 0 ? 'bg-primary' : 'bg-warning' %> text-white">
             <div class="card-body">
                 <h6 class="card-title"><i class="fas fa-wallet me-2"></i>Balance</h6>
@@ -39,14 +39,14 @@
 
 <!-- Filters -->
 <div class="row mb-3">
-    <div class="col-md-3">
+    <div class="col-md-3  mb-2">
         <select id="typeFilter" class="form-select">
             <option value="">All Types</option>
             <option value="income">Income</option>
             <option value="expense">Expense</option>
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3  mb-2">
         <select id="categoryFilter" class="form-select">
             <option value="">All Categories</option>
             <% categories.forEach(cat => { %>
@@ -54,10 +54,10 @@
             <% }); %>
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3  mb-2">
         <input type="date" id="dateFilter" class="form-control" placeholder="Filter by date">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3  mb-2">
         <button id="clearFilters" class="btn btn-outline-secondary w-100">
             <i class="fas fa-times me-1"></i>Clear Filters
         </button>

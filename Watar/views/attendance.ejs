@@ -8,10 +8,10 @@
                 <% } %>
             </div>
             <div>
-                <a href="/attendance/export-csv" class="btn btn-success btn-lg me-2">
+                <a href="/attendance/export-csv" class="btn btn-success btn-lg me-2 mb-2">
                     <i class="fas fa-file-csv me-2"></i>Export to CSV
                 </a>
-                <button type="button" class="btn btn-primary btn-lg" onclick="saveAllAttendance()">
+                <button type="button" class="btn btn-primary btn-lg mb-2" onclick="saveAllAttendance()">
                     <i class="fas fa-save me-2"></i>Save All Attendance
                 </button>
             </div>
@@ -19,7 +19,7 @@
     </div>
 </div>
 
-<% if (students && students.length > 0) { %>
+<% if (students) { %>
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -53,17 +53,17 @@
             <div class="card-body">
                 <form id="filterForm" method="GET" action="/attendance">
                     <div class="row mb-3">
-                        <div class="col-md-3">
+                        <div class="col-md-3 mb-2">
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" class="form-control" name="search" id="studentSearch" 
-                                       placeholder="Search students..." 
-                                       value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>">
+                                       placeholder="Search by name or phone" 
+                                       value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>" autofocus>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-2  mb-2">
                             <select class="form-select" name="month" id="monthFilter">
                                 <option value="">All Months</option>
                                 <% for (let m = 1; m <= 9; m++) { %>
@@ -73,7 +73,7 @@
                                 <% } %>
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-2  mb-2">
                             <select class="form-select" name="instrument" id="instrumentFilter">
                                 <option value="">All Instruments</option>
                                 <% if (instruments && instruments.length > 0) { %>
@@ -85,7 +85,7 @@
                                 <% } %>
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-2  mb-2">
                             <select class="form-select" name="status" id="statusFilter">
                                 <option value="">All Status</option>
                                 <option value="active" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'active') ? 'selected' : '' %>>Active</option>
@@ -113,6 +113,7 @@
                                     <th class="text-center" style="width: 80px;">Session 2</th>
                                     <th class="text-center" style="width: 80px;">Session 3</th>
                                     <th class="text-center" style="width: 80px;">Session 4</th>
+                                    <th class="text-center" style="width: 80px;">Note </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -123,7 +124,6 @@
                                     data-instrument="<%= (student.instrument || '').toLowerCase() %>"
                                     data-status="<%= student.status.toLowerCase() %>">
                                     <td>
-                                        <i class="fas fa-user-circle text-primary me-1"></i>
                                         <strong><%= student.name %></strong>
                                     </td>
                                     <td>
@@ -199,10 +199,10 @@
                                         </td>
                                     <% } %>
                                     <td>
-                                        <input type="text" class="form-control form-control-sm" 
+                                        <textarea style="height: 132px;width: 300px;" type="text" class="form-control form-control-sm" 
                                                name="student_notes[<%= student.id %>]" 
                                                placeholder="Notes..."
-                                               value="<%= student.general_notes || '' %>">
+                                               value="<%= student.general_notes || '' %>"></textarea>
                                     </td>
                                 </tr>
                                 <% }); %>
@@ -361,15 +361,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (statusFilter) statusFilter.addEventListener('change', () => filterForm.submit());
     
     // Debounced search submission
-    let searchTimeout;
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                filterForm.submit();
-            }, 500); // Wait 500ms after user stops typing
-        });
-    }
+    //let searchTimeout;
+    //if (searchInput) {
+    //    searchInput.addEventListener('input', function() {
+    //        clearTimeout(searchTimeout);
+    //        searchTimeout = setTimeout(() => {
+    //            filterForm.submit();
+    //        }, 500); // Wait 500ms after user stops typing
+    //    });
+   // }
 });
 
 // Add visual feedback for attendance changes

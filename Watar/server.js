@@ -26,7 +26,10 @@ app.use(session({
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
-
+app.use((req, res, next) => {
+    res.locals.currentUrl = req.originalUrl;
+    next();
+});
 // Authentication middleware
 const requireAuth = (req, res, next) => {
     if (req.session.user) {
@@ -256,7 +259,25 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
             FROM attendance a
             JOIN sessions s ON a.session_id = s.id
             WHERE s.session_date >= date('now', '-30 days')
-        `
+        `,
+        
+        getalltransactions: `SELECT ct.*, cc.name as category_name, cc.type as category_type
+        FROM cash_transactions ct
+        LEFT JOIN cash_categories cc ON ct.category_code = cc.code
+        ORDER BY ct.transaction_date DESC, ct.created_at DESC`,
+        
+        getallcategories: `SELECT * FROM cash_categories WHERE is_active = 1 ORDER BY type, name`,
+        monthlyFinance: `
+            SELECT 
+                strftime('%m', transaction_date) as month,
+                SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
+                SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
+            FROM cash_transactions
+            WHERE transaction_date >= date('now','start of year')
+            GROUP BY month
+            ORDER BY month
+        `,
+        
     };
     
     // Execute all queries
@@ -283,32 +304,89 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                         if (attendanceRate && attendanceRate[0] && attendanceRate[0].total_records > 0) {
                             attendancePercentage = Math.round((attendanceRate[0].present_count / attendanceRate[0].total_records) * 100);
                         }
-                        
-                        // Render dashboard view as a string
-                        res.render('dashboard', { 
-                            user, 
-                            stats: basicStats[0] || { 
-                                total_students: 0, 
-                                inactive_students: 0,
-                                graduated_students: 0,
-                                total_classes: 0, 
-                                total_trainers: 0, 
-                                today_attendance: 0 
-                            },
-                            studentsByMonth: studentsByMonth || [],
-                            studentsByInstrument: studentsByInstrument || [],
-                            recentAttendance: recentAttendance || [],
-                            attendancePercentage: attendancePercentage
-                        }, (err, html) => {
+                        // Get all transactions
+                        db.all(queries.getalltransactions, (err, transactions) => {
                             if (err) {
-                                console.error(err);
-                                return res.status(500).send('Render error');
+                                console.error('Error fetching transactions:', err);
+                                return res.status(500).send('Database error');
                             }
                             
-                            // Wrap in layout
-                            res.render('layout', {
-                                body: html,
-                                user: user
+                            // Get all categories
+                            db.all(queries.getallcategories, (err, categories) => {
+                                if (err) {
+                                    console.error('Error fetching categories:', err);
+                                    return res.status(500).send('Database error');
+                                }
+                                
+                                // Calculate totals
+                                const totalIncome = transactions
+                                    .filter(t => t.type === 'income')
+                                    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                                
+                                const totalExpense = transactions
+                                    .filter(t => t.type === 'expense')
+                                    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                                
+                                const balance = totalIncome - totalExpense;
+                        db.all(queries.monthlyFinance, (err, monthlyFinance) => {
+                            if (err) {
+                                console.error('Error fetching monthly finance:', err);
+                                return res.status(500).send('Database error');
+                            }
+
+                            // Prepare 12 months structure
+                            const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            
+                            const incomeData = Array(12).fill(0);
+                            const expenseData = Array(12).fill(0);
+
+                            monthlyFinance.forEach(row => {
+                                const index = parseInt(row.month) - 1;
+                                incomeData[index] = row.total_income || 0;
+                                expenseData[index] = row.total_expense || 0;
+                            });
+
+                            const financeChartData = {
+                                labels: monthLabels,
+                                income: incomeData,
+                                expenses: expenseData
+                            };
+                                console.log(studentsByMonth);
+                                // Render dashboard view as a string
+                                res.render('dashboard', { 
+                                    user, 
+                                    transactions,
+                                    categories,
+                                    totalIncome,
+                                    totalExpense,
+                                    balance,
+                                    financeChartData,
+                                    stats: basicStats[0] || { 
+                                        total_students: 0, 
+                                        inactive_students: 0,
+                                        graduated_students: 0,
+                                        total_classes: 0, 
+                                        total_trainers: 0, 
+                                        today_attendance: 0 
+                                    },
+                                    studentsByMonth: studentsByMonth || [],
+                                    studentsByInstrument: studentsByInstrument || [],
+                                    recentAttendance: recentAttendance || [],
+                                    attendancePercentage: attendancePercentage
+                                }, (err, html) => {
+                                    if (err) {
+                                        console.error(err);
+                                        return res.status(500).send('Render error');
+                                    }
+                                    
+                                    // Wrap in layout
+                                    res.render('layout', {
+                                        body: html,
+                                        user: user,
+                                        activemenu: 'dashboard' 
+                                    });
+                                });
+                            });
                             });
                         });
                     });
@@ -385,7 +463,8 @@ app.get('/students', requireAuth, (req, res) => {
                 // Wrap in layout
                 res.render('layout', {
                     body: html,
-                    user: user
+                    user: user,
+                    activemenu: 'students' 
                 });
             });
         });
@@ -596,8 +675,8 @@ app.get('/attendance', requireAuth, (req, res) => {
     let queryParams = [];
     
     if (searchTerm) {
-        whereConditions.push("s.name LIKE ?");
-        queryParams.push(`%${searchTerm}%`);
+        whereConditions.push("(s.name LIKE ? OR s.phone LIKE ?)");
+        queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
     }
     if (monthFilter) {
         whereConditions.push("s.current_level = ?");
@@ -1581,7 +1660,7 @@ app.get('/reports', requireAuth, (req, res) => {
 
             <!-- Statistics Cards -->
             <div class="row mb-4">
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-users fa-2x text-primary mb-2"></i>
@@ -1590,7 +1669,7 @@ app.get('/reports', requireAuth, (req, res) => {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
@@ -1599,7 +1678,7 @@ app.get('/reports', requireAuth, (req, res) => {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
@@ -1608,7 +1687,7 @@ app.get('/reports', requireAuth, (req, res) => {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 md-2">
                     <div class="card text-center">
                         <div class="card-body">
                             <i class="fas fa-percentage fa-2x text-info mb-2"></i>

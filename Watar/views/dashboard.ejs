@@ -1,13 +1,134 @@
+
+
+
 <div class="row">
     <div class="col-12">
-        <h1 class="mb-4">
+        <h4 class="mb-4">
             <i class="fas fa-music text-primary me-2"></i>
             Welcome back, <%= user.full_name %>!
-        </h1>
+        </h4>
     </div>
 </div>
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-8">
+       
+        <div class="card round">
+         <div class="card-header">
+                <h5 class="mb-0"><i class="fa-solid fa-money-bill-trend-up"></i> Monthly Income vs Expenses</h5>
+            </div>
+        <canvas id="studentsChart" class="m-2"></canvas>
+    </div>
+     <div class="row mt-4">
+     <div class="col-md-4">
+                <div class="card bg-success text-white mb-2">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="fas fa-arrow-down me-2"></i>Total Income</h6>
+                        <h2 class="mb-0">$<%= totalIncome.toFixed(2) %>
+                        </h2>
+                    </div>
+                </div>
+            </div>
+ <div class="col-md-4">
+        <div class="card bg-danger text-white mb-2">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-arrow-up me-2"></i>Total Expenses</h6>
+                <h2 class="mb-0">$<%= totalExpense.toFixed(2) %></h2>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-4">
 
-<!-- Main Statistics Cards -->
+     <div class="card mb-4 <%= balance >= 0 ? 'bg-primary' : 'bg-warning' %> text-white">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-wallet me-2"></i>Balance</h6>
+                <h2 class="mb-0">$<%= balance.toFixed(2) %></h2>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+    <div class="col-md-4">
+        <div class="row">
+            <div class="col-md-6">
+        <div class="card text-center border-primary mb-4">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                <h3 class="card-title"><%= stats.total_students %></h3>
+                <p class="card-text text-muted">Active Students</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center border-info mb-4">
+            <div class="card-body">
+                <i class="fas fa-chalkboard-teacher fa-3x text-info mb-3"></i>
+                <h3 class="card-title"><%= stats.total_classes %></h3>
+                <p class="card-text text-muted">Active Classes</p>
+            </div>
+        </div>
+    </div>
+
+        </div>
+        <div class="row">
+                <div class="col-md-12">
+        <div class="card text-center border-warning mb-4">
+            <div class="card-body">
+                <i class="fas fa-user-tie fa-3x text-warning mb-3"></i>
+                <h3 class="card-title"><%= stats.total_trainers %></h3>
+                <p class="card-text text-muted">Active Trainers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12">
+        
+       
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/attendance" class="btn btn-primary btn-lg">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Mark Attendance
+                    </a>
+                    <% if (user.role !== 'trainer') { %>
+                    <a href="/students" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Manage Students
+                    </a>
+                    <% } %>
+                    <a href="/reports" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-line me-2"></i>
+                        View Reports
+                    </a>
+                    <% if (user.role === 'manager') { %>
+                    <a href="/classes" class="btn btn-outline-primary">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>
+                        Manage Classes
+                    </a>
+                    <% } %>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="alert alert-info mb-0">
+                    <strong><i class="fas fa-user-shield me-2"></i>Your Role:</strong> 
+                    <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+            
+   
+
+</div>
+
+</div>
+
+<!-- Main Statistics Cards
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card text-center border-primary">
@@ -50,7 +171,11 @@
         </div>
     </div>
 </div>
-
+<div class="row mb-4">
+          <div class="col-md-6">
+         
+    </div>
+</div> -->
 <!-- Charts and Details Row -->
 <div class="row mb-4">
     <!-- Students by Month -->
@@ -150,8 +275,9 @@
 
 <!-- Recent Attendance and Quick Actions Row -->
 <div class="row">
+    
     <!-- Recent Attendance Trend -->
-    <div class="col-md-6">
+   
         <div class="card">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Recent Attendance (Last 7 Days)</h5>
@@ -194,44 +320,55 @@
             </div>
         </div>
     </div>
+   
 
-    <!-- Quick Actions -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-warning">
-                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/attendance" class="btn btn-primary btn-lg">
-                        <i class="fas fa-calendar-check me-2"></i>
-                        Mark Attendance
-                    </a>
-                    <% if (user.role !== 'trainer') { %>
-                    <a href="/students" class="btn btn-outline-primary">
-                        <i class="fas fa-user-plus me-2"></i>
-                        Manage Students
-                    </a>
-                    <% } %>
-                    <a href="/reports" class="btn btn-outline-primary">
-                        <i class="fas fa-chart-line me-2"></i>
-                        View Reports
-                    </a>
-                    <% if (user.role === 'manager') { %>
-                    <a href="/classes" class="btn btn-outline-primary">
-                        <i class="fas fa-chalkboard-teacher me-2"></i>
-                        Manage Classes
-                    </a>
-                    <% } %>
-                </div>
-                
-                <hr class="my-3">
-                
-                <div class="alert alert-info mb-0">
-                    <strong><i class="fas fa-user-shield me-2"></i>Your Role:</strong> 
-                    <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const financeData = <%- JSON.stringify(financeChartData) %>;
+    const ctx = document.getElementById('studentsChart');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: financeData.labels,
+            datasets: [{
+                label: 'Income',
+                data: financeData.income,
+                borderWidth: 2,
+                borderColor: 'rgba(40, 167, 69, 1)',
+                backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                tension: 0.4,
+            },
+            {
+                label: 'Expenses',
+                data: financeData.expenses,
+                borderColor: 'rgba(220, 53, 69, 1)',
+                backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                tension: 0.4,
+            }
+        ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+             plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + context.raw;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>

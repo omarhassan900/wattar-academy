@@ -19,7 +19,7 @@
     </div>
 </div>
 
-<% if (students && students.length > 0) { %>
+<% if (students) { %>
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -59,8 +59,8 @@
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" class="form-control" name="search" id="studentSearch" 
-                                       placeholder="Search students..." 
-                                       value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>">
+                                       placeholder="Search by name or phone" 
+                                       value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>" autofocus>
                             </div>
                         </div>
                         <div class="col-md-2  mb-2">
@@ -361,15 +361,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (statusFilter) statusFilter.addEventListener('change', () => filterForm.submit());
     
     // Debounced search submission
-    let searchTimeout;
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                filterForm.submit();
-            }, 500); // Wait 500ms after user stops typing
-        });
-    }
+    //let searchTimeout;
+    //if (searchInput) {
+    //    searchInput.addEventListener('input', function() {
+    //        clearTimeout(searchTimeout);
+    //        searchTimeout = setTimeout(() => {
+    //            filterForm.submit();
+    //        }, 500); // Wait 500ms after user stops typing
+    //    });
+   // }
 });
 
 // Add visual feedback for attendance changes

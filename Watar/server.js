@@ -675,8 +675,8 @@ app.get('/attendance', requireAuth, (req, res) => {
     let queryParams = [];
     
     if (searchTerm) {
-        whereConditions.push("s.name LIKE ?");
-        queryParams.push(`%${searchTerm}%`);
+        whereConditions.push("(s.name LIKE ? OR s.phone LIKE ?)");
+        queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
     }
     if (monthFilter) {
         whereConditions.push("s.current_level = ?");

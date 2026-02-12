@@ -21,7 +21,7 @@
                 <!-- Filters Section -->
                 <div class="row mb-3">
                     <div class="col-md-3  mb-2">
-                        <input type="text" id="searchStudent" class="form-control" placeholder="🔍 Search by name...">
+                        <input type="text" id="searchStudent" class="form-control" placeholder="🔍 Search by name or phone">
                     </div>
                     <div class="col-md-2  mb-2">
                         <select id="levelFilter" class="form-select">
@@ -698,8 +698,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const level = row.getAttribute('data-level');
             const instrument = row.getAttribute('data-instrument');
             const status = row.getAttribute('data-status');
-            
-            const nameMatch = !searchTerm || name.includes(searchTerm);
+            const phone = row.getAttribute('data-student-phone');
+
+            const nameMatch = !searchTerm || name.includes(searchTerm) || phone.includes(searchTerm);
             const levelMatch = !levelValue || level.includes(levelValue);
             const instrumentMatch = !instrumentValue || instrument.includes(instrumentValue);
             const statusMatch = !statusValue || status === statusValue;

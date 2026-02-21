@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+*.md
+.env
+.DS_Store
+*.log
+coverage
+.vscode
+.idea
+*.xlsx
+~$*.xlsx
+*.csv
+wattar_academy.db

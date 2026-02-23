@@ -711,7 +711,7 @@ app.get('/attendance', requireAuth, (req, res) => {
                 s.id, s.name, s.phone, s.current_level, s.instrument, s.status
             FROM students s
             WHERE ${whereClause}
-            ORDER BY s.current_level, s.name
+            ORDER BY s.name
             LIMIT ? OFFSET ?
         `;
         
@@ -771,7 +771,7 @@ app.get('/attendance', requireAuth, (req, res) => {
                 const studentPlaceholders = studentIds.map(() => '?').join(',');
                 
                 const attendanceQuery = `
-                    SELECT student_id, session_id, status, notes
+                    SELECT student_id, session_id, status, date, notes
                     FROM attendance
                     WHERE student_id IN (${studentPlaceholders})
                 `;
@@ -788,6 +788,7 @@ app.get('/attendance', requireAuth, (req, res) => {
                         const key = `${record.student_id}_${record.session_id}`;
                         attendanceMap[key] = {
                             status: record.status,
+                            date: record.date,
                             notes: record.notes
                         };
                     });
@@ -808,7 +809,7 @@ app.get('/attendance', requireAuth, (req, res) => {
                             return {
                                 session_id: session.id,
                                 session_number: session.session_number,
-                                session_date: session.session_date,
+                                session_date: attendance.date || null, // Use date from attendance, not sessions
                                 attendance_status: attendance.status,
                                 notes: attendance.notes
                             };
@@ -861,57 +862,69 @@ app.post('/attendance/save-all', requireAuth, (req, res) => {
     
     console.log('Saving attendance:', attendance); // Debug log
     
-    // Get unique session IDs
-    const sessionIds = [...new Set(attendance.map(a => a.session_id))];
-    const placeholders = sessionIds.map(() => '?').join(',');
+    const today = new Date().toISOString().split('T')[0];
     
-    // Delete existing attendance for these sessions
-    db.run(`DELETE FROM attendance WHERE session_id IN (${placeholders})`, sessionIds, (err) => {
-        if (err) {
-            console.error('Error deleting old attendance:', err);
-            return res.json({ success: false, error: 'Database error deleting old records' });
-        }
-        
-        // Insert new attendance records
-        // Map 'attended' to 'present' for database compatibility
-        const stmt = db.prepare(`
-            INSERT INTO attendance (student_id, session_id, status, marked_by, created_at) 
-            VALUES (?, ?, ?, ?, datetime('now'))
-        `);
-        
-        let errorOccurred = false;
-        attendance.forEach(record => {
-            const dbStatus = record.status === 'attended' ? 'present' : 'absent';
-            stmt.run(record.student_id, record.session_id, dbStatus, user.id, (err) => {
+    // Process each attendance record individually
+    let processed = 0;
+    let errors = 0;
+    
+    attendance.forEach((record, index) => {
+        // Check if attendance already exists for this student/session
+        db.get(
+            'SELECT id, date FROM attendance WHERE student_id = ? AND session_id = ?',
+            [record.student_id, record.session_id],
+            (err, existing) => {
                 if (err) {
-                    console.error('Error inserting attendance:', err);
-                    errorOccurred = true;
+                    console.error('Error checking existing attendance:', err);
+                    errors++;
+                } else if (existing) {
+                    // Update existing record - KEEP the original date!
+                    const dbStatus = record.status === 'attended' ? 'present' : 'absent';
+                    db.run(
+                        'UPDATE attendance SET status = ?, marked_by = ? WHERE id = ?',
+                        [dbStatus, user.id, existing.id],
+                        (err) => {
+                            if (err) {
+                                console.error('Error updating attendance:', err);
+                                errors++;
+                            } else {
+                                console.log(`Updated attendance for student ${record.student_id}, session ${record.session_id}, kept date: ${existing.date}`);
+                            }
+                            processed++;
+                            checkComplete();
+                        }
+                    );
+                } else {
+                    // Insert new record with today's date
+                    const dbStatus = record.status === 'attended' ? 'present' : 'absent';
+                    db.run(
+                        'INSERT INTO attendance (student_id, session_id, status, date, marked_by, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
+                        [record.student_id, record.session_id, dbStatus, today, user.id],
+                        (err) => {
+                            if (err) {
+                                console.error('Error inserting attendance:', err);
+                                errors++;
+                            } else {
+                                console.log(`Inserted new attendance for student ${record.student_id}, session ${record.session_id}, date: ${today}`);
+                            }
+                            processed++;
+                            checkComplete();
+                        }
+                    );
                 }
-            });
-        });
-        
-        stmt.finalize((err) => {
-            if (err || errorOccurred) {
-                console.error('Error finalizing statement:', err);
-                return res.json({ success: false, error: 'Database error saving records' });
             }
-            
-            // Now update session dates ONLY for sessions that were just marked
-            const today = new Date().toISOString().split('T')[0];
-            const dateStmt = db.prepare("UPDATE sessions SET session_date = ? WHERE id = ?");
-            sessionIds.forEach(sessionId => {
-                dateStmt.run(today, sessionId, (err) => {
-                    if (err) console.error('Error updating session date:', err);
-                });
-            });
-            dateStmt.finalize((err) => {
-                if (err) {
-                    console.error('Error finalizing date update:', err);
-                }
-                res.json({ success: true, message: 'Attendance saved successfully' });
-            });
-        });
+        );
     });
+    
+    function checkComplete() {
+        if (processed === attendance.length) {
+            if (errors > 0) {
+                res.json({ success: false, error: `${errors} errors occurred` });
+            } else {
+                res.json({ success: true, message: 'Attendance saved successfully' });
+            }
+        }
+    }
 });
 
 // API endpoint for clearing attendance
@@ -946,7 +959,7 @@ app.get('/attendance/export-csv', requireAuth, (req, res) => {
             s.status as student_status
         FROM students s
         WHERE s.status = 'active'
-        ORDER BY s.current_level, s.name
+        ORDER BY s.name
     `;
     
     db.all(studentsQuery, (err, students) => {

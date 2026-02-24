@@ -199,10 +199,9 @@
                                         </td>
                                     <% } %>
                                     <td>
-                                        <textarea style="height: 132px;width: 300px;" type="text" class="form-control form-control-sm" 
-                                               name="student_notes[<%= student.id %>]" 
-                                               placeholder="Notes..."
-                                               value="<%= student.general_notes || '' %>"></textarea>
+                                        <textarea style="height: 132px;width: 300px;" class="form-control form-control-sm student-notes" 
+                                               data-student-id="<%= student.id %>"
+                                               placeholder="Student feedback for this level..."><%= student.notes || '' %></textarea>
                                     </td>
                                 </tr>
                                 <% }); %>
@@ -244,6 +243,7 @@
 // Save all attendance
 function saveAllAttendance() {
     const attendanceData = [];
+    const studentNotes = {};
     const today = new Date().toISOString().split('T')[0];
     
     // Get all session controls
@@ -270,8 +270,17 @@ function saveAllAttendance() {
         }
     });
     
-    if (attendanceData.length === 0) {
-        alert('Please mark attendance for at least one student');
+    // Collect all student notes
+    document.querySelectorAll('.student-notes').forEach(textarea => {
+        const studentId = textarea.getAttribute('data-student-id');
+        const notes = textarea.value.trim();
+        if (notes) {
+            studentNotes[studentId] = notes;
+        }
+    });
+    
+    if (attendanceData.length === 0 && Object.keys(studentNotes).length === 0) {
+        alert('Please mark attendance or add notes for at least one student');
         return;
     }
     
@@ -288,7 +297,8 @@ function saveAllAttendance() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            attendance: attendanceData
+            attendance: attendanceData,
+            student_notes: studentNotes
         })
     })
     .then(response => response.json())

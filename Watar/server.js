@@ -782,67 +782,92 @@ app.get('/attendance', requireAuth, (req, res) => {
                         return res.status(500).send('Database error');
                     }
                     
-                    // Build maps
-                    const attendanceMap = {};
-                    attendanceRecords.forEach(record => {
-                        const key = `${record.student_id}_${record.session_id}`;
-                        attendanceMap[key] = {
-                            status: record.status,
-                            date: record.date,
-                            notes: record.notes
-                        };
-                    });
+                    // Get level notes for these students
+                    const levelNotesQuery = `
+                        SELECT student_id, level, notes
+                        FROM student_level_notes
+                        WHERE student_id IN (${studentPlaceholders})
+                    `;
                     
-                    const sessionsByLevel = {};
-                    sessions.forEach(session => {
-                        if (!sessionsByLevel[session.level]) {
-                            sessionsByLevel[session.level] = [];
+                    db.all(levelNotesQuery, studentIds, (err, levelNotesRecords) => {
+                        if (err) {
+                            console.error(err);
+                            return res.status(500).send('Database error');
                         }
-                        sessionsByLevel[session.level].push(session);
-                    });
-                    
-                    // Build student data
-                    const studentsWithData = students.map(student => {
-                        const studentSessions = (sessionsByLevel[student.current_level] || []).map(session => {
-                            const key = `${student.id}_${session.id}`;
-                            const attendance = attendanceMap[key] || {};
-                            return {
-                                session_id: session.id,
-                                session_number: session.session_number,
-                                session_date: attendance.date || null, // Use date from attendance, not sessions
-                                attendance_status: attendance.status,
-                                notes: attendance.notes
+                        
+                        // Build maps
+                        const attendanceMap = {};
+                        attendanceRecords.forEach(record => {
+                            const key = `${record.student_id}_${record.session_id}`;
+                            attendanceMap[key] = {
+                                status: record.status,
+                                date: record.date,
+                                notes: record.notes
                             };
                         });
                         
-                        return {
-                            ...student,
-                            sessions: studentSessions,
-                            general_notes: ''
-                        };
-                    });
-                    
-                    // Get all instruments for filter
-                    db.all('SELECT DISTINCT instrument FROM students WHERE instrument IS NOT NULL AND instrument != "" ORDER BY instrument', (err, instRows) => {
-                        const instruments = instRows ? instRows.map(r => r.instrument) : [];
+                        // Build level notes map
+                        const levelNotesMap = {};
+                        levelNotesRecords.forEach(record => {
+                            const key = `${record.student_id}_${record.level}`;
+                            levelNotesMap[key] = record.notes;
+                        });
                         
-                        res.render('attendance', {
-                            user,
-                            students: studentsWithData,
-                            instruments,
-                            currentPage: page,
-                            totalPages: totalPages,
-                            totalStudents: totalStudents,
-                            searchTerm: searchTerm,
-                            monthFilter: monthFilter,
-                            instrumentFilter: instrumentFilter,
-                            statusFilter: statusFilter
-                        }, (err, html) => {
-                            if (err) {
-                                console.error(err);
-                                return res.status(500).send('Render error');
+                        const sessionsByLevel = {};
+                        sessions.forEach(session => {
+                            if (!sessionsByLevel[session.level]) {
+                                sessionsByLevel[session.level] = [];
                             }
-                            res.render('layout', { body: html, user: user });
+                            sessionsByLevel[session.level].push(session);
+                        });
+                        
+                        // Build student data
+                        const studentsWithData = students.map(student => {
+                            const studentSessions = (sessionsByLevel[student.current_level] || []).map(session => {
+                                const key = `${student.id}_${session.id}`;
+                                const attendance = attendanceMap[key] || {};
+                                return {
+                                    session_id: session.id,
+                                    session_number: session.session_number,
+                                    session_date: attendance.date || null, // Use date from attendance, not sessions
+                                    attendance_status: attendance.status,
+                                    notes: attendance.notes
+                                };
+                            });
+                            
+                            // Get notes for this student's current level
+                            const levelNotesKey = `${student.id}_${student.current_level}`;
+                            const levelNotes = levelNotesMap[levelNotesKey] || '';
+                            
+                            return {
+                                ...student,
+                                sessions: studentSessions,
+                                notes: levelNotes  // Notes for current level
+                            };
+                        });
+                        
+                        // Get all instruments for filter
+                        db.all('SELECT DISTINCT instrument FROM students WHERE instrument IS NOT NULL AND instrument != "" ORDER BY instrument', (err, instRows) => {
+                            const instruments = instRows ? instRows.map(r => r.instrument) : [];
+                            
+                            res.render('attendance', {
+                                user,
+                                students: studentsWithData,
+                                instruments,
+                                currentPage: page,
+                                totalPages: totalPages,
+                                totalStudents: totalStudents,
+                                searchTerm: searchTerm,
+                                monthFilter: monthFilter,
+                                instrumentFilter: instrumentFilter,
+                                statusFilter: statusFilter
+                            }, (err, html) => {
+                                if (err) {
+                                    console.error(err);
+                                    return res.status(500).send('Render error');
+                                }
+                                res.render('layout', { body: html, user: user });
+                            });
                         });
                     });
                 });
@@ -853,77 +878,129 @@ app.get('/attendance', requireAuth, (req, res) => {
 
 // API endpoint for saving all attendance
 app.post('/attendance/save-all', requireAuth, (req, res) => {
-    const { attendance } = req.body;
+    const { attendance, student_notes } = req.body;
     const user = req.session.user;
     
-    if (!attendance || attendance.length === 0) {
-        return res.json({ success: false, error: 'No attendance data provided' });
+    if ((!attendance || attendance.length === 0) && (!student_notes || Object.keys(student_notes).length === 0)) {
+        return res.json({ success: false, error: 'No attendance or notes data provided' });
     }
     
-    console.log('Saving attendance:', attendance); // Debug log
+    console.log('Saving attendance:', attendance);
+    console.log('Saving student notes:', student_notes);
     
     const today = new Date().toISOString().split('T')[0];
     
-    // Process each attendance record individually
-    let processed = 0;
+    let attendanceProcessed = 0;
+    let notesProcessed = 0;
     let errors = 0;
+    const totalAttendance = attendance ? attendance.length : 0;
+    const totalNotes = student_notes ? Object.keys(student_notes).length : 0;
+    const totalOperations = totalAttendance + totalNotes;
     
-    attendance.forEach((record, index) => {
-        // Check if attendance already exists for this student/session
-        db.get(
-            'SELECT id, date FROM attendance WHERE student_id = ? AND session_id = ?',
-            [record.student_id, record.session_id],
-            (err, existing) => {
+    // Process attendance records
+    if (attendance && attendance.length > 0) {
+        attendance.forEach((record) => {
+            // Check if attendance already exists for this student/session
+            db.get(
+                'SELECT id, date FROM attendance WHERE student_id = ? AND session_id = ?',
+                [record.student_id, record.session_id],
+                (err, existing) => {
+                    if (err) {
+                        console.error('Error checking existing attendance:', err);
+                        errors++;
+                        attendanceProcessed++;
+                        checkComplete();
+                    } else if (existing) {
+                        // Update existing record - KEEP the original date!
+                        const dbStatus = record.status === 'attended' ? 'present' : 'absent';
+                        db.run(
+                            'UPDATE attendance SET status = ?, marked_by = ? WHERE id = ?',
+                            [dbStatus, user.id, existing.id],
+                            (err) => {
+                                if (err) {
+                                    console.error('Error updating attendance:', err);
+                                    errors++;
+                                }
+                                attendanceProcessed++;
+                                checkComplete();
+                            }
+                        );
+                    } else {
+                        // Insert new record with today's date
+                        const dbStatus = record.status === 'attended' ? 'present' : 'absent';
+                        db.run(
+                            'INSERT INTO attendance (student_id, session_id, status, date, marked_by, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
+                            [record.student_id, record.session_id, dbStatus, today, user.id],
+                            (err) => {
+                                if (err) {
+                                    console.error('Error inserting attendance:', err);
+                                    errors++;
+                                }
+                                attendanceProcessed++;
+                                checkComplete();
+                            }
+                        );
+                    }
+                }
+            );
+        });
+    }
+    
+    // Process student notes
+    if (student_notes && Object.keys(student_notes).length > 0) {
+        for (const studentId in student_notes) {
+            const notes = student_notes[studentId];
+            
+            // Get student's current level
+            db.get('SELECT current_level FROM students WHERE id = ?', [studentId], (err, student) => {
                 if (err) {
-                    console.error('Error checking existing attendance:', err);
+                    console.error('Error getting student level:', err);
                     errors++;
-                } else if (existing) {
-                    // Update existing record - KEEP the original date!
-                    const dbStatus = record.status === 'attended' ? 'present' : 'absent';
+                    notesProcessed++;
+                    checkComplete();
+                } else if (student) {
+                    // Save notes for this student's current level
                     db.run(
-                        'UPDATE attendance SET status = ?, marked_by = ? WHERE id = ?',
-                        [dbStatus, user.id, existing.id],
+                        `INSERT INTO student_level_notes (student_id, level, notes, updated_at) 
+                         VALUES (?, ?, ?, datetime("now"))
+                         ON CONFLICT(student_id, level) 
+                         DO UPDATE SET notes = ?, updated_at = datetime("now")`,
+                        [studentId, student.current_level, notes, notes],
                         (err) => {
                             if (err) {
-                                console.error('Error updating attendance:', err);
+                                console.error('Error updating student level notes:', err);
                                 errors++;
                             } else {
-                                console.log(`Updated attendance for student ${record.student_id}, session ${record.session_id}, kept date: ${existing.date}`);
+                                console.log(`Updated notes for student ${studentId}, level ${student.current_level}`);
                             }
-                            processed++;
+                            notesProcessed++;
                             checkComplete();
                         }
                     );
                 } else {
-                    // Insert new record with today's date
-                    const dbStatus = record.status === 'attended' ? 'present' : 'absent';
-                    db.run(
-                        'INSERT INTO attendance (student_id, session_id, status, date, marked_by, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))',
-                        [record.student_id, record.session_id, dbStatus, today, user.id],
-                        (err) => {
-                            if (err) {
-                                console.error('Error inserting attendance:', err);
-                                errors++;
-                            } else {
-                                console.log(`Inserted new attendance for student ${record.student_id}, session ${record.session_id}, date: ${today}`);
-                            }
-                            processed++;
-                            checkComplete();
-                        }
-                    );
+                    console.error('Student not found:', studentId);
+                    errors++;
+                    notesProcessed++;
+                    checkComplete();
                 }
-            }
-        );
-    });
+            });
+        }
+    }
     
     function checkComplete() {
-        if (processed === attendance.length) {
+        const totalProcessed = attendanceProcessed + notesProcessed;
+        if (totalProcessed === totalOperations) {
             if (errors > 0) {
                 res.json({ success: false, error: `${errors} errors occurred` });
             } else {
-                res.json({ success: true, message: 'Attendance saved successfully' });
+                res.json({ success: true, message: 'Attendance and notes saved successfully' });
             }
         }
+    }
+    
+    // If no operations to process, return immediately
+    if (totalOperations === 0) {
+        res.json({ success: false, error: 'No data to save' });
     }
 });
 

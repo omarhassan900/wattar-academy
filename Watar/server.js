@@ -12,6 +12,26 @@ const PORT = 3000;
 // Database setup
 const db = new sqlite3.Database('wattar.db');
 
+// Ensure student_level_notes table exists
+db.run(`
+    CREATE TABLE IF NOT EXISTS student_level_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        level TEXT NOT NULL,
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        UNIQUE(student_id, level)
+    )
+`, (err) => {
+    if (err) {
+        console.error('Error creating student_level_notes table:', err);
+    } else {
+        console.log('✓ student_level_notes table ready');
+    }
+});
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

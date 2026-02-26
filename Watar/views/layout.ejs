@@ -114,36 +114,67 @@
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                     </a>
                     <% } %>
+                    
+                    <% if (typeof user !== 'undefined' && ['operations_manager', 'manager'].includes(user.role)) { %>
+                    <a class="nav-link <%= currentUrl == '/session-confirmations' ? 'active' : '' %>" href="/session-confirmations">
+                        <i class="fas fa-phone-alt me-2"></i>Session Confirmations
+                    </a>
+                    <a class="nav-link <%= currentUrl == '/pre-schedule' ? 'active' : '' %>" href="/pre-schedule">
+                        <i class="fas fa-calendar-week me-2"></i>Weekly Schedule
+                    </a>
+                    <% } %>
+                    
+                    <% if (typeof user !== 'undefined' && ['reception', 'trainer'].includes(user.role)) { %>
+                    <a class="nav-link <%= currentUrl == '/pre-schedule' ? 'active' : '' %>" href="/pre-schedule">
+                        <i class="fas fa-calendar-week me-2"></i>Weekly Schedule
+                    </a>
+                    <% } %>
 
                     <a class="nav-link <%= currentUrl == '/students' ? 'active' : '' %>" href="/students">
                         <i class="fas fa-users me-2"></i>Students
                     </a>
 
-                    <% if (typeof user !== 'undefined' && ['manager', 'reception'].includes(user.role)) { %>
+                    <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/classes' ? 'active' : '' %>" href="/classes">
                         <i class="fas fa-chalkboard-teacher me-2"></i>Classes
                     </a>
                     <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['manager', 'reception', 'trainer'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/attendance' ? 'active' : '' %>" href="/attendance">
                         <i class="fas fa-calendar-check me-2"></i>Attendance
                     </a>
+                    <% } %>
+                    
+                    <% if (typeof user !== 'undefined' && user.role === 'operations_manager') { %>
+                    <a class="nav-link <%= currentUrl == '/attendance' ? 'active' : '' %>" href="/attendance">
+                        <i class="fas fa-calendar-check me-2"></i>Attendance (View Only)
+                    </a>
+                    <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['manager', 'trainer'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/attendance/summary' ? 'active' : '' %>" href="/attendance/summary">
                         <i class="fas fa-chart-line me-2"></i>Session Summary
                     </a>
+                    <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/reports' ? 'active' : '' %>" href="/reports">
                         <i class="fas fa-chart-bar me-2"></i>Reports
                     </a>
+                    <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['manager', 'reception'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/cash' ? 'active' : '' %>" href="/cash">
                         <i class="fas fa-money-bill-wave me-2"></i>Cash Management
                     </a>
+                    <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/users' ? 'active' : '' %>" href="/users">
                         <i class="fas fa-user-cog me-2"></i>User Management
                     </a>
+                    <% } %>
 
                     <hr class="text-white-50">
 
@@ -186,18 +217,45 @@
                         <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/dashboard' ? 'active' : '' %>"" href="/">Dashboard</a>
                         <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && ['operations_manager', 'manager'].includes(user.role)) { %>
+                        <a class="nav-link text-white <%= currentUrl == '/session-confirmations' ? 'active' : '' %>" href="/session-confirmations">Session Confirmations</a>
+                        <a class="nav-link text-white <%= currentUrl == '/pre-schedule' ? 'active' : '' %>" href="/pre-schedule">Weekly Schedule</a>
+                        <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && ['reception', 'trainer'].includes(user.role)) { %>
+                        <a class="nav-link text-white <%= currentUrl == '/pre-schedule' ? 'active' : '' %>" href="/pre-schedule">Weekly Schedule</a>
+                        <% } %>
 
                         <a class="nav-link text-white <%= currentUrl == '/students' ? 'active' : '' %>"" href="/students">Students</a>
 
-                        <% if (typeof user !== 'undefined' && ['manager', 'reception'].includes(user.role)) { %>
+                        <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/classes' ? 'active' : '' %>"" href="/classes">Classes</a>
                         <% } %>
 
+                        <% if (typeof user !== 'undefined' && ['manager', 'reception', 'trainer'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/attendance' ? 'active' : '' %>"" href="/attendance">Attendance</a>
+                        <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && user.role === 'operations_manager') { %>
+                        <a class="nav-link text-white <%= currentUrl == '/attendance' ? 'active' : '' %>"" href="/attendance">Attendance (View Only)</a>
+                        <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && ['manager', 'trainer'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/attendance/summary' ? 'active' : '' %>"" href="/attendance/summary">Session Summary</a>
+                        <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/reports' ? 'active' : '' %>"" href="/reports">Reports</a>
+                        <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && ['manager', 'reception'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/cash' ? 'active' : '' %>"" href="/cash">Cash Management</a>
+                        <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/users' ? 'active' : '' %>"" href="/users">User Management</a>
+                        <% } %>
 
                         <hr class="text-white-50">
 

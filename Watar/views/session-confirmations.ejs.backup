@@ -1,0 +1,345 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-phone-alt text-primary me-2"></i>Session Confirmations</h1>
+            <div>
+                <span class="badge bg-info me-2">
+                    <i class="fas fa-users me-1"></i>Call Students to Confirm Next Session
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Instructions:</strong> Call students to confirm their next session attendance. 
+            Mark them as "Confirmed" or "Not Confirmed" and add any notes from the call.
+            The confirmation helps reception prepare for upcoming sessions.
+        </div>
+    </div>
+</div>
+
+<% 
+const levels = Object.keys(studentsByLevel).sort();
+if (levels.length === 0) { 
+%>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Active Students</h4>
+                <p class="text-muted">There are no active students to confirm.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<% } else { %>
+
+<% levels.forEach(level => { 
+    const students = studentsByLevel[level];
+%>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group me-2"></i><%= level %>
+                    <span class="badge bg-light text-dark ms-2"><%= students.length %> Students</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Progress</th>
+                                <th>Next Session</th>
+                                <th>Last Attended</th>
+                                <th>Phone</th>
+                                <th>Parent Phone</th>
+                                <th>Confirmation Status</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% students.forEach(student => { 
+                                // Get confirmation for this student's next session
+                                // We'll use a simple approach: store confirmation by student_id with a "next_session" marker
+                            %>
+                            <tr class="student-confirmation-row" 
+                                data-student-id="<%= student.student_id %>" 
+                                data-next-session="<%= student.next_session %>"
+                                data-student-name="<%= student.student_name %>">
+                                <td>
+                                    <i class="fas fa-user-circle text-primary me-2"></i>
+                                    <strong><%= student.student_name %></strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info"><%= student.progress %> Sessions</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-calendar-day me-1"></i>Session <%= student.next_session %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (student.last_attendance_date) { %>
+                                        <small><%= moment(student.last_attendance_date).format('MMM D, YYYY') %></small>
+                                    <% } else { %>
+                                        <span class="text-muted">Never</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (student.phone) { %>
+                                        <a href="tel:<%= student.phone %>" class="text-decoration-none">
+                                            <i class="fas fa-phone me-1"></i><%= student.phone %>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (student.parent_phone) { %>
+                                        <a href="tel:<%= student.parent_phone %>" class="text-decoration-none">
+                                            <i class="fas fa-phone me-1"></i><%= student.parent_phone %>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td class="confirmation-status-cell">
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                </td>
+                                <td class="confirmation-notes-cell">
+                                    <span class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-success me-1 confirm-btn" 
+                                            title="Mark as Confirmed"
+                                            data-student-id="<%= student.student_id %>"
+                                            data-next-session="<%= student.next_session %>"
+                                            data-student-name="<%= student.student_name %>">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger me-1 not-confirm-btn" 
+                                            title="Mark as Not Confirmed"
+                                            data-student-id="<%= student.student_id %>"
+                                            data-next-session="<%= student.next_session %>"
+                                            data-student-name="<%= student.student_name %>">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info add-note-btn" 
+                                            title="Add Note"
+                                            data-student-id="<%= student.student_id %>"
+                                            data-next-session="<%= student.next_session %>"
+                                            data-student-name="<%= student.student_name %>"
+                                            data-current-notes="">
+                                        <i class="fas fa-sticky-note"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% }); %>
+<% } %>
+
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sticky-note me-2"></i>Add Confirmation Note
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Student:</strong> <span id="note-student-name"></span></p>
+                <p><strong>Next Session:</strong> Session <span id="note-session-number"></span></p>
+                <div class="mb-3">
+                    <label for="confirmation-note" class="form-label">Note</label>
+                    <textarea class="form-control" id="confirmation-note" rows="3" placeholder="Add any notes from the confirmation call..."></textarea>
+                </div>
+                <input type="hidden" id="note-student-id">
+                <input type="hidden" id="note-session-number-hidden">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-note-btn">
+                    <i class="fas fa-save me-2"></i>Save Note
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addNoteModal = new bootstrap.Modal(document.getElementById('addNoteModal'));
+    
+    // Load existing confirmations when page loads
+    loadConfirmations();
+    
+    function loadConfirmations() {
+        fetch('/session-confirmations/list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    data.confirmations.forEach(conf => {
+                        const row = document.querySelector(`tr[data-student-id="${conf.student_id}"]`);
+                        if (row) {
+                            updateRowUI(row, conf.confirmation_status, conf.confirmation_notes, conf.confirmed_at);
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading confirmations:', error));
+    }
+    
+    // Confirm button click
+    document.querySelectorAll('.confirm-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            const nextSession = this.dataset.nextSession;
+            const studentName = this.dataset.studentName;
+            
+            if (confirm(`Mark ${studentName} as CONFIRMED for Session ${nextSession}?`)) {
+                updateConfirmation(studentId, nextSession, 'confirmed', '');
+            }
+        });
+    });
+    
+    // Not confirm button click
+    document.querySelectorAll('.not-confirm-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            const nextSession = this.dataset.nextSession;
+            const studentName = this.dataset.studentName;
+            
+            if (confirm(`Mark ${studentName} as NOT CONFIRMED for Session ${nextSession}?`)) {
+                updateConfirmation(studentId, nextSession, 'not_confirmed', '');
+            }
+        });
+    });
+    
+    // Add note button click
+    document.querySelectorAll('.add-note-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            const nextSession = this.dataset.nextSession;
+            const studentName = this.dataset.studentName;
+            const currentNotes = this.dataset.currentNotes;
+            
+            document.getElementById('note-student-name').textContent = studentName;
+            document.getElementById('note-session-number').textContent = nextSession;
+            document.getElementById('note-student-id').value = studentId;
+            document.getElementById('note-session-number-hidden').value = nextSession;
+            document.getElementById('confirmation-note').value = currentNotes;
+            
+            addNoteModal.show();
+        });
+    });
+    
+    // Save note button
+    document.getElementById('save-note-btn').addEventListener('click', function() {
+        const studentId = document.getElementById('note-student-id').value;
+        const nextSession = document.getElementById('note-session-number-hidden').value;
+        const notes = document.getElementById('confirmation-note').value;
+        
+        // Get current status from the row
+        const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+        const statusBadge = row.querySelector('.confirmation-status-cell .badge');
+        let currentStatus = 'pending';
+        if (statusBadge.textContent.includes('Confirmed')) {
+            currentStatus = 'confirmed';
+        } else if (statusBadge.textContent.includes('Not Confirmed')) {
+            currentStatus = 'not_confirmed';
+        }
+        
+        updateConfirmation(studentId, nextSession, currentStatus, notes);
+        addNoteModal.hide();
+    });
+    
+    function updateConfirmation(studentId, nextSession, status, notes) {
+        fetch('/session-confirmations/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                next_session: nextSession,
+                confirmation_status: status,
+                confirmation_notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI
+                const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+                updateRowUI(row, status, notes, 'Just now');
+                
+                // Update the button's data attribute
+                row.querySelector('.add-note-btn').dataset.currentNotes = notes;
+                
+                // Show success message
+                showToast('Success', data.message, 'success');
+            } else {
+                showToast('Error', data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error', 'Failed to update confirmation', 'danger');
+        });
+    }
+    
+    function updateRowUI(row, status, notes, confirmedAt) {
+        const statusCell = row.querySelector('.confirmation-status-cell');
+        const notesCell = row.querySelector('.confirmation-notes-cell');
+        
+        // Update status badge
+        let badgeHtml = '';
+        if (status === 'confirmed') {
+            badgeHtml = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Confirmed</span>';
+        } else if (status === 'not_confirmed') {
+            badgeHtml = '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Not Confirmed</span>';
+        } else {
+            badgeHtml = '<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Pending</span>';
+        }
+        if (confirmedAt) {
+            badgeHtml += `<br><small class="text-muted">${confirmedAt}</small>`;
+        }
+        statusCell.innerHTML = badgeHtml;
+        
+        // Update notes
+        if (notes) {
+            notesCell.innerHTML = `<small>${notes}</small>`;
+        } else {
+            notesCell.innerHTML = '<span class="text-muted">-</span>';
+        }
+    }
+    
+    function showToast(title, message, type) {
+        // Simple alert for now - you can replace with a toast library
+        alert(`${title}: ${message}`);
+    }
+});
+</script>

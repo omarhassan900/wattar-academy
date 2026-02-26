@@ -1,0 +1,15 @@
+Add this CSS at the very top of views/session-confirmations.ejs file (before the first <div>):
+
+<style>
+    /* Force action buttons to stay on same line */
+    .table td:last-child {
+        white-space: nowrap !important;
+    }
+    .table td:last-child .btn {
+        display: inline-block !important;
+        margin-right: 4px !important;
+        margin-bottom: 0 !important;
+    }
+</style>
+
+This will force the buttons in the Actions column to stay on the same horizontal line.

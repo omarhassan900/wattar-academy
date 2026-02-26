@@ -32,6 +32,31 @@ db.run(`
     }
 });
 
+// Ensure session_confirmations table exists
+db.run(`
+    CREATE TABLE IF NOT EXISTS session_confirmations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        session_id INTEGER NOT NULL,
+        confirmation_status TEXT CHECK(confirmation_status IN ('confirmed', 'not_confirmed', 'pending')) DEFAULT 'pending',
+        confirmation_notes TEXT,
+        confirmed_by INTEGER,
+        confirmed_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        FOREIGN KEY (session_id) REFERENCES sessions(id),
+        FOREIGN KEY (confirmed_by) REFERENCES users(id),
+        UNIQUE(student_id, session_id)
+    )
+`, (err) => {
+    if (err) {
+        console.error('Error creating session_confirmations table:', err);
+    } else {
+        console.log('✓ session_confirmations table ready');
+    }
+});
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -78,7 +103,7 @@ db.serialize(() => {
         password_hash VARCHAR(255) NOT NULL,
         full_name VARCHAR(100) NOT NULL,
         email VARCHAR(100),
-        role TEXT CHECK(role IN ('manager', 'reception', 'trainer')) NOT NULL,
+        role TEXT CHECK(role IN ('manager', 'reception', 'trainer', 'operations_manager')) NOT NULL,
         status TEXT CHECK(status IN ('active', 'inactive')) DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -216,6 +241,8 @@ app.get('/', requireAuth, (req, res) => {
         res.redirect('/attendance');
     } else if(user.role == 'trainer'){
         res.redirect('/attendance');
+    } else if(user.role == 'operations_manager'){
+        res.redirect('/session-confirmations');
     }
     else {
      res.redirect('/dashboard');
@@ -815,6 +842,30 @@ app.get('/attendance', requireAuth, (req, res) => {
                             return res.status(500).send('Database error');
                         }
                         
+                        // Get session confirmations for these students
+                        const confirmationsQuery = `
+                            SELECT student_id, confirmation_status, confirmation_notes, confirmed_at
+                            FROM session_confirmations
+                            WHERE student_id IN (${studentPlaceholders}) AND session_id = 0
+                        `;
+                        
+                        db.all(confirmationsQuery, studentIds, (err, confirmationRecords) => {
+                            if (err) {
+                                console.error(err);
+                                // Continue without confirmations if there's an error
+                                confirmationRecords = [];
+                            }
+                            
+                            // Build confirmation map
+                            const confirmationMap = {};
+                            confirmationRecords.forEach(record => {
+                                confirmationMap[record.student_id] = {
+                                    status: record.confirmation_status,
+                                    notes: record.confirmation_notes,
+                                    confirmed_at: record.confirmed_at
+                                };
+                            });
+                        
                         // Build maps
                         const attendanceMap = {};
                         attendanceRecords.forEach(record => {
@@ -859,11 +910,33 @@ app.get('/attendance', requireAuth, (req, res) => {
                             const levelNotesKey = `${student.id}_${student.current_level}`;
                             const levelNotes = levelNotesMap[levelNotesKey] || '';
                             
+                            // Get confirmation status for this student
+                            const confirmation = confirmationMap[student.id] || null;
+                            
                             return {
                                 ...student,
                                 sessions: studentSessions,
-                                notes: levelNotes  // Notes for current level
+                                notes: levelNotes,  // Notes for current level
+                                confirmation: confirmation  // Confirmation status from operations manager
                             };
+                        });
+                        
+                        // Sort students: Confirmed first, then Not Confirmed, then Pending (no confirmation)
+                        studentsWithData.sort((a, b) => {
+                            const aStatus = a.confirmation?.status || 'pending';
+                            const bStatus = b.confirmation?.status || 'pending';
+                            
+                            // Priority: confirmed (1), not_confirmed (2), pending (3)
+                            const priority = { 'confirmed': 1, 'not_confirmed': 2, 'pending': 3 };
+                            const aPriority = priority[aStatus] || 3;
+                            const bPriority = priority[bStatus] || 3;
+                            
+                            if (aPriority !== bPriority) {
+                                return aPriority - bPriority;
+                            }
+                            
+                            // If same priority, sort alphabetically by name
+                            return a.name.localeCompare(b.name);
                         });
                         
                         // Get all instruments for filter
@@ -889,6 +962,7 @@ app.get('/attendance', requireAuth, (req, res) => {
                                 res.render('layout', { body: html, user: user });
                             });
                         });
+                        }); // Close confirmations callback
                     });
                 });
             });
@@ -940,6 +1014,17 @@ app.post('/attendance/save-all', requireAuth, (req, res) => {
                                 if (err) {
                                     console.error('Error updating attendance:', err);
                                     errors++;
+                                } else {
+                                    // Clear confirmation status for this student (reset to pending for next session)
+                                    db.run(
+                                        'DELETE FROM session_confirmations WHERE student_id = ? AND session_id = 0',
+                                        [record.student_id],
+                                        (err) => {
+                                            if (err) {
+                                                console.error('Error clearing confirmation:', err);
+                                            }
+                                        }
+                                    );
                                 }
                                 attendanceProcessed++;
                                 checkComplete();
@@ -955,6 +1040,17 @@ app.post('/attendance/save-all', requireAuth, (req, res) => {
                                 if (err) {
                                     console.error('Error inserting attendance:', err);
                                     errors++;
+                                } else {
+                                    // Clear confirmation status for this student (reset to pending for next session)
+                                    db.run(
+                                        'DELETE FROM session_confirmations WHERE student_id = ? AND session_id = 0',
+                                        [record.student_id],
+                                        (err) => {
+                                            if (err) {
+                                                console.error('Error clearing confirmation:', err);
+                                            }
+                                        }
+                                    );
                                 }
                                 attendanceProcessed++;
                                 checkComplete();
@@ -2031,6 +2127,327 @@ app.post('/students/:id', requireAuth, requireRole(['manager', 'reception']), (r
             return res.status(500).send('Database error');
         }
         res.redirect('/students');
+    });
+});
+
+// Pre-Schedule Management Routes (Operations Manager, Reception, Trainer)
+app.get('/pre-schedule', requireAuth, requireRole(['operations_manager', 'manager', 'reception', 'trainer']), (req, res) => {
+    const user = req.session.user;
+    
+    // Get all active students
+    db.all(`
+        SELECT id, name, current_level
+        FROM students
+        WHERE status = 'active'
+        ORDER BY name
+    `, (err, students) => {
+        if (err) {
+            console.error('Error fetching students:', err);
+        }
+        
+        // Get all trainers for dropdown (from users table)
+        db.all(`
+            SELECT id, full_name as name
+            FROM users
+            WHERE role = 'trainer' AND status = 'active'
+            ORDER BY full_name
+        `, (err, trainers) => {
+            if (err) {
+                console.error('Error fetching trainers:', err);
+            }
+            
+            console.log('Trainers found:', trainers); // Debug log
+            
+            res.render('pre-schedule', {
+                user,
+                students: students || [],
+                trainers: trainers || [],
+                isReadOnly: user.role === 'reception' || user.role === 'trainer'
+            }, (err, html) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).send('Render error');
+                }
+                
+                res.render('layout', {
+                    body: html,
+                    user: user,
+                    activemenu: 'pre-schedule'
+                });
+            });
+        });
+    });
+});
+
+// API endpoint to get all schedule templates
+app.get('/pre-schedule/list', requireAuth, requireRole(['operations_manager', 'manager', 'reception', 'trainer']), (req, res) => {
+    const user = req.session.user;
+    
+    // Build query based on role
+    let query = `
+        SELECT 
+            st.*,
+            s.name as student_name,
+            s.current_level as student_level,
+            u.full_name as trainer_name
+        FROM schedule_templates st
+        JOIN students s ON st.student_id = s.id
+        LEFT JOIN users u ON st.trainer_id = u.id AND u.role = 'trainer'
+        WHERE st.is_active = 1
+    `;
+    
+    let params = [];
+    
+    // If trainer, only show their assigned students
+    if (user.role === 'trainer') {
+        query += ` AND st.trainer_id = ?`;
+        params.push(user.id);
+    }
+    
+    query += ` ORDER BY st.day_of_week, st.time_slot`;
+    
+    db.all(query, params, (err, schedules) => {
+        if (err) {
+            console.error('Error fetching schedules:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        
+        res.json({ success: true, schedules });
+    });
+});
+
+// API endpoint to add schedule template
+app.post('/pre-schedule/add', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
+    const { day_of_week, student_id, time_slot, trainer_id, notes } = req.body;
+    
+    if (!day_of_week || !student_id || !time_slot) {
+        return res.json({ success: false, error: 'Missing required fields (day, student, time)' });
+    }
+    
+    db.run(`
+        INSERT INTO schedule_templates (day_of_week, time_slot, student_id, trainer_id, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `, [day_of_week, time_slot, student_id, trainer_id || null, notes], function(err) {
+        if (err) {
+            console.error('Error adding schedule:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        
+        res.json({ success: true, message: 'Schedule added successfully', id: this.lastID });
+    });
+});
+
+// API endpoint to update schedule template
+app.post('/pre-schedule/update', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
+    const { id, day_of_week, student_id, time_slot, trainer_id, notes } = req.body;
+    
+    if (!id || !day_of_week || !student_id || !time_slot) {
+        return res.json({ success: false, error: 'Missing required fields (day, student, time)' });
+    }
+    
+    db.run(`
+        UPDATE schedule_templates 
+        SET day_of_week = ?, time_slot = ?, student_id = ?, trainer_id = ?, notes = ?, updated_at = datetime('now')
+        WHERE id = ?
+    `, [day_of_week, time_slot, student_id, trainer_id || null, notes, id], function(err) {
+        if (err) {
+            console.error('Error updating schedule:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        
+        res.json({ success: true, message: 'Schedule updated successfully' });
+    });
+});
+
+// API endpoint to delete schedule template
+app.post('/pre-schedule/delete', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
+    const { id } = req.body;
+    
+    if (!id) {
+        return res.json({ success: false, error: 'Missing schedule ID' });
+    }
+    
+    // Soft delete by setting is_active to 0
+    db.run(`
+        UPDATE schedule_templates 
+        SET is_active = 0, updated_at = datetime('now')
+        WHERE id = ?
+    `, [id], function(err) {
+        if (err) {
+            console.error('Error deleting schedule:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        
+        res.json({ success: true, message: 'Schedule deleted successfully' });
+    });
+});
+
+// Session Confirmations Routes (Operations Manager)
+app.get('/session-confirmations', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
+    const user = req.session.user;
+    
+    // Get all active students with their session progress and trainer info
+    const query = `
+        SELECT 
+            s.id as student_id,
+            s.name as student_name,
+            s.phone,
+            s.parent_phone,
+            s.current_level,
+            s.trainer_id,
+            u.full_name as trainer_name,
+            (SELECT COUNT(DISTINCT session_id) 
+             FROM attendance 
+             WHERE student_id = s.id AND status IN ('present', 'attended')) as completed_sessions,
+            (SELECT MAX(a.date) 
+             FROM attendance a 
+             WHERE a.student_id = s.id) as last_attendance_date
+        FROM students s
+        LEFT JOIN trainers t ON s.trainer_id = t.id
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE s.status = 'active'
+        ORDER BY s.current_level, s.name
+    `;
+    
+    db.all(query, [], (err, students) => {
+        if (err) {
+            console.error('Error fetching students:', err);
+            return res.status(500).send('Database error');
+        }
+        
+        // Get all trainers for filter
+        db.all(`
+            SELECT t.id, u.full_name as name
+            FROM trainers t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.status = 'active'
+            ORDER BY u.full_name
+        `, (err, trainers) => {
+            if (err) {
+                console.error('Error fetching trainers:', err);
+            }
+            
+            // Group students by level
+            const studentsByLevel = {};
+            students.forEach(student => {
+                const level = student.current_level;
+                if (!studentsByLevel[level]) {
+                    studentsByLevel[level] = [];
+                }
+                
+                // Determine next session number (1-4)
+                const nextSession = Math.min((student.completed_sessions || 0) + 1, 4);
+                student.next_session = nextSession;
+                student.progress = `${student.completed_sessions || 0}/4`;
+                
+                studentsByLevel[level].push(student);
+            });
+            
+            // Get unique levels for filter
+            const levels = Object.keys(studentsByLevel).sort();
+            
+            res.render('session-confirmations', {
+                user,
+                studentsByLevel,
+                trainers: trainers || [],
+                levels,
+                moment
+            }, (err, html) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).send('Render error');
+                }
+                
+                res.render('layout', {
+                    body: html,
+                    user: user,
+                    activemenu: 'session-confirmations'
+                });
+            });
+        });
+    });
+});
+
+// API endpoint to update confirmation status
+app.post('/session-confirmations/update', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
+    const { student_id, next_session, level, confirmation_status, confirmation_notes, session_date, session_time } = req.body;
+    const user = req.session.user;
+    
+    if (!student_id || !next_session || !confirmation_status) {
+        return res.json({ success: false, error: 'Missing required fields' });
+    }
+    
+    // If confirming, require date and time
+    if (confirmation_status === 'confirmed' && (!session_date || !session_time)) {
+        return res.json({ success: false, error: 'Session date and time are required when confirming' });
+    }
+    
+    // Start transaction
+    db.serialize(() => {
+        // If confirming, update the session date in the sessions table
+        if (confirmation_status === 'confirmed' && session_date && level) {
+            db.run(`
+                UPDATE sessions 
+                SET session_date = ?, status = 'scheduled'
+                WHERE level = ? AND session_number = ?
+            `, [session_date, level, next_session], (err) => {
+                if (err) {
+                    console.error('Error updating session date:', err);
+                }
+            });
+        }
+        
+        // Store confirmation with session date and time
+        const fullNotes = session_date && session_time 
+            ? `Scheduled: ${session_date} at ${session_time}${confirmation_notes ? ' - ' + confirmation_notes : ''}`
+            : confirmation_notes;
+        
+        db.run(`
+            INSERT INTO session_confirmations (student_id, session_id, confirmation_status, confirmation_notes, confirmed_by, confirmed_at, updated_at)
+            VALUES (?, 0, ?, ?, ?, datetime('now'), datetime('now'))
+            ON CONFLICT(student_id, session_id)
+            DO UPDATE SET 
+                confirmation_status = ?,
+                confirmation_notes = ?,
+                confirmed_by = ?,
+                confirmed_at = datetime('now'),
+                updated_at = datetime('now')
+        `, [student_id, confirmation_status, fullNotes, user.id, confirmation_status, fullNotes, user.id], function(err) {
+            if (err) {
+                console.error('Error updating confirmation:', err);
+                return res.json({ success: false, error: 'Database error' });
+            }
+            
+            res.json({ 
+                success: true, 
+                message: 'Confirmation updated successfully',
+                session_date,
+                session_time,
+                full_notes: fullNotes
+            });
+        });
+    });
+});
+
+// API endpoint to get all confirmations
+app.get('/session-confirmations/list', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
+    db.all(`
+        SELECT 
+            sc.student_id,
+            sc.confirmation_status,
+            sc.confirmation_notes,
+            sc.confirmed_at,
+            u.full_name as confirmed_by_name
+        FROM session_confirmations sc
+        LEFT JOIN users u ON sc.confirmed_by = u.id
+        WHERE sc.session_id = 0
+    `, [], (err, confirmations) => {
+        if (err) {
+            console.error('Error fetching confirmations:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        
+        res.json({ success: true, confirmations });
     });
 });
 

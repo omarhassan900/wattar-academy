@@ -1,0 +1,508 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-phone-alt text-primary me-2"></i>Session Confirmations</h1>
+            <div>
+                <span class="badge bg-info me-2">
+                    <i class="fas fa-users me-1"></i>Call Students to Confirm Next Session
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Instructions:</strong> Call students to confirm their next session. 
+            When confirming, set the session date (tomorrow by default) and time.
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <input type="text" id="searchStudent" class="form-control" placeholder="🔍 Search by student name">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <select id="levelFilter" class="form-select">
+                            <option value="">All Levels</option>
+                            <% if (typeof levels !== 'undefined') { %>
+                                <% levels.forEach(level => { %>
+                                    <option value="<%= level %>"><%= level %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <select id="trainerFilter" class="form-select">
+                            <option value="">All Trainers</option>
+                            <% if (typeof trainers !== 'undefined' && trainers) { %>
+                                <% trainers.forEach(trainer => { %>
+                                    <option value="<%= trainer.id %>"><%= trainer.name %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button id="clearFilters" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% 
+const levelsArray = Object.keys(studentsByLevel).sort();
+if (levelsArray.length === 0) { 
+%>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Active Students</h4>
+                <p class="text-muted">There are no active students to confirm.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<% } else { %>
+
+<div id="studentsContainer">
+<% levelsArray.forEach(level => { 
+    const students = studentsByLevel[level];
+%>
+
+<div class="row mb-4 level-section" data-level="<%= level %>">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group me-2"></i><%= level %>
+                    <span class="badge bg-light text-dark ms-2 level-count"><%= students.length %> Students</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Trainer</th>
+                                <th>Progress</th>
+                                <th>Next Session</th>
+                                <th>Last Attended</th>
+                                <th>Phone</th>
+                                <th>Parent Phone</th>
+                                <th>Status</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% students.forEach(student => { %>
+                            <tr class="student-row" 
+                                data-student-id="<%= student.student_id %>" 
+                                data-next-session="<%= student.next_session %>"
+                                data-student-name="<%= student.student_name.toLowerCase() %>"
+                                data-trainer-id="<%= student.trainer_id || '' %>"
+                                data-level="<%= student.current_level %>">
+                                <td>
+                                    <i class="fas fa-user-circle text-primary me-2"></i>
+                                    <strong class="student-name-display"><%= student.student_name %></strong>
+                                </td>
+                                <td>
+                                    <% if (student.trainer_name) { %>
+                                        <span class="badge bg-info"><i class="fas fa-user-tie me-1"></i><%= student.trainer_name %></span>
+                                    <% } else { %>
+                                        <span class="text-muted">No Trainer</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info"><%= student.progress %> Sessions</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-calendar-day me-1"></i>Session <%= student.next_session %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (student.last_attendance_date) { %>
+                                        <small><%= moment(student.last_attendance_date).format('MMM D, YYYY') %></small>
+                                    <% } else { %>
+                                        <span class="text-muted">Never</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (student.phone) { %>
+                                        <a href="tel:<%= student.phone %>" class="text-decoration-none">
+                                            <i class="fas fa-phone me-1"></i><%= student.phone %>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (student.parent_phone) { %>
+                                        <a href="tel:<%= student.parent_phone %>" class="text-decoration-none">
+                                            <i class="fas fa-phone me-1"></i><%= student.parent_phone %>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-muted">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td class="confirmation-status-cell">
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                </td>
+                                <td class="confirmation-notes-cell">
+                                    <span class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-success me-1 confirm-btn" 
+                                            title="Confirm Session"
+                                            data-student-id="<%= student.student_id %>"
+                                            data-next-session="<%= student.next_session %>"
+                                            data-student-name="<%= student.student_name %>"
+                                            data-level="<%= student.current_level %>">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger me-1 not-confirm-btn" 
+                                            title="Mark as Not Confirmed"
+                                            data-student-id="<%= student.student_id %>"
+                                            data-next-session="<%= student.next_session %>"
+                                            data-student-name="<%= student.student_name %>">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info add-note-btn" 
+                                            title="Add Note"
+                                            data-student-id="<%= student.student_id %>"
+                                            data-next-session="<%= student.next_session %>"
+                                            data-student-name="<%= student.student_name %>"
+                                            data-current-notes="">
+                                        <i class="fas fa-sticky-note"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% }); %>
+</div>
+<% } %>
+
+<!-- Confirm Session Modal -->
+<div class="modal fade" id="confirmSessionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Confirm Session
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Student:</strong> <span id="confirm-student-name"></span></p>
+                <p><strong>Level:</strong> <span id="confirm-level"></span></p>
+                <p><strong>Session:</strong> Session <span id="confirm-session-number"></span></p>
+                
+                <div class="mb-3">
+                    <label for="session-date" class="form-label">Session Date *</label>
+                    <input type="date" class="form-control" id="session-date" required>
+                    <small class="text-muted">Default is tomorrow</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="session-time" class="form-label">Session Time *</label>
+                    <input type="time" class="form-control" id="session-time" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirm-notes" class="form-label">Notes (Optional)</label>
+                    <textarea class="form-control" id="confirm-notes" rows="2" placeholder="Add any notes from the call..."></textarea>
+                </div>
+                
+                <input type="hidden" id="confirm-student-id">
+                <input type="hidden" id="confirm-session-number-hidden">
+                <input type="hidden" id="confirm-level-hidden">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="save-confirmation-btn">
+                    <i class="fas fa-check me-2"></i>Confirm Session
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sticky-note me-2"></i>Add Note
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Student:</strong> <span id="note-student-name"></span></p>
+                <p><strong>Next Session:</strong> Session <span id="note-session-number"></span></p>
+                <div class="mb-3">
+                    <label for="confirmation-note" class="form-label">Note</label>
+                    <textarea class="form-control" id="confirmation-note" rows="3" placeholder="Add any notes..."></textarea>
+                </div>
+                <input type="hidden" id="note-student-id">
+                <input type="hidden" id="note-session-number-hidden">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-note-btn">
+                    <i class="fas fa-save me-2"></i>Save Note
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmSessionModal = new bootstrap.Modal(document.getElementById('confirmSessionModal'));
+    const addNoteModal = new bootstrap.Modal(document.getElementById('addNoteModal'));
+    
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    document.getElementById('session-date').value = tomorrowStr;
+    
+    // Load existing confirmations
+    loadConfirmations();
+    
+    function loadConfirmations() {
+        fetch('/session-confirmations/list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    data.confirmations.forEach(conf => {
+                        const row = document.querySelector(`tr[data-student-id="${conf.student_id}"]`);
+                        if (row) {
+                            updateRowUI(row, conf.confirmation_status, conf.confirmation_notes, conf.confirmed_at);
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading confirmations:', error));
+    }
+    
+    // Confirm button - opens modal
+    document.querySelectorAll('.confirm-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            const nextSession = this.dataset.nextSession;
+            const studentName = this.dataset.studentName;
+            const level = this.dataset.level;
+            
+            document.getElementById('confirm-student-name').textContent = studentName;
+            document.getElementById('confirm-level').textContent = level;
+            document.getElementById('confirm-session-number').textContent = nextSession;
+            document.getElementById('confirm-student-id').value = studentId;
+            document.getElementById('confirm-session-number-hidden').value = nextSession;
+            document.getElementById('confirm-level-hidden').value = level;
+            document.getElementById('confirm-notes').value = '';
+            document.getElementById('session-date').value = tomorrowStr;
+            document.getElementById('session-time').value = '';
+            
+            confirmSessionModal.show();
+        });
+    });
+    
+    // Save confirmation
+    document.getElementById('save-confirmation-btn').addEventListener('click', function() {
+        const studentId = document.getElementById('confirm-student-id').value;
+        const nextSession = document.getElementById('confirm-session-number-hidden').value;
+        const level = document.getElementById('confirm-level-hidden').value;
+        const sessionDate = document.getElementById('session-date').value;
+        const sessionTime = document.getElementById('session-time').value;
+        const notes = document.getElementById('confirm-notes').value;
+        
+        if (!sessionDate || !sessionTime) {
+            alert('Please enter both session date and time');
+            return;
+        }
+        
+        updateConfirmation(studentId, nextSession, level, 'confirmed', notes, sessionDate, sessionTime);
+        confirmSessionModal.hide();
+    });
+    
+    // Not confirm button
+    document.querySelectorAll('.not-confirm-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            const nextSession = this.dataset.nextSession;
+            const studentName = this.dataset.studentName;
+            
+            if (confirm(`Mark ${studentName} as NOT CONFIRMED for Session ${nextSession}?`)) {
+                updateConfirmation(studentId, nextSession, '', 'not_confirmed', '', null, null);
+            }
+        });
+    });
+    
+    // Add note button
+    document.querySelectorAll('.add-note-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            const nextSession = this.dataset.nextSession;
+            const studentName = this.dataset.studentName;
+            const currentNotes = this.dataset.currentNotes;
+            
+            document.getElementById('note-student-name').textContent = studentName;
+            document.getElementById('note-session-number').textContent = nextSession;
+            document.getElementById('note-student-id').value = studentId;
+            document.getElementById('note-session-number-hidden').value = nextSession;
+            document.getElementById('confirmation-note').value = currentNotes;
+            
+            addNoteModal.show();
+        });
+    });
+    
+    // Save note
+    document.getElementById('save-note-btn').addEventListener('click', function() {
+        const studentId = document.getElementById('note-student-id').value;
+        const nextSession = document.getElementById('note-session-number-hidden').value;
+        const notes = document.getElementById('confirmation-note').value;
+        
+        const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+        const statusBadge = row.querySelector('.confirmation-status-cell .badge');
+        let currentStatus = 'pending';
+        if (statusBadge.textContent.includes('Confirmed')) {
+            currentStatus = 'confirmed';
+        } else if (statusBadge.textContent.includes('Not Confirmed')) {
+            currentStatus = 'not_confirmed';
+        }
+        
+        updateConfirmation(studentId, nextSession, '', currentStatus, notes, null, null);
+        addNoteModal.hide();
+    });
+    
+    function updateConfirmation(studentId, nextSession, level, status, notes, sessionDate, sessionTime) {
+        fetch('/session-confirmations/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: studentId,
+                next_session: nextSession,
+                level: level,
+                confirmation_status: status,
+                confirmation_notes: notes,
+                session_date: sessionDate,
+                session_time: sessionTime
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+                updateRowUI(row, status, data.full_notes || notes, 'Just now');
+                row.querySelector('.add-note-btn').dataset.currentNotes = notes;
+                alert('Success: ' + data.message);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error: Failed to update confirmation');
+        });
+    }
+    
+    function updateRowUI(row, status, notes, confirmedAt) {
+        const statusCell = row.querySelector('.confirmation-status-cell');
+        const notesCell = row.querySelector('.confirmation-notes-cell');
+        
+        let badgeHtml = '';
+        if (status === 'confirmed') {
+            badgeHtml = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Confirmed</span>';
+        } else if (status === 'not_confirmed') {
+            badgeHtml = '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Not Confirmed</span>';
+        } else {
+            badgeHtml = '<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Pending</span>';
+        }
+        if (confirmedAt) {
+            badgeHtml += `<br><small class="text-muted">${confirmedAt}</small>`;
+        }
+        statusCell.innerHTML = badgeHtml;
+        
+        if (notes) {
+            notesCell.innerHTML = `<small>${notes}</small>`;
+        } else {
+            notesCell.innerHTML = '<span class="text-muted">-</span>';
+        }
+    }
+    
+    // Filters
+    const searchInput = document.getElementById('searchStudent');
+    const levelFilter = document.getElementById('levelFilter');
+    const trainerFilter = document.getElementById('trainerFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedLevel = levelFilter.value;
+        const selectedTrainer = trainerFilter.value;
+        
+        document.querySelectorAll('.student-row').forEach(row => {
+            const studentName = row.dataset.studentName;
+            const level = row.dataset.level;
+            const trainerId = row.dataset.trainerId;
+            
+            const matchesSearch = !searchTerm || studentName.includes(searchTerm);
+            const matchesLevel = !selectedLevel || level === selectedLevel;
+            const matchesTrainer = !selectedTrainer || trainerId === selectedTrainer;
+            
+            row.style.display = (matchesSearch && matchesLevel && matchesTrainer) ? '' : 'none';
+        });
+        
+        document.querySelectorAll('.level-section').forEach(section => {
+            const visibleRows = section.querySelectorAll('.student-row:not([style*="display: none"])').length;
+            const countBadge = section.querySelector('.level-count');
+            if (countBadge) {
+                countBadge.textContent = `${visibleRows} Students`;
+            }
+            section.style.display = visibleRows === 0 ? 'none' : '';
+        });
+    }
+    
+    searchInput.addEventListener('input', applyFilters);
+    levelFilter.addEventListener('change', applyFilters);
+    trainerFilter.addEventListener('change', applyFilters);
+    
+    clearFiltersBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        levelFilter.value = '';
+        trainerFilter.value = '';
+        applyFilters();
+    });
+});
+</script>

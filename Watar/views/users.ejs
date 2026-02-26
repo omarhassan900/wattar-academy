@@ -61,6 +61,8 @@
                                         <span class="badge bg-info"><i class="fas fa-user-tie me-1"></i>Reception</span>
                                     <% } else if (user.role === 'trainer') { %>
                                         <span class="badge bg-success"><i class="fas fa-chalkboard-teacher me-1"></i>Trainer</span>
+                                    <% } else if (user.role === 'operations_manager') { %>
+                                        <span class="badge bg-warning"><i class="fas fa-phone-alt me-1"></i>Operations Manager</span>
                                     <% } else { %>
                                         <span class="badge bg-secondary"><%= user.role %></span>
                                     <% } %>
@@ -131,10 +133,14 @@
                         <label for="role" class="form-label">Role *</label>
                         <select class="form-control" id="role" name="role" required>
                             <option value="">Select Role</option>
-                            <option value="manager">Manager</option>
-                            <option value="reception">Reception</option>
-                            <option value="trainer">Trainer</option>
+                            <option value="manager">Manager - Full system access</option>
+                            <option value="reception">Reception - Attendance & student management</option>
+                            <option value="trainer">Trainer - View students & attendance</option>
+                            <option value="operations_manager">Operations Manager - Session confirmations</option>
                         </select>
+                        <small class="text-muted">
+                            <strong>Operations Manager:</strong> Calls students to confirm sessions, view-only access to students/attendance
+                        </small>
                     </div>
                     
                     <div class="mb-3">
@@ -194,9 +200,10 @@
                     <div class="mb-3">
                         <label for="edit_role" class="form-label">Role *</label>
                         <select class="form-control" id="edit_role" name="role" required>
-                            <option value="manager">Manager</option>
-                            <option value="reception">Reception</option>
-                            <option value="trainer">Trainer</option>
+                            <option value="manager">Manager - Full system access</option>
+                            <option value="reception">Reception - Attendance & student management</option>
+                            <option value="trainer">Trainer - View students & attendance</option>
+                            <option value="operations_manager">Operations Manager - Session confirmations</option>
                         </select>
                     </div>
                     

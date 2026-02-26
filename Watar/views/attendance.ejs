@@ -7,6 +7,7 @@
                 <small class="text-muted">Showing <%= students.length %> of <%= totalStudents %> students (Page <%= currentPage %> of <%= totalPages %>)</small>
                 <% } %>
             </div>
+            <% if (user.role !== 'operations_manager') { %>
             <div>
                 <a href="/attendance/export-csv" class="btn btn-success btn-lg me-2 mb-2">
                     <i class="fas fa-file-csv me-2"></i>Export to CSV
@@ -15,6 +16,13 @@
                     <i class="fas fa-save me-2"></i>Save All Attendance
                 </button>
             </div>
+            <% } else { %>
+            <div>
+                <span class="badge bg-info fs-6">
+                    <i class="fas fa-eye me-2"></i>View Only Mode
+                </span>
+            </div>
+            <% } %>
         </div>
     </div>
 </div>
@@ -125,11 +133,26 @@
                                     data-status="<%= student.status.toLowerCase() %>">
                                     <td>
                                         <strong><%= student.name %></strong>
+                                        <% if (student.confirmation) { %>
+                                            <% if (student.confirmation.status === 'confirmed') { %>
+                                                <span class="badge bg-success ms-2" title="<%= student.confirmation.notes %>">
+                                                    <i class="fas fa-check-circle"></i> Confirmed
+                                                </span>
+                                            <% } else if (student.confirmation.status === 'not_confirmed') { %>
+                                                <span class="badge bg-danger ms-2" title="<%= student.confirmation.notes %>">
+                                                    <i class="fas fa-times-circle"></i> Not Confirmed
+                                                </span>
+                                            <% } %>
+                                            <% if (student.confirmation.notes) { %>
+                                                <br><small class="text-muted"><%= student.confirmation.notes %></small>
+                                            <% } %>
+                                        <% } %>
                                     </td>
                                     <td>
                                         <select class="form-select form-select-sm month-selector" 
                                                 data-student-id="<%= student.id %>" 
-                                                onchange="changeStudentMonth(this)">
+                                                onchange="changeStudentMonth(this)"
+                                                <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
                                             <% for (let m = 1; m <= 9; m++) { %>
                                                 <option value="Month <%= m %>" <%= student.current_level === `Month ${m}` ? 'selected' : '' %>>
                                                     <%= m %>
@@ -163,7 +186,8 @@
                                                                name="att_<%= student.id %>_<%= sessionId %>" 
                                                                value="attended" 
                                                                id="att_<%= student.id %>_<%= sessionId %>"
-                                                               <%= attendanceStatus === 'present' || attendanceStatus === 'attended' ? 'checked' : '' %>>
+                                                               <%= attendanceStatus === 'present' || attendanceStatus === 'attended' ? 'checked' : '' %>
+                                                               <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
                                                         <label class="btn btn-outline-success" 
                                                                for="att_<%= student.id %>_<%= sessionId %>" title="Present">
                                                             <i class="fas fa-check"></i>
@@ -173,7 +197,8 @@
                                                                name="att_<%= student.id %>_<%= sessionId %>" 
                                                                value="absent" 
                                                                id="abs_<%= student.id %>_<%= sessionId %>"
-                                                               <%= attendanceStatus === 'absent' ? 'checked' : '' %>>
+                                                               <%= attendanceStatus === 'absent' ? 'checked' : '' %>
+                                                               <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
                                                         <label class="btn btn-outline-danger" 
                                                                for="abs_<%= student.id %>_<%= sessionId %>" title="Absent">
                                                             <i class="fas fa-times"></i>
@@ -182,7 +207,8 @@
                                                         <% if (attendanceStatus) { %>
                                                         <button type="button" class="btn btn-outline-secondary btn-sm clear-attendance-btn" 
                                                                 title="Clear attendance"
-                                                                onclick="clearAttendance(<%= student.id %>, <%= sessionId %>)">
+                                                                onclick="clearAttendance(<%= student.id %>, <%= sessionId %>)"
+                                                                <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
                                                             <i class="fas fa-eraser"></i>
                                                         </button>
                                                         <% } %>
@@ -201,7 +227,8 @@
                                     <td>
                                         <textarea style="height: 132px;width: 300px;" class="form-control form-control-sm student-notes" 
                                                data-student-id="<%= student.id %>"
-                                               placeholder="Student feedback for this level..."><%= student.notes || '' %></textarea>
+                                               placeholder="Student feedback for this level..."
+                                               <%= user.role === 'operations_manager' ? 'readonly' : '' %>><%= student.notes || '' %></textarea>
                                     </td>
                                 </tr>
                                 <% }); %>

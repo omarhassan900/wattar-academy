@@ -4,7 +4,7 @@ const fs = require('fs');
 
 // Configuration - UPDATE THESE FOR AWS
 const USE_AWS = process.argv.includes('--aws');
-const DB_PATH = USE_AWS ? 'wattar_production.db' : 'wattar.db';
+const DB_PATH = 'wattar.db'; // Same database name for both local and AWS
 
 console.log('=== Wattar Academy Student Data Update ===');
 console.log(`Mode: ${USE_AWS ? 'AWS PRODUCTION' : 'LOCAL TEST'}`);

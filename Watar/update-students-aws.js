@@ -120,103 +120,64 @@ async function updateStudents() {
     try {
         await createBackup();
         
-        console.log('=== Starting Student Updates ===\n');
+        console.log('=== Starting Student Data Replacement ===\n');
+        console.log('⚠️  WARNING: This will DELETE all existing students and replace with Excel data!\n');
         
-        let updated = 0;
+        // Delete all existing students
+        await new Promise((resolve, reject) => {
+            db.run('DELETE FROM students', (err) => {
+                if (err) reject(err);
+                else {
+                    console.log('✓ Deleted all existing students\n');
+                    resolve();
+                }
+            });
+        });
+        
         let inserted = 0;
         let errors = 0;
         
+        console.log('=== Inserting New Students ===\n');
+        
         for (const student of students) {
             try {
-                // Check if student exists by phone number
-                const existing = await new Promise((resolve, reject) => {
-                    db.get(
-                        'SELECT id FROM students WHERE phone = ? OR parent_phone = ?',
-                        [student.phone, student.phone],
-                        (err, row) => {
-                            if (err) reject(err);
-                            else resolve(row);
-                        }
-                    );
+                // Insert new student
+                await new Promise((resolve, reject) => {
+                    db.run(`
+                        INSERT INTO students (
+                            name, phone, parent_phone, email, address,
+                            date_of_birth, instrument, current_level, trainer_id,
+                            start_date, notes, status, created_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'))
+                    `, [
+                        student.name,
+                        student.phone,
+                        student.parent_phone,
+                        student.email,
+                        student.address,
+                        student.date_of_birth,
+                        student.instrument,
+                        student.level,
+                        student.trainer_id,
+                        student.start_date,
+                        student.notes
+                    ], (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
                 });
                 
-                if (existing) {
-                    // Update existing student
-                    await new Promise((resolve, reject) => {
-                        db.run(`
-                            UPDATE students 
-                            SET name = ?,
-                                phone = ?,
-                                parent_phone = ?,
-                                email = ?,
-                                address = ?,
-                                date_of_birth = ?,
-                                instrument = ?,
-                                current_level = ?,
-                                trainer_id = ?,
-                                notes = ?,
-                                updated_at = datetime('now')
-                            WHERE id = ?
-                        `, [
-                            student.name,
-                            student.phone,
-                            student.parent_phone,
-                            student.email,
-                            student.address,
-                            student.date_of_birth,
-                            student.instrument,
-                            student.level,
-                            student.trainer_id,
-                            student.notes,
-                            existing.id
-                        ], (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        });
-                    });
-                    
-                    updated++;
-                    console.log(`✓ Updated: ${student.name}`);
-                } else {
-                    // Insert new student
-                    await new Promise((resolve, reject) => {
-                        db.run(`
-                            INSERT INTO students (
-                                name, phone, parent_phone, email, address,
-                                date_of_birth, instrument, current_level, trainer_id,
-                                start_date, notes, status, created_at
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'))
-                        `, [
-                            student.name,
-                            student.phone,
-                            student.parent_phone,
-                            student.email,
-                            student.address,
-                            student.date_of_birth,
-                            student.instrument,
-                            student.level,
-                            student.trainer_id,
-                            student.start_date,
-                            student.notes
-                        ], (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        });
-                    });
-                    
-                    inserted++;
-                    console.log(`✓ Inserted: ${student.name}`);
-                }
+                inserted++;
+                console.log(`✓ Inserted: ${student.name}`);
             } catch (err) {
                 errors++;
-                console.error(`✗ Error processing ${student.name}:`, err.message);
+                console.error(`✗ Error inserting ${student.name}:`, err.message);
             }
         }
         
-        console.log(`\n=== Update Summary ===`);
-        console.log(`Total processed: ${students.length}`);
-        console.log(`Updated: ${updated}`);
-        console.log(`Inserted: ${inserted}`);
+        console.log(`\n=== Replacement Summary ===`);
+        console.log(`Total in Excel: ${students.length}`);
+        console.log(`Successfully inserted: ${inserted}`);
         console.log(`Errors: ${errors}`);
         
         // Final count
@@ -228,18 +189,20 @@ async function updateStudents() {
         });
         
         console.log(`\nTotal active students in database: ${total}`);
-        console.log('\n✅ Update completed successfully!');
+        console.log('\n✅ Replacement completed successfully!');
         
         if (USE_AWS) {
-            console.log('\n⚠️  PRODUCTION UPDATE COMPLETE');
+            console.log('\n⚠️  PRODUCTION DATABASE REPLACED');
+            console.log('All old students have been removed.');
+            console.log('Only students from Excel file remain.');
             console.log('Please verify the changes on your AWS deployment.');
         } else {
             console.log('\n💡 This was a LOCAL TEST run.');
-            console.log('To update AWS production, run: node update-students-aws.js --aws');
+            console.log('To replace AWS production data, run: node update-students-aws.js --aws');
         }
         
     } catch (err) {
-        console.error('\n❌ Error during update:', err);
+        console.error('\n❌ Error during replacement:', err);
     } finally {
         db.close();
     }

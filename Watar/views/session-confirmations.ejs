@@ -181,8 +181,8 @@ if (levelsArray.length === 0) {
                                             data-level="<%= student.current_level %>">
                                         <i class="fas fa-check"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-danger me-1 not-confirm-btn" 
-                                            title="Mark as Not Confirmed"
+                                    <button class="btn btn-sm btn-warning me-1 pending-btn" 
+                                            title="Mark as Pending"
                                             data-student-id="<%= student.student_id %>"
                                             data-next-session="<%= student.next_session %>"
                                             data-student-name="<%= student.student_name %>">
@@ -356,15 +356,15 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmSessionModal.hide();
     });
     
-    // Not confirm button
-    document.querySelectorAll('.not-confirm-btn').forEach(btn => {
+    // Not confirm button - now marks as pending
+    document.querySelectorAll('.pending-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const studentId = this.dataset.studentId;
             const nextSession = this.dataset.nextSession;
             const studentName = this.dataset.studentName;
             
-            if (confirm(`Mark ${studentName} as NOT CONFIRMED for Session ${nextSession}?`)) {
-                updateConfirmation(studentId, nextSession, '', 'not_confirmed', '', null, null);
+            if (confirm(`Mark ${studentName} as PENDING for Session ${nextSession}?`)) {
+                updateConfirmation(studentId, nextSession, '', 'pending', '', null, null);
             }
         });
     });
@@ -398,8 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentStatus = 'pending';
         if (statusBadge.textContent.includes('Confirmed')) {
             currentStatus = 'confirmed';
-        } else if (statusBadge.textContent.includes('Not Confirmed')) {
-            currentStatus = 'not_confirmed';
         }
         
         updateConfirmation(studentId, nextSession, '', currentStatus, notes, null, null);
@@ -444,12 +442,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let badgeHtml = '';
         if (status === 'confirmed') {
             badgeHtml = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Confirmed</span>';
-        } else if (status === 'not_confirmed') {
-            badgeHtml = '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Not Confirmed</span>';
         } else {
             badgeHtml = '<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Pending</span>';
         }
-        if (confirmedAt) {
+        if (confirmedAt && status === 'confirmed') {
             badgeHtml += `<br><small class="text-muted">${confirmedAt}</small>`;
         }
         statusCell.innerHTML = badgeHtml;

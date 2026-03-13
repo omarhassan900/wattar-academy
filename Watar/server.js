@@ -2477,6 +2477,47 @@ app.get('/session-confirmations/list', requireAuth, requireRole(['operations_man
     });
 });
 
+// Database Admin Routes (Manager only)
+app.get('/admin/db', requireAuth, requireRole(['manager']), (req, res) => {
+    res.render('admin-db', {}, (err, html) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Render error');
+        }
+        res.render('layout', {
+            body: html,
+            user: req.session.user,
+            activemenu: 'admin-db'
+        });
+    });
+});
+
+app.post('/admin/db/query', requireAuth, requireRole(['manager']), (req, res) => {
+    const { query } = req.body;
+    if (!query || !query.trim()) {
+        return res.status(400).json({ error: 'Empty query' });
+    }
+
+    const trimmed = query.trim().toUpperCase();
+    const isSelect = trimmed.startsWith('SELECT') || trimmed.startsWith('PRAGMA');
+
+    if (isSelect) {
+        db.all(query, (err, rows) => {
+            if (err) {
+                return res.status(400).json({ error: err.message });
+            }
+            res.json({ type: 'select', rows: rows || [] });
+        });
+    } else {
+        db.run(query, function(err) {
+            if (err) {
+                return res.status(400).json({ error: err.message });
+            }
+            res.json({ type: 'run', message: `Query executed. Rows affected: ${this.changes}` });
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Wattar Academy Management System running on http://localhost:${PORT}`);
     console.log('Default login: username=admin, password=admin123');

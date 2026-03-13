@@ -1,0 +1,159 @@
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-4">
+            <i class="fas fa-database text-primary me-2"></i>
+            Database Admin
+        </h4>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-terminal me-2"></i>SQL Query</h5>
+            </div>
+            <div class="card-body">
+                <form id="sqlForm">
+                    <div class="mb-3">
+                        <textarea id="sqlQuery" class="form-control font-monospace" rows="5" 
+                            placeholder="Enter SQL query... (e.g. SELECT * FROM students LIMIT 10)"
+                            style="font-size: 14px;"></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play me-1"></i> Run Query
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('sqlQuery').value=''">
+                            <i class="fas fa-eraser me-1"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i>Quick Tables</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-outline-primary quick-query" data-query="SELECT * FROM students ORDER BY name">Students</button>
+                    <button class="btn btn-sm btn-outline-primary quick-query" data-query="SELECT * FROM trainers t LEFT JOIN users u ON t.user_id = u.id">Trainers</button>
+                    <button class="btn btn-sm btn-outline-primary quick-query" data-query="SELECT * FROM sessions ORDER BY session_date DESC">Sessions</button>
+                    <button class="btn btn-sm btn-outline-primary quick-query" data-query="SELECT * FROM attendance ORDER BY date DESC LIMIT 50">Attendance</button>
+                    <button class="btn btn-sm btn-outline-primary quick-query" data-query="SELECT * FROM classes">Classes</button>
+                    <button class="btn btn-sm btn-outline-primary quick-query" data-query="SELECT * FROM users">Users</button>
+                    <button class="btn btn-sm btn-outline-primary quick-query" data-query="SELECT * FROM cash_transactions ORDER BY transaction_date DESC LIMIT 50">Cash</button>
+                    <button class="btn btn-sm btn-outline-info quick-query" data-query="SELECT name FROM sqlite_master WHERE type='table' ORDER BY name">Show Tables</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="resultArea" class="row" style="display:none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Result</h5>
+                <span id="resultInfo" class="badge bg-light text-dark"></span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table id="resultTable" class="table table-sm table-striped table-hover mb-0">
+                        <thead id="resultHead" class="table-dark sticky-top"></thead>
+                        <tbody id="resultBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="messageArea" class="row" style="display:none;">
+    <div class="col-12">
+        <div id="messageCard" class="card">
+            <div class="card-body">
+                <p id="messageText" class="mb-0"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="errorArea" class="row" style="display:none;">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Error</h5>
+            </div>
+            <div class="card-body">
+                <pre id="errorText" class="mb-0 text-danger"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('sqlForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const query = document.getElementById('sqlQuery').value.trim();
+    if (!query) return;
+    
+    document.getElementById('resultArea').style.display = 'none';
+    document.getElementById('messageArea').style.display = 'none';
+    document.getElementById('errorArea').style.display = 'none';
+    
+    try {
+        const res = await fetch('/admin/db/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+            document.getElementById('errorArea').style.display = '';
+            document.getElementById('errorText').textContent = data.error;
+            return;
+        }
+        
+        if (data.type === 'select') {
+            const rows = data.rows;
+            if (rows.length === 0) {
+                document.getElementById('messageArea').style.display = '';
+                document.getElementById('messageCard').className = 'card border-warning';
+                document.getElementById('messageText').innerHTML = '<i class="fas fa-info-circle text-warning me-2"></i>No rows returned.';
+                return;
+            }
+            
+            const cols = Object.keys(rows[0]);
+            document.getElementById('resultHead').innerHTML = '<tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr>';
+            document.getElementById('resultBody').innerHTML = rows.map(row => 
+                '<tr>' + cols.map(c => '<td>' + (row[c] === null ? '<span class="text-muted">NULL</span>' : row[c]) + '</td>').join('') + '</tr>'
+            ).join('');
+            document.getElementById('resultInfo').textContent = rows.length + ' rows';
+            document.getElementById('resultArea').style.display = '';
+        } else {
+            document.getElementById('messageArea').style.display = '';
+            document.getElementById('messageCard').className = 'card border-success';
+            document.getElementById('messageText').innerHTML = '<i class="fas fa-check text-success me-2"></i>' + data.message;
+        }
+    } catch (err) {
+        document.getElementById('errorArea').style.display = '';
+        document.getElementById('errorText').textContent = err.message;
+    }
+});
+
+document.querySelectorAll('.quick-query').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('sqlQuery').value = btn.dataset.query;
+        document.getElementById('sqlForm').dispatchEvent(new Event('submit'));
+    });
+});
+</script>

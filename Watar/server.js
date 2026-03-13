@@ -591,10 +591,13 @@ app.get('/students-old', requireAuth, (req, res) => {
 app.post('/students', requireAuth, requireRole(['manager', 'reception']), (req, res) => {
     const { name, national_id, phone, parent_phone, email, start_date, current_level, instrument, address, date_of_birth, emergency_contact, emergency_phone, trainer_id } = req.body;
     
+    // Convert empty national_id to NULL so UNIQUE constraint allows multiple empty values
+    const finalNationalId = (national_id && national_id.trim() !== '') ? national_id.trim() : null;
+    
     db.run(`
         INSERT INTO students (name, national_id, phone, parent_phone, email, start_date, current_level, instrument, address, date_of_birth, emergency_contact, emergency_phone, trainer_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [name, national_id, phone, parent_phone, email, start_date, current_level, instrument, address, date_of_birth, emergency_contact, emergency_phone, trainer_id], function(err) {
+    `, [name, finalNationalId, phone, parent_phone, email, start_date, current_level, instrument, address, date_of_birth, emergency_contact, emergency_phone, trainer_id], function(err) {
         if (err) {
             console.error(err);
             if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('national_id')) {

@@ -121,9 +121,30 @@ db.serialize(() => {
         current_level TEXT CHECK(current_level IN ('Level One', 'Level Two', 'Level Three', 'Level Four', 'Level Five', 'Level Six')) DEFAULT 'Level One',
         status TEXT CHECK(status IN ('active', 'inactive', 'graduated')) DEFAULT 'active',
         notes TEXT,
+        instrument VARCHAR(100),
+        address TEXT,
+        date_of_birth DATE,
+        emergency_contact VARCHAR(100),
+        emergency_phone VARCHAR(20),
+        trainer_id INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    // Add missing columns for existing databases
+    const studentColumns = [
+        'instrument VARCHAR(100)',
+        'address TEXT',
+        'date_of_birth DATE',
+        'emergency_contact VARCHAR(100)',
+        'emergency_phone VARCHAR(20)',
+        'trainer_id INTEGER'
+    ];
+    studentColumns.forEach(col => {
+        db.run(`ALTER TABLE students ADD COLUMN ${col}`, (err) => {
+            // Ignore "duplicate column" errors - means column already exists
+        });
+    });
 
     // Trainers table
     db.run(`CREATE TABLE IF NOT EXISTS trainers (
@@ -576,6 +597,9 @@ app.post('/students', requireAuth, requireRole(['manager', 'reception']), (req, 
     `, [name, national_id, phone, parent_phone, email, start_date, current_level, instrument, address, date_of_birth, emergency_contact, emergency_phone, trainer_id], function(err) {
         if (err) {
             console.error(err);
+            if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('national_id')) {
+                return res.status(400).send('A student with this National ID / Phone already exists. Please use a different one.');
+            }
             return res.status(500).send('Database error');
         }
         res.redirect('/students');

@@ -113,7 +113,7 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS students (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name VARCHAR(100) NOT NULL,
-        national_id VARCHAR(20) UNIQUE,
+        national_id VARCHAR(20),
         phone VARCHAR(20),
         parent_phone VARCHAR(20),
         email VARCHAR(100),

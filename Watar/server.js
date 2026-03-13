@@ -285,15 +285,14 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
             LIMIT 5
         `,
         
-        // Recent attendance (last 7 days)
+        // Recent attendance (last 7 days with attendance records)
         recentAttendance: `
             SELECT 
-                DATE(s.session_date) as date,
+                DATE(a.date) as date,
                 COUNT(DISTINCT a.student_id) as students_present
-            FROM sessions s
-            LEFT JOIN attendance a ON s.id = a.session_id AND a.status IN ('present', 'attended')
-            WHERE s.session_date >= date('now', '-7 days')
-            GROUP BY DATE(s.session_date)
+            FROM attendance a
+            WHERE a.status IN ('present', 'attended')
+            GROUP BY DATE(a.date)
             ORDER BY date DESC
             LIMIT 7
         `,

@@ -58,14 +58,20 @@ db.run(`
 });
 
 // Ensure sessions exist for all 48 months (4 sessions per month)
-for (let m = 1; m <= 48; m++) {
-    const level = `Month ${m}`;
-    for (let s = 1; s <= 4; s++) {
-        db.run(`INSERT OR IGNORE INTO sessions (level, session_number, session_name, description)
-                VALUES (?, ?, ?, ?)`,
-            [level, s, `${level} - Session ${s}`, `Session ${s} for ${level} students`]);
+// Only insert if sessions don't exist yet for a level
+db.get(`SELECT COUNT(DISTINCT level) as levelCount FROM sessions`, (err, row) => {
+    if (!err && row && row.levelCount < 48) {
+        const stmt = db.prepare(`INSERT OR IGNORE INTO sessions (level, session_number, session_name, description) VALUES (?, ?, ?, ?)`);
+        for (let m = 1; m <= 48; m++) {
+            const level = `Month ${m}`;
+            for (let s = 1; s <= 4; s++) {
+                stmt.run(level, s, `${level} - Session ${s}`, `Session ${s} for ${level} students`);
+            }
+        }
+        stmt.finalize();
+        console.log('✓ Sessions created for all 48 months');
     }
-}
+});
 
 // Middleware
 app.set('view engine', 'ejs');

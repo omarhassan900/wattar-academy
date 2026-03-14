@@ -26,15 +26,9 @@
                     <div class="col-md-2  mb-2">
                         <select id="levelFilter" class="form-select">
                             <option value="">All Levels</option>
-                            <option value="Month 1">Month 1</option>
-                            <option value="Month 2">Month 2</option>
-                            <option value="Month 3">Month 3</option>
-                            <option value="Month 4">Month 4</option>
-                            <option value="Month 5">Month 5</option>
-                            <option value="Month 6">Month 6</option>
-                            <option value="Month 7">Month 7</option>
-                            <option value="Month 8">Month 8</option>
-                            <option value="Month 9">Month 9</option>
+                            <% for (let i = 1; i <= 48; i++) { %>
+                            <option value="Month <%= i %>">Month <%= i %></option>
+                            <% } %>
                         </select>
                     </div>
                     <div class="col-md-2 mb-2">
@@ -266,15 +260,9 @@
                             <div class="mb-3">
                                 <label for="current_level" class="form-label">Level *</label>
                                 <select class="form-control" id="current_level" name="current_level" required>
-                                    <option value="Month 1">Month 1</option>
-                                    <option value="Month 2">Month 2</option>
-                                    <option value="Month 3">Month 3</option>
-                                    <option value="Month 4">Month 4</option>
-                                    <option value="Month 5">Month 5</option>
-                                    <option value="Month 6">Month 6</option>
-                                    <option value="Month 7">Month 7</option>
-                                    <option value="Month 8">Month 8</option>
-                                    <option value="Month 9">Month 9</option>
+                                    <% for (let i = 1; i <= 48; i++) { %>
+                                    <option value="Month <%= i %>">Month <%= i %></option>
+                                    <% } %>
                                 </select>
                             </div>
                         </div>
@@ -409,15 +397,9 @@
                             <div class="mb-3">
                                 <label for="edit_current_level" class="form-label">Level *</label>
                                 <select class="form-control" id="edit_current_level" name="current_level" required>
-                                    <option value="Month 1">Month 1</option>
-                                    <option value="Month 2">Month 2</option>
-                                    <option value="Month 3">Month 3</option>
-                                    <option value="Month 4">Month 4</option>
-                                    <option value="Month 5">Month 5</option>
-                                    <option value="Month 6">Month 6</option>
-                                    <option value="Month 7">Month 7</option>
-                                    <option value="Month 8">Month 8</option>
-                                    <option value="Month 9">Month 9</option>
+                                    <% for (let i = 1; i <= 48; i++) { %>
+                                    <option value="Month <%= i %>">Month <%= i %></option>
+                                    <% } %>
                                 </select>
                             </div>
                         </div>

@@ -74,7 +74,7 @@
                         <div class="col-md-2  mb-2">
                             <select class="form-select" name="month" id="monthFilter">
                                 <option value="">All Months</option>
-                                <% for (let m = 1; m <= 9; m++) { %>
+                                <% for (let m = 1; m <= 48; m++) { %>
                                     <option value="Month <%= m %>" <%= (typeof monthFilter !== 'undefined' && monthFilter === `Month ${m}`) ? 'selected' : '' %>>
                                         Month <%= m %>
                                     </option>
@@ -153,7 +153,7 @@
                                                 data-student-id="<%= student.id %>" 
                                                 onchange="changeStudentMonth(this)"
                                                 <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
-                                            <% for (let m = 1; m <= 9; m++) { %>
+                                            <% for (let m = 1; m <= 48; m++) { %>
                                                 <option value="Month <%= m %>" <%= student.current_level === `Month ${m}` ? 'selected' : '' %>>
                                                     <%= m %>
                                                 </option>

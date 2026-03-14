@@ -57,6 +57,16 @@ db.run(`
     }
 });
 
+// Ensure sessions exist for all 48 months (4 sessions per month)
+for (let m = 1; m <= 48; m++) {
+    const level = `Month ${m}`;
+    for (let s = 1; s <= 4; s++) {
+        db.run(`INSERT OR IGNORE INTO sessions (level, session_number, session_name, description)
+                VALUES (?, ?, ?, ?)`,
+            [level, s, `${level} - Session ${s}`, `Session ${s} for ${level} students`]);
+    }
+}
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -1594,7 +1604,7 @@ app.get('/attendance/summary', requireAuth, (req, res) => {
             user,
             selectedLevel,
             levelSummary: Object.values(levelSummary),
-            levels: ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6', 'Month 7', 'Month 8', 'Month 9']
+            levels: Array.from({length: 48}, (_, i) => `Month ${i + 1}`)
         }, (err, html) => {
             if (err) {
                 console.error('Error rendering attendance summary:', err);

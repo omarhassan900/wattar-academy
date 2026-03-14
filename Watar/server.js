@@ -73,6 +73,13 @@ db.get(`SELECT COUNT(DISTINCT level) as levelCount FROM sessions`, (err, row) =>
     }
 });
 
+// Add database indexes for performance
+db.run(`CREATE INDEX IF NOT EXISTS idx_attendance_student ON attendance(student_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_attendance_session ON attendance(session_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_sessions_level ON sessions(level)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_students_level ON students(current_level)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_students_status ON students(status)`);
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -855,17 +862,20 @@ app.get('/attendance', requireAuth, (req, res) => {
                     return res.status(500).send('Database error');
                 }
                 
-                // Get attendance for these students only
+                // Get attendance for these students and their level sessions only
                 const studentIds = students.map(s => s.id);
                 const studentPlaceholders = studentIds.map(() => '?').join(',');
+                const sessionIds = sessions.map(s => s.id);
+                const sessionPlaceholders = sessionIds.map(() => '?').join(',');
                 
                 const attendanceQuery = `
                     SELECT student_id, session_id, status, date, notes
                     FROM attendance
                     WHERE student_id IN (${studentPlaceholders})
+                    AND session_id IN (${sessionPlaceholders})
                 `;
                 
-                db.all(attendanceQuery, studentIds, (err, attendanceRecords) => {
+                db.all(attendanceQuery, [...studentIds, ...sessionIds], (err, attendanceRecords) => {
                     if (err) {
                         console.error(err);
                         return res.status(500).send('Database error');

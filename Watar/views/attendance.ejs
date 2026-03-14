@@ -149,16 +149,13 @@
                                         <% } %>
                                     </td>
                                     <td>
-                                        <select class="form-select form-select-sm month-selector" 
+                                        <input type="number" class="form-control form-control-sm month-selector" 
+                                                style="width: 60px;"
+                                                min="1" max="48"
                                                 data-student-id="<%= student.id %>" 
+                                                value="<%= parseInt(student.current_level.replace('Month ', '')) || 1 %>"
                                                 onchange="changeStudentMonth(this)"
                                                 <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
-                                            <% for (let m = 1; m <= 48; m++) { %>
-                                                <option value="Month <%= m %>" <%= student.current_level === `Month ${m}` ? 'selected' : '' %>>
-                                                    <%= m %>
-                                                </option>
-                                            <% } %>
-                                        </select>
                                     </td>
                                     <td>
                                         <span class="badge bg-success"><%= student.instrument || 'N/A' %></span>
@@ -427,12 +424,17 @@ document.addEventListener('change', function(e) {
 });
 
 // Change student month and reload page
-function changeStudentMonth(selectElement) {
-    const studentId = selectElement.getAttribute('data-student-id');
-    const newMonth = selectElement.value;
+function changeStudentMonth(inputElement) {
+    const studentId = inputElement.getAttribute('data-student-id');
+    const val = parseInt(inputElement.value);
+    if (val < 1 || val > 48 || isNaN(val)) {
+        alert('Month must be between 1 and 48');
+        return;
+    }
+    const newMonth = 'Month ' + val;
     
     // Show loading indicator
-    selectElement.disabled = true;
+    inputElement.disabled = true;
     
     // Update student's month
     fetch('/api/update-student-month', {
@@ -452,13 +454,13 @@ function changeStudentMonth(selectElement) {
             window.location.reload();
         } else {
             alert('Error updating month: ' + (data.error || 'Unknown error'));
-            selectElement.disabled = false;
+            inputElement.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error updating month');
-        selectElement.disabled = false;
+        inputElement.disabled = false;
     });
 }
 </script>

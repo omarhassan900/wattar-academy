@@ -822,24 +822,27 @@ app.get('/attendance', requireAuth, (req, res) => {
             if (students.length === 0) {
                 db.all('SELECT DISTINCT instrument FROM students WHERE instrument IS NOT NULL AND instrument != "" ORDER BY instrument', (err, instRows) => {
                     const instruments = instRows ? instRows.map(r => r.instrument) : [];
-                    
-                    return res.render('attendance', {
-                        user,
-                        students: [],
-                        instruments: instruments,
-                        currentPage: page,
-                        totalPages: totalPages,
-                        totalStudents: totalStudents,
-                        searchTerm: searchTerm,
-                        monthFilter: monthFilter,
-                        instrumentFilter: instrumentFilter,
-                        statusFilter: statusFilter
-                    }, (err, html) => {
-                        if (err) {
-                            console.error(err);
-                            return res.status(500).send('Render error');
-                        }
-                        res.render('layout', { body: html, user: user });
+                    db.all(`SELECT DISTINCT current_level FROM students WHERE current_level IS NOT NULL ORDER BY CAST(REPLACE(current_level, 'Month ', '') AS INTEGER)`, (err, lvlRows) => {
+                        const activeLevels = lvlRows ? lvlRows.map(r => r.current_level) : [];
+                        return res.render('attendance', {
+                            user,
+                            students: [],
+                            instruments: instruments,
+                            activeLevels,
+                            currentPage: page,
+                            totalPages: totalPages,
+                            totalStudents: totalStudents,
+                            searchTerm: searchTerm,
+                            monthFilter: monthFilter,
+                            instrumentFilter: instrumentFilter,
+                            statusFilter: statusFilter
+                        }, (err, html) => {
+                            if (err) {
+                                console.error(err);
+                                return res.status(500).send('Render error');
+                            }
+                            res.render('layout', { body: html, user: user });
+                        });
                     });
                 });
                 return;
@@ -991,14 +994,18 @@ app.get('/attendance', requireAuth, (req, res) => {
                             return a.name.localeCompare(b.name);
                         });
                         
-                        // Get all instruments for filter
+                        // Get all instruments and active levels for filter
                         db.all('SELECT DISTINCT instrument FROM students WHERE instrument IS NOT NULL AND instrument != "" ORDER BY instrument', (err, instRows) => {
                             const instruments = instRows ? instRows.map(r => r.instrument) : [];
+                            
+                            db.all(`SELECT DISTINCT current_level FROM students WHERE current_level IS NOT NULL ORDER BY CAST(REPLACE(current_level, 'Month ', '') AS INTEGER)`, (err, levelRows) => {
+                            const activeLevels = levelRows ? levelRows.map(r => r.current_level) : [];
                             
                             res.render('attendance', {
                                 user,
                                 students: studentsWithData,
                                 instruments,
+                                activeLevels,
                                 currentPage: page,
                                 totalPages: totalPages,
                                 totalStudents: totalStudents,
@@ -1012,6 +1019,7 @@ app.get('/attendance', requireAuth, (req, res) => {
                                     return res.status(500).send('Render error');
                                 }
                                 res.render('layout', { body: html, user: user });
+                            });
                             });
                         });
                         }); // Close confirmations callback

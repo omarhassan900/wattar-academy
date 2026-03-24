@@ -296,7 +296,9 @@
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Students Present</th>
+                                    <th>Present</th>
+                                    <th>Absent</th>
+                                    <th>Confirmed</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -304,7 +306,9 @@
                                 <% recentAttendance.forEach(day => { %>
                                 <tr>
                                     <td><%= new Date(day.date).toLocaleDateString('en-GB', {weekday: 'short', day: '2-digit', month: 'short'}) %></td>
-                                    <td><strong><%= day.students_present %></strong> students</td>
+                                    <td><span class="badge bg-success"><%= day.students_present %></span></td>
+                                    <td><span class="badge bg-danger"><%= day.students_absent || 0 %></span></td>
+                                    <td><span class="badge bg-primary"><%= day.students_confirmed || 0 %></span></td>
                                     <td>
                                         <% if (day.students_present > 0) { %>
                                             <span class="badge bg-success">

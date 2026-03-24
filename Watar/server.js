@@ -57,6 +57,24 @@ db.run(`
     }
 });
 
+// Confirmation log - permanent record for dashboard reporting
+db.run(`
+    CREATE TABLE IF NOT EXISTS confirmation_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        confirmation_date DATE NOT NULL,
+        confirmed_by INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id)
+    )
+`, (err) => {
+    if (err) {
+        console.error('Error creating confirmation_log table:', err);
+    } else {
+        console.log('✓ confirmation_log table ready');
+    }
+});
+
 // Ensure sessions exist for all 48 months (4 sessions per month)
 // Only insert if sessions don't exist yet for a level
 db.get(`SELECT COUNT(DISTINCT level) as levelCount FROM sessions`, (err, row) => {
@@ -337,9 +355,11 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
         recentAttendance: `
             SELECT 
                 DATE(a.date) as date,
-                COUNT(DISTINCT a.student_id) as students_present
+                COUNT(DISTINCT CASE WHEN a.status IN ('present', 'attended') THEN a.student_id END) as students_present,
+                COUNT(DISTINCT CASE WHEN a.status = 'absent' THEN a.student_id END) as students_absent,
+                (SELECT COUNT(*) FROM confirmation_log cl 
+                 WHERE cl.confirmation_date = DATE(a.date)) as students_confirmed
             FROM attendance a
-            WHERE a.status IN ('present', 'attended')
             GROUP BY DATE(a.date)
             ORDER BY date DESC
             LIMIT 7
@@ -820,13 +840,19 @@ app.get('/attendance', requireAuth, (req, res) => {
         const totalStudents = countResult.total;
         const totalPages = Math.ceil(totalStudents / limit);
         
-        // Get paginated students with filters
+        // Get paginated students with filters - confirmed students first
         const studentsQuery = `
             SELECT 
-                s.id, s.name, s.phone, s.current_level, s.instrument, s.status
+                s.id, s.name, s.phone, s.current_level, s.instrument, s.status,
+                CASE 
+                    WHEN sc.confirmation_status = 'confirmed' THEN 1
+                    WHEN sc.confirmation_status = 'not_confirmed' THEN 2
+                    ELSE 3
+                END as confirm_order
             FROM students s
+            LEFT JOIN session_confirmations sc ON s.id = sc.student_id AND sc.session_id = 0
             WHERE ${whereClause}
-            ORDER BY s.name
+            ORDER BY confirm_order, s.name
             LIMIT ? OFFSET ?
         `;
         
@@ -995,23 +1021,7 @@ app.get('/attendance', requireAuth, (req, res) => {
                             };
                         });
                         
-                        // Sort students: Confirmed first, then Not Confirmed, then Pending (no confirmation)
-                        studentsWithData.sort((a, b) => {
-                            const aStatus = a.confirmation?.status || 'pending';
-                            const bStatus = b.confirmation?.status || 'pending';
-                            
-                            // Priority: confirmed (1), not_confirmed (2), pending (3)
-                            const priority = { 'confirmed': 1, 'not_confirmed': 2, 'pending': 3 };
-                            const aPriority = priority[aStatus] || 3;
-                            const bPriority = priority[bStatus] || 3;
-                            
-                            if (aPriority !== bPriority) {
-                                return aPriority - bPriority;
-                            }
-                            
-                            // If same priority, sort alphabetically by name
-                            return a.name.localeCompare(b.name);
-                        });
+                        // Sorting already done in SQL query (confirmed first)
                         
                         // Get all instruments and active levels for filter
                         db.all('SELECT DISTINCT instrument FROM students WHERE instrument IS NOT NULL AND instrument != "" ORDER BY instrument', (err, instRows) => {
@@ -1093,16 +1103,11 @@ app.post('/attendance/save-all', requireAuth, (req, res) => {
                                 if (err) {
                                     console.error('Error updating attendance:', err);
                                     errors++;
-                                } else {
-                                    // Clear confirmation status for this student (reset to pending for next session)
+                                } else if (dbStatus === 'present') {
+                                    // Only clear confirmation when student is marked as present/attended
                                     db.run(
                                         'DELETE FROM session_confirmations WHERE student_id = ? AND session_id = 0',
-                                        [record.student_id],
-                                        (err) => {
-                                            if (err) {
-                                                console.error('Error clearing confirmation:', err);
-                                            }
-                                        }
+                                        [record.student_id]
                                     );
                                 }
                                 attendanceProcessed++;
@@ -1119,16 +1124,11 @@ app.post('/attendance/save-all', requireAuth, (req, res) => {
                                 if (err) {
                                     console.error('Error inserting attendance:', err);
                                     errors++;
-                                } else {
-                                    // Clear confirmation status for this student (reset to pending for next session)
+                                } else if (dbStatus === 'present') {
+                                    // Only clear confirmation when student is marked as present/attended
                                     db.run(
                                         'DELETE FROM session_confirmations WHERE student_id = ? AND session_id = 0',
-                                        [record.student_id],
-                                        (err) => {
-                                            if (err) {
-                                                console.error('Error clearing confirmation:', err);
-                                            }
-                                        }
+                                        [record.student_id]
                                     );
                                 }
                                 attendanceProcessed++;
@@ -2507,6 +2507,12 @@ app.post('/session-confirmations/update', requireAuth, requireRole(['operations_
             if (err) {
                 console.error('Error updating confirmation:', err);
                 return res.json({ success: false, error: 'Database error' });
+            }
+            
+            // Log confirmed students permanently for dashboard reporting
+            if (confirmation_status === 'confirmed') {
+                db.run(`INSERT INTO confirmation_log (student_id, confirmation_date, confirmed_by) VALUES (?, date('now'), ?)`,
+                    [student_id, user.id]);
             }
             
             res.json({ 

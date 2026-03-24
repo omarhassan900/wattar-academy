@@ -79,6 +79,9 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_attendance_session ON attendance(session_
 db.run(`CREATE INDEX IF NOT EXISTS idx_sessions_level ON sessions(level)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_students_level ON students(current_level)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_students_status ON students(status)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_cash_date ON cash_transactions(transaction_date)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_cash_type ON cash_transactions(type)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_cash_category ON cash_transactions(category_code)`);
 
 // Middleware
 app.set('view engine', 'ejs');
@@ -296,6 +299,7 @@ app.get('/', requireAuth, (req, res) => {
 // Dashboard Routes
 app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, res) => {
     const user = req.session.user;
+    const selectedYear = parseInt(req.query.year) || new Date().getFullYear();
     
     // Get comprehensive dashboard statistics
     const queries = {
@@ -351,10 +355,16 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
             WHERE s.session_date >= date('now', '-30 days')
         `,
         
-        getalltransactions: `SELECT ct.*, cc.name as category_name, cc.type as category_type
+        getalltransactions: `SELECT 
+            COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
+            COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
+        FROM cash_transactions`,
+        
+        recentTransactions: `SELECT ct.*, cc.name as category_name, cc.type as category_type
         FROM cash_transactions ct
         LEFT JOIN cash_categories cc ON ct.category_code = cc.code
-        ORDER BY ct.transaction_date DESC, ct.created_at DESC`,
+        ORDER BY ct.transaction_date DESC, ct.created_at DESC
+        LIMIT 50`,
         
         getallcategories: `SELECT * FROM cash_categories WHERE is_active = 1 ORDER BY type, name`,
         monthlyFinance: `
@@ -363,10 +373,12 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                 SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
                 SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
             FROM cash_transactions
-            WHERE transaction_date >= date('now','start of year')
+            WHERE strftime('%Y', transaction_date) = '${selectedYear}'
             GROUP BY month
             ORDER BY month
         `,
+        
+        availableYears: `SELECT DISTINCT strftime('%Y', transaction_date) as year FROM cash_transactions ORDER BY year DESC`,
         
     };
     
@@ -394,11 +406,22 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                         if (attendanceRate && attendanceRate[0] && attendanceRate[0].total_records > 0) {
                             attendancePercentage = Math.round((attendanceRate[0].present_count / attendanceRate[0].total_records) * 100);
                         }
-                        // Get all transactions
-                        db.all(queries.getalltransactions, (err, transactions) => {
+                        // Get aggregated totals (not all rows)
+                        db.get(queries.getalltransactions, (err, totalsRow) => {
                             if (err) {
-                                console.error('Error fetching transactions:', err);
+                                console.error('Error fetching totals:', err);
                                 return res.status(500).send('Database error');
+                            }
+                            
+                            const totalIncome = totalsRow ? totalsRow.total_income : 0;
+                            const totalExpense = totalsRow ? totalsRow.total_expense : 0;
+                            const balance = totalIncome - totalExpense;
+                            
+                            // Get recent transactions for display
+                            db.all(queries.recentTransactions, (err, transactions) => {
+                            if (err) {
+                                console.error('Error fetching recent transactions:', err);
+                                transactions = [];
                             }
                             
                             // Get all categories
@@ -407,22 +430,14 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     console.error('Error fetching categories:', err);
                                     return res.status(500).send('Database error');
                                 }
-                                
-                                // Calculate totals
-                                const totalIncome = transactions
-                                    .filter(t => t.type === 'income')
-                                    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-                                
-                                const totalExpense = transactions
-                                    .filter(t => t.type === 'expense')
-                                    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-                                
-                                const balance = totalIncome - totalExpense;
                         db.all(queries.monthlyFinance, (err, monthlyFinance) => {
                             if (err) {
                                 console.error('Error fetching monthly finance:', err);
                                 return res.status(500).send('Database error');
                             }
+
+                            db.all(queries.availableYears, (err, yearRows) => {
+                            const availableYears = yearRows ? yearRows.map(r => r.year) : [new Date().getFullYear().toString()];
 
                             // Prepare 12 months structure
                             const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -451,6 +466,8 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     totalExpense,
                                     balance,
                                     financeChartData,
+                                    selectedYear,
+                                    availableYears,
                                     stats: basicStats[0] || { 
                                         total_students: 0, 
                                         inactive_students: 0,
@@ -476,6 +493,8 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                         activemenu: 'dashboard' 
                                     });
                                 });
+                            });
+                            });
                             });
                             });
                         });
@@ -1642,14 +1661,34 @@ app.get('/attendance/summary', requireAuth, (req, res) => {
 // Cash Management Routes
 app.get('/cash', requireAuth, requireRole(['manager','reception']), (req, res) => {
     const user = req.session.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 50;
+    const offset = (page - 1) * limit;
     
-    // Get all transactions
+    // Get totals via aggregation (fast)
+    db.get(`SELECT 
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense,
+        COUNT(*) as total_count
+    FROM cash_transactions`, (err, totals) => {
+        if (err) {
+            console.error('Error fetching totals:', err);
+            return res.status(500).send('Database error');
+        }
+        
+        const totalIncome = totals.total_income;
+        const totalExpense = totals.total_expense;
+        const balance = totalIncome - totalExpense;
+        const totalPages = Math.ceil(totals.total_count / limit);
+    
+    // Get paginated transactions
     db.all(`
         SELECT ct.*, cc.name as category_name, cc.type as category_type
         FROM cash_transactions ct
         LEFT JOIN cash_categories cc ON ct.category_code = cc.code
         ORDER BY ct.transaction_date DESC, ct.created_at DESC
-    `, (err, transactions) => {
+        LIMIT ? OFFSET ?
+    `, [limit, offset], (err, transactions) => {
         if (err) {
             console.error('Error fetching transactions:', err);
             return res.status(500).send('Database error');
@@ -1662,17 +1701,6 @@ app.get('/cash', requireAuth, requireRole(['manager','reception']), (req, res) =
                 return res.status(500).send('Database error');
             }
             
-            // Calculate totals
-            const totalIncome = transactions
-                .filter(t => t.type === 'income')
-                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-            
-            const totalExpense = transactions
-                .filter(t => t.type === 'expense')
-                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-            
-            const balance = totalIncome - totalExpense;
-            
             // Render cash view and wrap in layout
             res.render('cash', {
                 user,
@@ -1680,7 +1708,9 @@ app.get('/cash', requireAuth, requireRole(['manager','reception']), (req, res) =
                 categories,
                 totalIncome,
                 totalExpense,
-                balance
+                balance,
+                currentPage: page,
+                totalPages: totalPages
             }, (err, html) => {
                 if (err) {
                     console.error('Error rendering cash view:', err);
@@ -1689,6 +1719,7 @@ app.get('/cash', requireAuth, requireRole(['manager','reception']), (req, res) =
                 res.render('layout', { body: html, user: user });
             });
         });
+    });
     });
 });
 

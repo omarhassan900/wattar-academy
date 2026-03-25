@@ -343,10 +343,16 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
         
         // Students by instrument
         studentsByInstrument: `
-            SELECT instrument, COUNT(*) as count 
-            FROM students 
-            WHERE status = 'active' AND instrument IS NOT NULL AND instrument != ''
-            GROUP BY instrument 
+            SELECT 
+                UPPER(SUBSTR(instrument,1,1)) || LOWER(SUBSTR(instrument,2)) as instrument, 
+                SUM(cnt) as count 
+            FROM (
+                SELECT LOWER(TRIM(instrument)) as inst_lower, TRIM(instrument) as instrument, COUNT(*) as cnt
+                FROM students 
+                WHERE status = 'active' AND instrument IS NOT NULL AND instrument != ''
+                GROUP BY LOWER(TRIM(instrument))
+            )
+            GROUP BY inst_lower
             ORDER BY count DESC
             LIMIT 5
         `,

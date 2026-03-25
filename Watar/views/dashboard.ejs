@@ -26,6 +26,14 @@
             </div>
         <canvas id="studentsChart" class="m-2"></canvas>
     </div>
+
+    <div class="card round mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Monthly Revenue (Excl. Manager Cash)</h5>
+        </div>
+        <canvas id="revenueChart" class="m-2"></canvas>
+    </div>
+
      <div class="row mt-4">
      <div class="col-md-4">
                 <div class="card bg-success text-white mb-2">
@@ -379,6 +387,41 @@
                 y: {
                     beginAtZero: true
                 }
+            }
+        }
+    });
+
+    // Revenue Chart
+    const revenueData = <%- JSON.stringify(revenueChartData) %>;
+    const revCtx = document.getElementById('revenueChart');
+    
+    new Chart(revCtx, {
+        type: 'bar',
+        data: {
+            labels: revenueData.labels,
+            datasets: [{
+                label: 'Revenue',
+                data: revenueData.revenue,
+                backgroundColor: revenueData.revenue.map(v => v >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)'),
+                borderColor: revenueData.revenue.map(v => v >= 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: ' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true }
             }
         }
     });

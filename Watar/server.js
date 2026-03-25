@@ -400,6 +400,17 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
         
         availableYears: `SELECT DISTINCT strftime('%Y', transaction_date) as year FROM cash_transactions ORDER BY year DESC`,
         
+        monthlyRevenue: `
+            SELECT 
+                strftime('%m', transaction_date) as month,
+                SUM(CASE WHEN type = 'income' AND category_code != 'MGR_CASH' THEN amount ELSE 0 END) as real_income,
+                SUM(CASE WHEN type = 'expense' AND category_code != 'CA' THEN amount ELSE 0 END) as real_expense
+            FROM cash_transactions
+            WHERE strftime('%Y', transaction_date) = '${selectedYear}'
+            GROUP BY month
+            ORDER BY month
+        `,
+        
     };
     
     // Execute all queries
@@ -459,11 +470,15 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                             db.all(queries.availableYears, (err, yearRows) => {
                             const availableYears = yearRows ? yearRows.map(r => r.year) : [new Date().getFullYear().toString()];
 
+                            db.all(queries.monthlyRevenue, (err, monthlyRevenue) => {
+                            if (err) console.error('Error fetching monthly revenue:', err);
+
                             // Prepare 12 months structure
                             const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                             
                             const incomeData = Array(12).fill(0);
                             const expenseData = Array(12).fill(0);
+                            const revenueData = Array(12).fill(0);
 
                             monthlyFinance.forEach(row => {
                                 const index = parseInt(row.month) - 1;
@@ -471,10 +486,20 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                 expenseData[index] = row.total_expense || 0;
                             });
 
+                            (monthlyRevenue || []).forEach(row => {
+                                const index = parseInt(row.month) - 1;
+                                revenueData[index] = (row.real_income || 0) - (row.real_expense || 0);
+                            });
+
                             const financeChartData = {
                                 labels: monthLabels,
                                 income: incomeData,
                                 expenses: expenseData
+                            };
+
+                            const revenueChartData = {
+                                labels: monthLabels,
+                                revenue: revenueData
                             };
                                 console.log(studentsByMonth);
                                 // Render dashboard view as a string
@@ -486,6 +511,7 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     totalExpense,
                                     balance,
                                     financeChartData,
+                                    revenueChartData,
                                     selectedYear,
                                     availableYears,
                                     stats: basicStats[0] || { 
@@ -513,6 +539,7 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                         activemenu: 'dashboard' 
                                     });
                                 });
+                            });
                             });
                             });
                             });

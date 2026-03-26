@@ -2544,8 +2544,8 @@ app.post('/session-confirmations/update', requireAuth, requireRole(['operations_
             
             // Log confirmed students permanently for dashboard reporting
             if (confirmation_status === 'confirmed') {
-                db.run(`INSERT INTO confirmation_log (student_id, confirmation_date, confirmed_by) VALUES (?, date('now'), ?)`,
-                    [student_id, user.id]);
+                db.run(`INSERT INTO confirmation_log (student_id, confirmation_date, confirmed_by) VALUES (?, ?, ?)`,
+                    [student_id, session_date || new Date().toISOString().split('T')[0], user.id]);
             }
             
             res.json({ 

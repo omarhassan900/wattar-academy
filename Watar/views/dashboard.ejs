@@ -34,6 +34,13 @@
         <canvas id="revenueChart" class="m-2"></canvas>
     </div>
 
+    <div class="card round mt-3">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Monthly Expenses by Category</h5>
+        </div>
+        <canvas id="expenseCategoryChart" class="m-2"></canvas>
+    </div>
+
      <div class="row mt-4">
      <div class="col-md-4">
                 <div class="card bg-success text-white mb-2">
@@ -422,6 +429,36 @@
             },
             scales: {
                 y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Expense by Category Chart
+    const expCatData = <%- JSON.stringify(expenseByCategoryData) %>;
+    const expCatCtx = document.getElementById('expenseCategoryChart');
+    
+    new Chart(expCatCtx, {
+        type: 'bar',
+        data: {
+            labels: expCatData.labels,
+            datasets: expCatData.datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true }
             }
         }
     });

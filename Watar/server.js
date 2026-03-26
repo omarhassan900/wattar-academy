@@ -417,6 +417,19 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
             ORDER BY month
         `,
         
+        monthlyExpenseByCategory: `
+            SELECT 
+                strftime('%m', ct.transaction_date) as month,
+                ct.category_code,
+                cc.name as category_name,
+                SUM(ct.amount) as total
+            FROM cash_transactions ct
+            LEFT JOIN cash_categories cc ON ct.category_code = cc.code
+            WHERE ct.type = 'expense' AND ct.category_code != 'CA' AND strftime('%Y', ct.transaction_date) = '${selectedYear}'
+            GROUP BY month, ct.category_code
+            ORDER BY month, ct.category_code
+        `,
+        
     };
     
     // Execute all queries
@@ -479,6 +492,9 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                             db.all(queries.monthlyRevenue, (err, monthlyRevenue) => {
                             if (err) console.error('Error fetching monthly revenue:', err);
 
+                            db.all(queries.monthlyExpenseByCategory, (err, expByCat) => {
+                            if (err) console.error('Error fetching expense by category:', err);
+
                             // Prepare 12 months structure
                             const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                             
@@ -496,6 +512,27 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                 const index = parseInt(row.month) - 1;
                                 revenueData[index] = (row.real_income || 0) - (row.real_expense || 0);
                             });
+
+                            // Build expense by category chart data
+                            const catColors = {
+                                'T': '#e74c3c', 'S': '#3498db', 'CA': '#f39c12', 'C': '#2ecc71',
+                                'AR': '#9b59b6', 'B': '#1abc9c', 'E': '#e67e22', 'R': '#34495e',
+                                'ST': '#e91e63', 'SI': '#00bcd4', 'BA': '#ff5722', 'D': '#795548'
+                            };
+                            const catMap = {};
+                            (expByCat || []).forEach(row => {
+                                const name = row.category_name || row.category_code;
+                                if (!catMap[name]) catMap[name] = { code: row.category_code, data: Array(12).fill(0) };
+                                catMap[name].data[parseInt(row.month) - 1] = row.total;
+                            });
+                            const expenseByCategoryData = {
+                                labels: monthLabels,
+                                datasets: Object.entries(catMap).map(([name, val]) => ({
+                                    label: name,
+                                    data: val.data,
+                                    backgroundColor: catColors[val.code] || '#' + Math.floor(Math.random()*16777215).toString(16)
+                                }))
+                            };
 
                             const financeChartData = {
                                 labels: monthLabels,
@@ -518,6 +555,7 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     balance,
                                     financeChartData,
                                     revenueChartData,
+                                    expenseByCategoryData,
                                     selectedYear,
                                     availableYears,
                                     stats: basicStats[0] || { 
@@ -545,6 +583,7 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                         activemenu: 'dashboard' 
                                     });
                                 });
+                            });
                             });
                             });
                             });

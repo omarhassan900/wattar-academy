@@ -430,6 +430,19 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
             ORDER BY month, ct.category_code
         `,
         
+        monthlyIncomeByCategory: `
+            SELECT 
+                strftime('%m', ct.transaction_date) as month,
+                ct.category_code,
+                cc.name as category_name,
+                SUM(ct.amount) as total
+            FROM cash_transactions ct
+            LEFT JOIN cash_categories cc ON ct.category_code = cc.code
+            WHERE ct.type = 'income' AND ct.category_code != 'MGR_CASH' AND strftime('%Y', ct.transaction_date) = '${selectedYear}'
+            GROUP BY month, ct.category_code
+            ORDER BY month, ct.category_code
+        `,
+        
     };
     
     // Execute all queries
@@ -495,6 +508,9 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                             db.all(queries.monthlyExpenseByCategory, (err, expByCat) => {
                             if (err) console.error('Error fetching expense by category:', err);
 
+                            db.all(queries.monthlyIncomeByCategory, (err, incByCat) => {
+                            if (err) console.error('Error fetching income by category:', err);
+
                             // Prepare 12 months structure
                             const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                             
@@ -534,6 +550,27 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                 }))
                             };
 
+                            // Build income by category chart data
+                            const incColors = {
+                                'P': '#3498db', 'V': '#9b59b6', 'G': '#e74c3c', 'VO': '#f39c12',
+                                'O': '#e67e22', 'D': '#795548', 'DR': '#607d8b', 'SI': '#00bcd4',
+                                'A': '#ff9800', 'BA': '#4caf50', 'MGR_CASH': '#ffc107'
+                            };
+                            const incCatMap = {};
+                            (incByCat || []).forEach(row => {
+                                const name = row.category_name || row.category_code;
+                                if (!incCatMap[name]) incCatMap[name] = { code: row.category_code, data: Array(12).fill(0) };
+                                incCatMap[name].data[parseInt(row.month) - 1] = row.total;
+                            });
+                            const incomeByCategoryData = {
+                                labels: monthLabels,
+                                datasets: Object.entries(incCatMap).map(([name, val]) => ({
+                                    label: name,
+                                    data: val.data,
+                                    backgroundColor: incColors[val.code] || '#' + Math.floor(Math.random()*16777215).toString(16)
+                                }))
+                            };
+
                             const financeChartData = {
                                 labels: monthLabels,
                                 income: incomeData,
@@ -556,6 +593,7 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                     financeChartData,
                                     revenueChartData,
                                     expenseByCategoryData,
+                                    incomeByCategoryData,
                                     selectedYear,
                                     availableYears,
                                     stats: basicStats[0] || { 
@@ -583,6 +621,7 @@ app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, r
                                         activemenu: 'dashboard' 
                                     });
                                 });
+                            });
                             });
                             });
                             });

@@ -103,6 +103,11 @@
                                 <option value="graduated" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'graduated') ? 'selected' : '' %>>Graduated</option>
                             </select>
                         </div>
+                        <div class="col-md-2 mb-2">
+                            <input type="date" class="form-control" name="date" id="dateFilter" 
+                                   value="<%= typeof dateFilter !== 'undefined' ? dateFilter : '' %>"
+                                   placeholder="Filter by date">
+                        </div>
                         <div class="col-md-1">
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-filter"></i>
@@ -397,6 +402,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (monthFilter) monthFilter.addEventListener('change', () => filterForm.submit());
     if (instrumentFilter) instrumentFilter.addEventListener('change', () => filterForm.submit());
     if (statusFilter) statusFilter.addEventListener('change', () => filterForm.submit());
+    const dateFilter = document.getElementById('dateFilter');
+    if (dateFilter) dateFilter.addEventListener('change', () => filterForm.submit());
     
     // Debounced search submission
     //let searchTimeout;

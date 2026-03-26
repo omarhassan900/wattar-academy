@@ -915,6 +915,7 @@ app.get('/attendance', requireAuth, (req, res) => {
     const monthFilter = req.query.month || '';
     const instrumentFilter = req.query.instrument || '';
     const statusFilter = req.query.status || '';
+    const dateFilter = req.query.date || '';
     
     // Build WHERE clause based on filters
     let whereConditions = ["s.status = 'active'"];
@@ -935,6 +936,10 @@ app.get('/attendance', requireAuth, (req, res) => {
     if (statusFilter) {
         whereConditions.push("s.status = ?");
         queryParams.push(statusFilter);
+    }
+    if (dateFilter) {
+        whereConditions.push("s.id IN (SELECT DISTINCT student_id FROM attendance WHERE date = ?)");
+        queryParams.push(dateFilter);
     }
     
     const whereClause = whereConditions.join(' AND ');
@@ -991,7 +996,8 @@ app.get('/attendance', requireAuth, (req, res) => {
                             searchTerm: searchTerm,
                             monthFilter: monthFilter,
                             instrumentFilter: instrumentFilter,
-                            statusFilter: statusFilter
+                            statusFilter: statusFilter,
+                            dateFilter: dateFilter
                         }, (err, html) => {
                             if (err) {
                                 console.error(err);
@@ -1152,7 +1158,8 @@ app.get('/attendance', requireAuth, (req, res) => {
                                 searchTerm: searchTerm,
                                 monthFilter: monthFilter,
                                 instrumentFilter: instrumentFilter,
-                                statusFilter: statusFilter
+                                statusFilter: statusFilter,
+                                dateFilter: dateFilter
                             }, (err, html) => {
                                 if (err) {
                                     console.error(err);

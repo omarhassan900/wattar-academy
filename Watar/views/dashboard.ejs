@@ -146,15 +146,15 @@
                 <% if (studentsByMonth && studentsByMonth.length > 0) { %>
                 <div class="table-responsive">
                     <table class="table table-sm">
-                        <thead><tr><th>Month</th><th>Students</th><th>Progress</th></tr></thead>
+                        <thead><tr><th>Month</th><th>Students</th><th>Distribution</th></tr></thead>
                         <tbody>
-                            <% const maxCount = Math.max(...studentsByMonth.map(m => m.count));
+                            <% const totalStudentsByMonth = studentsByMonth.reduce((sum, m) => sum + m.count, 0);
                             studentsByMonth.forEach(month => { 
-                                const percentage = (month.count / maxCount) * 100; %>
+                                const pct = Math.round((month.count / totalStudentsByMonth) * 100); %>
                             <tr>
                                 <td><%= month.current_level %></td>
-                                <td><span class="badge bg-info"><%= month.count %></span></td>
-                                <td><div class="progress" style="height: 20px;"><div class="progress-bar bg-primary" style="width: <%= percentage %>%"></div></div></td>
+                                <td><span class="badge bg-primary"><%= month.count %></span></td>
+                                <td><div class="progress" style="height: 20px;"><div class="progress-bar bg-primary" style="width: <%= pct %>%"><%= pct %>%</div></div></td>
                             </tr>
                             <% }); %>
                         </tbody>

@@ -2515,7 +2515,7 @@ app.get('/session-confirmations', requireAuth, requireRole(['operations_manager'
         LEFT JOIN trainers t ON s.trainer_id = t.id
         LEFT JOIN users u ON t.user_id = u.id
         WHERE s.status = 'active'
-        ORDER BY s.current_level, s.name
+        ORDER BY u.full_name, s.current_level, s.name
     `;
     
     db.all(query, [], (err, students) => {
@@ -2536,12 +2536,12 @@ app.get('/session-confirmations', requireAuth, requireRole(['operations_manager'
                 console.error('Error fetching trainers:', err);
             }
             
-            // Group students by level
-            const studentsByLevel = {};
+            // Group students by trainer
+            const studentsByTrainer = {};
             students.forEach(student => {
-                const level = student.current_level;
-                if (!studentsByLevel[level]) {
-                    studentsByLevel[level] = [];
+                const trainerKey = student.trainer_name || 'No Trainer';
+                if (!studentsByTrainer[trainerKey]) {
+                    studentsByTrainer[trainerKey] = [];
                 }
                 
                 // Determine next session number (1-4)
@@ -2549,15 +2549,15 @@ app.get('/session-confirmations', requireAuth, requireRole(['operations_manager'
                 student.next_session = nextSession;
                 student.progress = `${student.completed_sessions || 0}/4`;
                 
-                studentsByLevel[level].push(student);
+                studentsByTrainer[trainerKey].push(student);
             });
             
             // Get unique levels for filter
-            const levels = Object.keys(studentsByLevel).sort();
+            const levels = [...new Set(students.map(s => s.current_level))].sort();
             
             res.render('session-confirmations', {
                 user,
-                studentsByLevel,
+                studentsByTrainer,
                 trainers: trainers || [],
                 levels,
                 moment

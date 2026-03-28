@@ -65,8 +65,12 @@
 </div>
 
 <% 
-const levelsArray = Object.keys(studentsByLevel).sort();
-if (levelsArray.length === 0) { 
+const trainerNames = Object.keys(studentsByTrainer).sort((a, b) => {
+    if (a === 'No Trainer') return 1;
+    if (b === 'No Trainer') return -1;
+    return a.localeCompare(b);
+});
+if (trainerNames.length === 0) { 
 %>
 <div class="row">
     <div class="col-12">
@@ -82,16 +86,16 @@ if (levelsArray.length === 0) {
 <% } else { %>
 
 <div id="studentsContainer">
-<% levelsArray.forEach(level => { 
-    const students = studentsByLevel[level];
+<% trainerNames.forEach(trainerName => { 
+    const students = studentsByTrainer[trainerName];
 %>
 
-<div class="row mb-4 level-section" data-level="<%= level %>">
+<div class="row mb-4 level-section" data-level="<%= trainerName %>">
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-layer-group me-2"></i><%= level %>
+                    <i class="fas fa-user-tie me-2"></i><%= trainerName %>
                     <span class="badge bg-light text-dark ms-2 level-count"><%= students.length %> Students</span>
                 </h5>
             </div>
@@ -101,7 +105,7 @@ if (levelsArray.length === 0) {
                         <thead class="table-light">
                             <tr>
                                 <th>Student Name</th>
-                                <th>Trainer</th>
+                                <th>Level</th>
                                 <th>Progress</th>
                                 <th>Next Session</th>
                                 <th>Last Attended</th>
@@ -125,11 +129,7 @@ if (levelsArray.length === 0) {
                                     <strong class="student-name-display"><%= student.student_name %></strong>
                                 </td>
                                 <td>
-                                    <% if (student.trainer_name) { %>
-                                        <span class="badge bg-info"><i class="fas fa-user-tie me-1"></i><%= student.trainer_name %></span>
-                                    <% } else { %>
-                                        <span class="text-muted">No Trainer</span>
-                                    <% } %>
+                                    <span class="badge bg-primary"><%= student.current_level %></span>
                                 </td>
                                 <td>
                                     <span class="badge bg-info"><%= student.progress %> Sessions</span>
@@ -486,7 +486,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (countBadge) {
                 countBadge.textContent = `${visibleRows} Students`;
             }
-            section.style.display = visibleRows === 0 ? 'none' : '';
+            // For trainer filter, also hide the whole section if trainer doesn't match
+            const sectionTrainer = section.dataset.level; // trainer name stored in data-level
+            const trainerMatch = !selectedTrainer || 
+                section.querySelectorAll(`.student-row[data-trainer-id="${selectedTrainer}"]`).length > 0;
+            section.style.display = (visibleRows === 0) ? 'none' : '';
         });
     }
     

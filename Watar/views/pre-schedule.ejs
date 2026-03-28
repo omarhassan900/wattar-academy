@@ -32,6 +32,20 @@
     </div>
 </div>
 
+<!-- Trainer Filter -->
+<div class="row mb-3">
+    <div class="col-md-3">
+        <select id="schedule-trainer-filter" class="form-select form-select-sm">
+            <option value="">All Instructors</option>
+            <% if (typeof trainers !== 'undefined' && trainers) { %>
+                <% trainers.forEach(trainer => { %>
+                    <option value="<%= trainer.name %>"><%= trainer.name %></option>
+                <% }); %>
+            <% } %>
+        </select>
+    </div>
+</div>
+
 <!-- Calendar View -->
 <div class="row mb-2">
     <div class="col-12">
@@ -384,6 +398,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load schedule data
     loadSchedule();
     
+    // Trainer filter
+    document.getElementById('schedule-trainer-filter').addEventListener('change', function() {
+        renderCalendar();
+    });
+    
     function loadSchedule() {
         fetch('/pre-schedule/list')
             .then(response => response.json())
@@ -398,8 +417,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function renderCalendar() {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const selectedTrainer = document.getElementById('schedule-trainer-filter').value;
         
-        // Build trainer color map first from all schedule data
+        // Filter schedule data by trainer if selected
+        const filteredData = selectedTrainer 
+            ? scheduleData.filter(s => s.trainer_name === selectedTrainer)
+            : scheduleData;
+        
+        // Build trainer color map first from ALL schedule data (not filtered)
         const uniqueTrainers = [...new Set(scheduleData.filter(s => s.trainer_name).map(s => s.trainer_name))];
         uniqueTrainers.forEach(name => getTrainerColor(name));
         
@@ -420,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Get all unique time slots and sort them
-        const timeSlots = [...new Set(scheduleData.map(s => s.time_slot))].sort();
+        const timeSlots = [...new Set(filteredData.map(s => s.time_slot))].sort();
         
         // If no time slots, show default hours
         const defaultTimes = timeSlots.length > 0 ? timeSlots : [
@@ -445,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const dayCell = document.createElement('td');
                 
                 // Find schedules for this day and time
-                const daySchedules = scheduleData.filter(s => 
+                const daySchedules = filteredData.filter(s => 
                     s.day_of_week === day && s.time_slot === time && s.is_active === 1
                 );
                 

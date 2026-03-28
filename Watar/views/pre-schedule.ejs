@@ -33,6 +33,15 @@
 </div>
 
 <!-- Calendar View -->
+<div class="row mb-2">
+    <div class="col-12">
+        <div id="trainer-legend" class="d-flex flex-wrap gap-2 align-items-center" style="font-size: 0.8rem;">
+            <span class="text-muted fw-bold me-1"><i class="fas fa-palette me-1"></i>Trainers:</span>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Table -->
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -87,15 +96,24 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label for="add-student" class="form-label">Student *</label>
-                    <select class="form-select" id="add-student" required>
-                        <option value="">Select Student</option>
+                    <label class="form-label">Students * <small class="text-muted">(select one or more)</small></label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="add-student-search" placeholder="Search students...">
+                    </div>
+                    <div id="add-student-list" style="max-height: 180px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 4px;">
                         <% if (typeof students !== 'undefined' && students) { %>
                             <% students.forEach(student => { %>
-                                <option value="<%= student.id %>" data-level="<%= student.current_level %>"><%= student.name %> (<%= student.current_level %>)</option>
+                                <div class="form-check student-check-item px-2 py-1" data-name="<%= student.name.toLowerCase() %>">
+                                    <input class="form-check-input add-student-cb" type="checkbox" value="<%= student.id %>" data-level="<%= student.current_level %>" id="add-stu-<%= student.id %>">
+                                    <label class="form-check-label" for="add-stu-<%= student.id %>" style="cursor:pointer; font-size:0.88rem;">
+                                        <%= student.name %> <span class="text-muted">(<%= student.current_level %>)</span>
+                                    </label>
+                                </div>
                             <% }); %>
                         <% } %>
-                    </select>
+                    </div>
+                    <small id="add-student-count" class="text-primary fw-bold mt-1 d-block">0 selected</small>
                 </div>
                 
                 <div class="mb-3">
@@ -205,7 +223,7 @@
 
 <style>
 .schedule-calendar {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
 }
 
 .schedule-calendar th {
@@ -213,12 +231,14 @@
     vertical-align: middle;
     background-color: #f8f9fa;
     font-weight: 600;
+    padding: 5px 4px;
+    font-size: 0.8rem;
 }
 
 .schedule-calendar td {
     vertical-align: top;
-    padding: 8px;
-    min-height: 60px;
+    padding: 4px;
+    min-height: 40px;
     position: relative;
 }
 
@@ -227,21 +247,23 @@
     font-weight: 600;
     text-align: center;
     vertical-align: middle;
+    padding: 3px 4px;
+    font-size: 0.8rem;
 }
 
 .schedule-slot {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 6px;
+    padding: 4px 6px;
+    border-radius: 5px;
+    margin-bottom: 4px;
     <% if (typeof isReadOnly === 'undefined' || !isReadOnly) { %>
     cursor: pointer;
     <% } else { %>
     cursor: default;
     <% } %>
     transition: transform 0.2s, box-shadow 0.2s;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
+    line-height: 1.3;
 }
 
 <% if (typeof isReadOnly === 'undefined' || !isReadOnly) { %>
@@ -253,48 +275,64 @@
 
 .schedule-slot .student-name {
     font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 4px;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+
+.schedule-slot .student-names {
+    margin-bottom: 2px;
+}
+
+.schedule-slot .student-name-item {
+    display: block;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 1px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.schedule-slot .student-name-item:last-child {
+    border-bottom: none;
 }
 
 .schedule-slot .level-badge {
     background-color: rgba(255,255,255,0.3);
-    padding: 2px 6px;
+    padding: 1px 5px;
     border-radius: 3px;
-    font-size: 0.75rem;
+    font-size: 0.68rem;
     display: inline-block;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .schedule-slot .time-range {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     opacity: 0.95;
-    margin-top: 2px;
+    margin-top: 1px;
     font-weight: 600;
     background-color: rgba(255,255,255,0.2);
-    padding: 2px 6px;
+    padding: 1px 5px;
     border-radius: 3px;
     display: inline-block;
 }
 
 .schedule-slot .trainer-name {
-    font-size: 0.75rem;
+    font-size: 0.68rem;
     opacity: 0.9;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .schedule-slot .notes-text {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     opacity: 0.8;
     font-style: italic;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 .empty-slot {
     color: #999;
     font-size: 0.8rem;
     text-align: center;
-    padding: 20px;
+    padding: 10px;
 }
 </style>
 
@@ -304,6 +342,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const editScheduleModal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
     
     let scheduleData = [];
+    
+    // Color palette for trainers - each trainer gets a unique gradient
+    const trainerColors = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',  // Purple
+        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',  // Pink
+        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',  // Blue
+        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',  // Green
+        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',  // Rose-Yellow
+        'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',  // Lavender
+        'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',  // Peach-Purple
+        'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',  // Light Purple-Blue
+        'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',  // Yellow-Orange
+        'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',  // Cyan-Blue
+    ];
+    const noTrainerColor = 'linear-gradient(135deg, #a0a0a0 0%, #6c6c6c 100%)'; // Gray for unassigned
+    const trainerColorMap = {};
+    let colorIndex = 0;
+    
+    function getTrainerColor(trainerName) {
+        if (!trainerName) return noTrainerColor;
+        if (!trainerColorMap[trainerName]) {
+            trainerColorMap[trainerName] = trainerColors[colorIndex % trainerColors.length];
+            colorIndex++;
+        }
+        return trainerColorMap[trainerName];
+    }
     
     // Function to calculate end time (45 minutes later)
     function formatTimeRange(startTime) {
@@ -334,6 +398,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function renderCalendar() {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // Build trainer color map first from all schedule data
+        const uniqueTrainers = [...new Set(scheduleData.filter(s => s.trainer_name).map(s => s.trainer_name))];
+        uniqueTrainers.forEach(name => getTrainerColor(name));
+        
+        // Render legend
+        const legend = document.getElementById('trainer-legend');
+        // Keep the label, clear the rest
+        legend.innerHTML = '<span class="text-muted fw-bold me-1"><i class="fas fa-palette me-1"></i>Trainers:</span>';
+        uniqueTrainers.forEach(name => {
+            const chip = document.createElement('span');
+            chip.style.background = getTrainerColor(name);
+            chip.style.color = 'white';
+            chip.style.padding = '2px 10px';
+            chip.style.borderRadius = '12px';
+            chip.style.fontSize = '0.75rem';
+            chip.style.fontWeight = '600';
+            chip.textContent = name;
+            legend.appendChild(chip);
+        });
         
         // Get all unique time slots and sort them
         const timeSlots = [...new Set(scheduleData.map(s => s.time_slot))].sort();
@@ -366,21 +450,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 );
                 
                 if (daySchedules.length > 0) {
-                    daySchedules.forEach(schedule => {
+                    // Group by trainer (trainer_id or 'none')
+                    const groups = {};
+                    daySchedules.forEach(s => {
+                        const key = s.trainer_id || 'none';
+                        if (!groups[key]) groups[key] = [];
+                        groups[key].push(s);
+                    });
+                    
+                    Object.values(groups).forEach(group => {
+                        const first = group[0];
                         const slotDiv = document.createElement('div');
                         slotDiv.className = 'schedule-slot';
-                        slotDiv.dataset.scheduleId = schedule.id;
+                        slotDiv.dataset.scheduleIds = group.map(s => s.id).join(',');
+                        slotDiv.style.background = getTrainerColor(first.trainer_name);
+                        
+                        // Build student names list
+                        const studentsHtml = group.map(s => 
+                            `<span class="student-name-item" data-id="${s.id}">${s.student_name} <span class="level-badge">${s.student_level}</span></span>`
+                        ).join('');
                         
                         slotDiv.innerHTML = `
-                            <div class="student-name">${schedule.student_name}</div>
-                            <div class="level-badge">${schedule.student_level}</div>
-                            <div class="time-range"><i class="fas fa-clock me-1"></i>${formatTimeRange(schedule.time_slot)}</div>
-                            ${schedule.trainer_name ? `<div class="trainer-name"><i class="fas fa-user-tie me-1"></i>${schedule.trainer_name}</div>` : ''}
-                            ${schedule.notes ? `<div class="notes-text">${schedule.notes}</div>` : ''}
+                            <div class="student-names">${studentsHtml}</div>
+                            <div class="time-range"><i class="fas fa-clock me-1"></i>${formatTimeRange(first.time_slot)}</div>
+                            ${first.trainer_name ? `<div class="trainer-name"><i class="fas fa-user-tie me-1"></i>${first.trainer_name}</div>` : ''}
+                            ${first.notes ? `<div class="notes-text">${first.notes}</div>` : ''}
                         `;
                         
                         <% if (typeof isReadOnly === 'undefined' || !isReadOnly) { %>
-                        slotDiv.addEventListener('click', () => openEditModal(schedule));
+                        slotDiv.addEventListener('click', () => openGroupEditModal(group));
                         <% } %>
                         dayCell.appendChild(slotDiv);
                     });
@@ -391,6 +489,36 @@ document.addEventListener('DOMContentLoaded', function() {
             
             scheduleBody.appendChild(row);
         });
+    }
+    
+    function openGroupEditModal(group) {
+        <% if (typeof isReadOnly !== 'undefined' && isReadOnly) { %>
+        alert('View Only: Contact operations manager to make changes to the schedule.');
+        return;
+        <% } %>
+        
+        // If single student, use normal edit
+        if (group.length === 1) {
+            openEditModal(group[0]);
+            return;
+        }
+        
+        // For group, let user pick which student to edit
+        let msg = 'Which student do you want to edit?\n\n';
+        group.forEach((s, i) => {
+            msg += `${i + 1}. ${s.student_name} (${s.student_level})\n`;
+        });
+        msg += `\nEnter number (1-${group.length}):`;
+        
+        const choice = prompt(msg);
+        if (!choice) return;
+        
+        const idx = parseInt(choice) - 1;
+        if (idx >= 0 && idx < group.length) {
+            openEditModal(group[idx]);
+        } else {
+            alert('Invalid selection');
+        }
     }
     
     function openEditModal(schedule) {
@@ -410,97 +538,106 @@ document.addEventListener('DOMContentLoaded', function() {
         editScheduleModal.show();
     }
     
+    // Search filter for student checkboxes
+    document.getElementById('add-student-search').addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('.student-check-item').forEach(item => {
+            item.style.display = item.dataset.name.includes(query) ? '' : 'none';
+        });
+    });
+    
+    // Update selected count
+    document.getElementById('add-student-list').addEventListener('change', function() {
+        const count = document.querySelectorAll('.add-student-cb:checked').length;
+        document.getElementById('add-student-count').textContent = count + ' selected';
+    });
+    
     // Add schedule
     document.getElementById('save-schedule-btn').addEventListener('click', function() {
         const day = document.getElementById('add-day').value;
-        const student = document.getElementById('add-student').value;
+        const selectedStudents = [...document.querySelectorAll('.add-student-cb:checked')].map(cb => cb.value);
         const time = document.getElementById('add-time').value;
         const trainer = document.getElementById('add-trainer').value;
         const notes = document.getElementById('add-notes').value;
         
-        if (!day || !student || !time) {
-            alert('Please fill in all required fields (Day, Student, Time)');
+        if (!day || selectedStudents.length === 0 || !time) {
+            alert('Please fill in all required fields (Day, at least one Student, Time)');
             return;
         }
         
-        // Check for time conflicts (45-minute sessions)
-        if (!checkTimeConflict(day, time, trainer, null)) {
-            return; // Conflict detected, don't proceed
+        // Check for duplicates
+        for (const studentId of selectedStudents) {
+            if (!checkTimeConflict(day, time, trainer, null, studentId)) {
+                return;
+            }
         }
         
-        fetch('/pre-schedule/add', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                day_of_week: day,
-                student_id: student,
-                time_slot: time,
-                trainer_id: trainer || null,
-                notes: notes
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Student added to schedule successfully!');
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        
+        // Send one request per student
+        const promises = selectedStudents.map(studentId =>
+            fetch('/pre-schedule/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    day_of_week: day,
+                    student_id: studentId,
+                    time_slot: time,
+                    trainer_id: trainer || null,
+                    notes: notes
+                })
+            }).then(r => r.json())
+        );
+        
+        Promise.all(promises)
+            .then(results => {
+                const failed = results.filter(r => !r.success);
+                if (failed.length > 0) {
+                    alert(`Added ${results.length - failed.length} student(s). ${failed.length} failed.`);
+                } else {
+                    alert(`${results.length} student(s) added to schedule successfully!`);
+                }
                 addScheduleModal.hide();
+                // Reset form
                 document.getElementById('add-day').value = '';
-                document.getElementById('add-student').value = '';
+                document.querySelectorAll('.add-student-cb:checked').forEach(cb => cb.checked = false);
+                document.getElementById('add-student-count').textContent = '0 selected';
+                document.getElementById('add-student-search').value = '';
+                document.querySelectorAll('.student-check-item').forEach(item => item.style.display = '');
                 document.getElementById('add-time').value = '';
                 document.getElementById('add-trainer').value = '';
                 document.getElementById('add-notes').value = '';
                 loadSchedule();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error adding to schedule');
-        });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding to schedule');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save me-2"></i>Add to Schedule';
+            });
     });
     
-    // Function to check for time conflicts
-    function checkTimeConflict(day, newTime, trainerId, excludeScheduleId) {
-        const [newHours, newMinutes] = newTime.split(':').map(Number);
-        const newStart = newHours * 60 + newMinutes;
-        const newEnd = newStart + 45; // 45-minute session
-        
-        // Find all schedules for this day and trainer
-        const daySchedules = scheduleData.filter(s => 
+    // Function to check for duplicate student in same slot (allows multiple students per slot)
+    function checkTimeConflict(day, newTime, trainerId, excludeScheduleId, studentId) {
+        // Only prevent the same student from being added to the same day+time
+        const duplicate = scheduleData.find(s => 
             s.day_of_week === day && 
+            s.time_slot === newTime && 
+            s.student_id == studentId &&
             s.is_active === 1 &&
-            s.id !== excludeScheduleId // Exclude current schedule when editing
+            s.id != excludeScheduleId
         );
         
-        // If trainer is selected, only check conflicts for same trainer
-        const relevantSchedules = trainerId 
-            ? daySchedules.filter(s => s.trainer_id == trainerId)
-            : daySchedules;
-        
-        for (const schedule of relevantSchedules) {
-            const [existHours, existMinutes] = schedule.time_slot.split(':').map(Number);
-            const existStart = existHours * 60 + existMinutes;
-            const existEnd = existStart + 45;
-            
-            // Check if times overlap
-            if ((newStart < existEnd && newEnd > existStart)) {
-                const conflictStudent = schedule.student_name;
-                const conflictTime = formatTimeRange(schedule.time_slot);
-                
-                let message = `⚠️ TIME CONFLICT!\n\n`;
-                message += `${conflictStudent} is already scheduled at ${conflictTime} on ${day}`;
-                if (trainerId && schedule.trainer_name) {
-                    message += ` with ${schedule.trainer_name}`;
-                }
-                message += `.\n\nEach session is 45 minutes. Please choose a different time slot.`;
-                
-                alert(message);
-                return false;
-            }
+        if (duplicate) {
+            alert(`⚠️ DUPLICATE!\n\n${duplicate.student_name} is already scheduled at ${formatTimeRange(newTime)} on ${day}.\n\nThe same student cannot be added twice to the same slot.`);
+            return false;
         }
         
-        return true; // No conflict
+        return true; // No conflict - multiple students per slot is allowed
     }
     
     // Update schedule
@@ -517,9 +654,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Check for time conflicts (exclude current schedule)
-        if (!checkTimeConflict(day, time, trainer, id)) {
-            return; // Conflict detected, don't proceed
+        // Check for duplicate student in same slot (exclude current schedule)
+        if (!checkTimeConflict(day, time, trainer, id, student)) {
+            return; // Duplicate detected, don't proceed
         }
         
         fetch('/pre-schedule/update', {

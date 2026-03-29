@@ -12,6 +12,30 @@ const PORT = 3000;
 // Database setup
 const db = new sqlite3.Database('wattar.db');
 
+// Migration: Add 'sales' to users role constraint (SQLite requires table recreation)
+db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'", (err, row) => {
+    if (row && row.sql && !row.sql.includes("'sales'")) {
+        console.log('Migrating users table to add sales role...');
+        db.serialize(() => {
+            db.run(`ALTER TABLE users RENAME TO users_old`);
+            db.run(`CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                full_name VARCHAR(100) NOT NULL,
+                email VARCHAR(100),
+                role TEXT CHECK(role IN ('manager', 'reception', 'trainer', 'operations_manager', 'sales')) NOT NULL,
+                status TEXT CHECK(status IN ('active', 'inactive')) DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`);
+            db.run(`INSERT INTO users SELECT * FROM users_old`);
+            db.run(`DROP TABLE users_old`);
+            console.log('✓ Users table migrated with sales role');
+        });
+    }
+});
+
 // Ensure student_level_notes table exists
 db.run(`
     CREATE TABLE IF NOT EXISTS student_level_notes (
@@ -101,6 +125,55 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_cash_date ON cash_transactions(transactio
 db.run(`CREATE INDEX IF NOT EXISTS idx_cash_type ON cash_transactions(type)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_cash_category ON cash_transactions(category_code)`);
 
+// Leads table for sales pipeline
+db.run(`
+    CREATE TABLE IF NOT EXISTS leads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name VARCHAR(100) NOT NULL,
+        phone VARCHAR(20),
+        parent_phone VARCHAR(20),
+        email VARCHAR(100),
+        age INTEGER,
+        instrument VARCHAR(50),
+        source VARCHAR(50),
+        status VARCHAR(20) DEFAULT 'new',
+        assigned_to INTEGER,
+        notes TEXT,
+        created_by INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (assigned_to) REFERENCES users(id),
+        FOREIGN KEY (created_by) REFERENCES users(id)
+    )
+`, (err) => {
+    if (err) console.error('Error creating leads table:', err);
+    else {
+        console.log('✓ leads table ready');
+        // Migration: add trial columns if missing
+        db.run(`ALTER TABLE leads ADD COLUMN trial_date DATE`, () => {});
+        db.run(`ALTER TABLE leads ADD COLUMN trial_time TIME`, () => {});
+        db.run(`ALTER TABLE leads ADD COLUMN trial_trainer_id INTEGER`, () => {});
+        db.run(`ALTER TABLE leads ADD COLUMN trial_notes TEXT`, () => {});
+    }
+});
+
+// Lead calls log
+db.run(`
+    CREATE TABLE IF NOT EXISTS lead_calls (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        lead_id INTEGER NOT NULL,
+        called_by INTEGER NOT NULL,
+        call_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        outcome VARCHAR(30) NOT NULL,
+        notes TEXT,
+        FOREIGN KEY (lead_id) REFERENCES leads(id),
+        FOREIGN KEY (called_by) REFERENCES users(id)
+    )
+`, (err) => {
+    if (err) console.error('Error creating lead_calls table:', err);
+    else console.log('✓ lead_calls table ready');
+});
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -147,7 +220,7 @@ db.serialize(() => {
         password_hash VARCHAR(255) NOT NULL,
         full_name VARCHAR(100) NOT NULL,
         email VARCHAR(100),
-        role TEXT CHECK(role IN ('manager', 'reception', 'trainer', 'operations_manager')) NOT NULL,
+        role TEXT CHECK(role IN ('manager', 'reception', 'trainer', 'operations_manager', 'sales')) NOT NULL,
         status TEXT CHECK(status IN ('active', 'inactive')) DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -308,6 +381,8 @@ app.get('/', requireAuth, (req, res) => {
         res.redirect('/attendance');
     } else if(user.role == 'operations_manager'){
         res.redirect('/session-confirmations');
+    } else if(user.role == 'sales'){
+        res.redirect('/leads');
     }
     else {
      res.redirect('/dashboard');
@@ -2664,6 +2739,216 @@ app.get('/session-confirmations/list', requireAuth, requireRole(['operations_man
         
         res.json({ success: true, confirmations });
     });
+});
+
+// ==================== LEADS / SALES ROUTES ====================
+
+// Leads page
+app.get('/leads', requireAuth, requireRole(['sales', 'manager', 'operations_manager', 'reception']), (req, res) => {
+    const user = req.session.user;
+    
+    let leadsQuery = `
+        SELECT l.*, 
+            u1.full_name as assigned_to_name,
+            u2.full_name as created_by_name,
+            u3.full_name as trial_trainer_name,
+            (SELECT COUNT(*) FROM lead_calls lc WHERE lc.lead_id = l.id) as call_count,
+            (SELECT lc.notes FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_notes,
+            (SELECT lc.outcome FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_outcome,
+            (SELECT lc.call_date FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_date
+        FROM leads l
+        LEFT JOIN users u1 ON l.assigned_to = u1.id
+        LEFT JOIN users u2 ON l.created_by = u2.id
+        LEFT JOIN trainers t ON l.trial_trainer_id = t.id
+        LEFT JOIN users u3 ON t.user_id = u3.id
+    `;
+    
+    // Role-based filtering
+    const params = [];
+    if (user.role === 'sales') {
+        leadsQuery += ' WHERE l.assigned_to = ?';
+        params.push(user.id);
+    } else if (user.role === 'operations_manager') {
+        leadsQuery += " WHERE l.status IN ('interested', 'trial_scheduled')";
+    } else if (user.role === 'reception') {
+        leadsQuery += " WHERE l.status IN ('trial_scheduled', 'enrolled', 'not_interested')";
+    }
+    
+    leadsQuery += ' ORDER BY l.created_at DESC';
+    
+    db.all(leadsQuery, params, (err, leads) => {
+        if (err) {
+            console.error('Error fetching leads:', err);
+            return res.status(500).send('Database error');
+        }
+        
+        // Get sales users for assignment dropdown
+        db.all(`SELECT id, full_name FROM users WHERE role = 'sales' AND status = 'active' ORDER BY full_name`, (err, salesUsers) => {
+            if (err) salesUsers = [];
+            
+            // Get trainers for trial scheduling
+            db.all(`SELECT t.id, u.full_name as name FROM trainers t JOIN users u ON t.user_id = u.id WHERE t.status = 'active' ORDER BY u.full_name`, (err, trainers) => {
+                if (err) trainers = [];
+                
+                res.render('leads', {
+                    leads: leads || [],
+                    salesUsers: salesUsers || [],
+                    trainers: trainers || [],
+                    user,
+                    moment
+                }, (err, html) => {
+                    if (err) {
+                        console.error(err);
+                        return res.status(500).send('Render error');
+                    }
+                    res.render('layout', { body: html, user, activemenu: 'leads' });
+                });
+            });
+        });
+    });
+});
+
+// Add lead
+app.post('/leads/add', requireAuth, requireRole(['sales', 'manager']), (req, res) => {
+    const { name, phone, parent_phone, email, age, instrument, source, notes, assigned_to } = req.body;
+    const user = req.session.user;
+    
+    if (!name) return res.json({ success: false, error: 'Name is required' });
+    
+    db.run(`
+        INSERT INTO leads (name, phone, parent_phone, email, age, instrument, source, notes, assigned_to, created_by, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')
+    `, [name, phone || null, parent_phone || null, email || null, age || null, instrument || null, source || null, notes || null, assigned_to || user.id, user.id], function(err) {
+        if (err) {
+            console.error('Error adding lead:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        res.json({ success: true, id: this.lastID });
+    });
+});
+
+// Update lead
+app.post('/leads/:id/update', requireAuth, requireRole(['sales', 'manager']), (req, res) => {
+    const { id } = req.params;
+    const { name, phone, parent_phone, email, age, instrument, source, status, notes, assigned_to } = req.body;
+    
+    db.run(`
+        UPDATE leads SET name=?, phone=?, parent_phone=?, email=?, age=?, instrument=?, source=?, status=?, notes=?, assigned_to=?, updated_at=datetime('now')
+        WHERE id=?
+    `, [name, phone || null, parent_phone || null, email || null, age || null, instrument || null, source || null, status, notes || null, assigned_to || null, id], function(err) {
+        if (err) {
+            console.error('Error updating lead:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        res.json({ success: true });
+    });
+});
+
+// Delete lead
+app.post('/leads/:id/delete', requireAuth, requireRole(['manager']), (req, res) => {
+    const { id } = req.params;
+    db.run('DELETE FROM lead_calls WHERE lead_id = ?', [id], (err) => {
+        db.run('DELETE FROM leads WHERE id = ?', [id], function(err) {
+            if (err) return res.json({ success: false, error: 'Database error' });
+            res.json({ success: true });
+        });
+    });
+});
+
+// Log a call
+app.post('/leads/:id/call', requireAuth, requireRole(['sales', 'manager']), (req, res) => {
+    const { id } = req.params;
+    const { outcome, notes } = req.body;
+    const user = req.session.user;
+    
+    if (!outcome) return res.json({ success: false, error: 'Outcome is required' });
+    
+    db.run(`
+        INSERT INTO lead_calls (lead_id, called_by, outcome, notes)
+        VALUES (?, ?, ?, ?)
+    `, [id, user.id, outcome, notes || null], function(err) {
+        if (err) {
+            console.error('Error logging call:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        
+        // Auto-update lead status based on outcome
+        let newStatus = null;
+        if (outcome === 'enrolled') newStatus = 'enrolled';
+        else if (outcome === 'not_interested') newStatus = 'not_interested';
+        else if (outcome === 'interested') newStatus = 'interested';
+        else if (outcome === 'callback') newStatus = 'callback';
+        else if (outcome === 'no_answer') newStatus = 'contacted';
+        
+        if (newStatus) {
+            db.run('UPDATE leads SET status = ?, updated_at = datetime(\'now\') WHERE id = ?', [newStatus, id]);
+        }
+        
+        res.json({ success: true, id: this.lastID });
+    });
+});
+
+// Get call history for a lead
+app.get('/leads/:id/calls', requireAuth, requireRole(['sales', 'manager', 'operations_manager', 'reception']), (req, res) => {
+    const { id } = req.params;
+    db.all(`
+        SELECT lc.*, u.full_name as caller_name
+        FROM lead_calls lc
+        LEFT JOIN users u ON lc.called_by = u.id
+        WHERE lc.lead_id = ?
+        ORDER BY lc.call_date DESC
+    `, [id], (err, calls) => {
+        if (err) return res.json({ success: false, error: 'Database error' });
+        res.json({ success: true, calls: calls || [] });
+    });
+});
+
+// Schedule trial (Operations Manager)
+app.post('/leads/:id/schedule-trial', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
+    const { id } = req.params;
+    const { trial_date, trial_time, trial_trainer_id, trial_notes } = req.body;
+    
+    if (!trial_date || !trial_time) return res.json({ success: false, error: 'Date and time are required' });
+    
+    db.run(`
+        UPDATE leads SET trial_date=?, trial_time=?, trial_trainer_id=?, trial_notes=?, status='trial_scheduled', updated_at=datetime('now')
+        WHERE id=?
+    `, [trial_date, trial_time, trial_trainer_id || null, trial_notes || null, id], function(err) {
+        if (err) return res.json({ success: false, error: 'Database error' });
+        res.json({ success: true });
+    });
+});
+
+// Mark trial result (Reception)
+app.post('/leads/:id/trial-result', requireAuth, requireRole(['reception', 'manager']), (req, res) => {
+    const { id } = req.params;
+    const { result, notes } = req.body;
+    
+    if (result === 'enrolled') {
+        // Convert lead to student
+        db.get('SELECT * FROM leads WHERE id = ?', [id], (err, lead) => {
+            if (err || !lead) return res.json({ success: false, error: 'Lead not found' });
+            
+            db.run(`
+                INSERT INTO students (name, phone, parent_phone, email, instrument, current_level, status, start_date, trainer_id, date_of_birth)
+                VALUES (?, ?, ?, ?, ?, 'Month 1', 'active', date('now'), ?, NULL)
+            `, [lead.name, lead.phone, lead.parent_phone, lead.email, lead.instrument, lead.trial_trainer_id], function(err) {
+                if (err) {
+                    console.error('Error converting lead to student:', err);
+                    return res.json({ success: false, error: 'Error creating student' });
+                }
+                
+                const studentId = this.lastID;
+                db.run("UPDATE leads SET status='enrolled', notes=COALESCE(notes,'') || '\n[Enrolled - Student ID: " + studentId + "]', updated_at=datetime('now') WHERE id=?", [id]);
+                res.json({ success: true, studentId });
+            });
+        });
+    } else {
+        db.run("UPDATE leads SET status='not_interested', updated_at=datetime('now') WHERE id=?", [id], function(err) {
+            if (err) return res.json({ success: false, error: 'Database error' });
+            res.json({ success: true });
+        });
+    }
 });
 
 // Database Admin Routes (Manager only)

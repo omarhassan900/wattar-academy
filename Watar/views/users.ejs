@@ -63,6 +63,8 @@
                                         <span class="badge bg-success"><i class="fas fa-chalkboard-teacher me-1"></i>Trainer</span>
                                     <% } else if (user.role === 'operations_manager') { %>
                                         <span class="badge bg-warning"><i class="fas fa-phone-alt me-1"></i>Operations Manager</span>
+                                    <% } else if (user.role === 'sales') { %>
+                                        <span class="badge bg-purple" style="background-color:#8e44ad;"><i class="fas fa-headset me-1"></i>Sales</span>
                                     <% } else { %>
                                         <span class="badge bg-secondary"><%= user.role %></span>
                                     <% } %>
@@ -137,6 +139,7 @@
                             <option value="reception">Reception - Attendance & student management</option>
                             <option value="trainer">Trainer - View students & attendance</option>
                             <option value="operations_manager">Operations Manager - Session confirmations</option>
+                            <option value="sales">Sales - Lead management & calls</option>
                         </select>
                         <small class="text-muted">
                             <strong>Operations Manager:</strong> Calls students to confirm sessions, view-only access to students/attendance
@@ -204,6 +207,7 @@
                             <option value="reception">Reception - Attendance & student management</option>
                             <option value="trainer">Trainer - View students & attendance</option>
                             <option value="operations_manager">Operations Manager - Session confirmations</option>
+                            <option value="sales">Sales - Lead management & calls</option>
                         </select>
                     </div>
                     

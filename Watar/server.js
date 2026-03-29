@@ -2768,8 +2768,6 @@ app.get('/leads', requireAuth, requireRole(['sales', 'manager', 'operations_mana
     if (user.role === 'sales') {
         leadsQuery += ' WHERE l.assigned_to = ?';
         params.push(user.id);
-    } else if (user.role === 'operations_manager') {
-        leadsQuery += " WHERE l.status IN ('interested', 'trial_scheduled')";
     } else if (user.role === 'reception') {
         leadsQuery += " WHERE l.status IN ('trial_scheduled', 'enrolled', 'not_interested')";
     }
@@ -2809,7 +2807,7 @@ app.get('/leads', requireAuth, requireRole(['sales', 'manager', 'operations_mana
 });
 
 // Add lead
-app.post('/leads/add', requireAuth, requireRole(['sales', 'manager']), (req, res) => {
+app.post('/leads/add', requireAuth, requireRole(['sales', 'manager', 'operations_manager']), (req, res) => {
     const { name, phone, parent_phone, email, age, instrument, source, notes, assigned_to } = req.body;
     const user = req.session.user;
     
@@ -2828,7 +2826,7 @@ app.post('/leads/add', requireAuth, requireRole(['sales', 'manager']), (req, res
 });
 
 // Update lead
-app.post('/leads/:id/update', requireAuth, requireRole(['sales', 'manager']), (req, res) => {
+app.post('/leads/:id/update', requireAuth, requireRole(['sales', 'manager', 'operations_manager']), (req, res) => {
     const { id } = req.params;
     const { name, phone, parent_phone, email, age, instrument, source, status, notes, assigned_to } = req.body;
     
@@ -2845,7 +2843,7 @@ app.post('/leads/:id/update', requireAuth, requireRole(['sales', 'manager']), (r
 });
 
 // Delete lead
-app.post('/leads/:id/delete', requireAuth, requireRole(['manager']), (req, res) => {
+app.post('/leads/:id/delete', requireAuth, requireRole(['manager', 'operations_manager']), (req, res) => {
     const { id } = req.params;
     db.run('DELETE FROM lead_calls WHERE lead_id = ?', [id], (err) => {
         db.run('DELETE FROM leads WHERE id = ?', [id], function(err) {
@@ -2856,7 +2854,7 @@ app.post('/leads/:id/delete', requireAuth, requireRole(['manager']), (req, res) 
 });
 
 // Log a call
-app.post('/leads/:id/call', requireAuth, requireRole(['sales', 'manager']), (req, res) => {
+app.post('/leads/:id/call', requireAuth, requireRole(['sales', 'manager', 'operations_manager']), (req, res) => {
     const { id } = req.params;
     const { outcome, notes } = req.body;
     const user = req.session.user;
@@ -2920,7 +2918,7 @@ app.post('/leads/:id/schedule-trial', requireAuth, requireRole(['operations_mana
 });
 
 // Mark trial result (Reception)
-app.post('/leads/:id/trial-result', requireAuth, requireRole(['reception', 'manager']), (req, res) => {
+app.post('/leads/:id/trial-result', requireAuth, requireRole(['reception', 'manager', 'operations_manager']), (req, res) => {
     const { id } = req.params;
     const { result, notes } = req.body;
     

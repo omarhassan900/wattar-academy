@@ -68,7 +68,7 @@
                                 <th>Status</th>
                                 <th>Calls</th>
                                 <th>Last Call</th>
-                                <% if (user.role === 'manager') { %><th>Assigned To</th><% } %>
+                                <% if (['manager','operations_manager'].includes(user.role)) { %><th>Assigned To</th><% } %>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -106,9 +106,9 @@
                                         <% if (lead.last_call_outcome) { %><br><small class="text-muted"><%= lead.last_call_outcome.replace('_',' ') %></small><% } %>
                                     <% } else { %>-<% } %>
                                 </td>
-                                <% if (user.role === 'manager') { %><td><small><%= lead.assigned_to_name || 'Unassigned' %></small></td><% } %>
+                                <% if (['manager','operations_manager'].includes(user.role)) { %><td><small><%= lead.assigned_to_name || 'Unassigned' %></small></td><% } %>
                                 <td>
-                                    <% if (['sales', 'manager'].includes(user.role)) { %>
+                                    <% if (['sales', 'manager', 'operations_manager'].includes(user.role)) { %>
                                     <button class="btn btn-sm btn-success log-call-btn" title="Log Call"
                                         data-id="<%= lead.id %>" data-name="<%= lead.name %>">
                                         <i class="fas fa-phone"></i>
@@ -118,7 +118,7 @@
                                         data-id="<%= lead.id %>" data-name="<%= lead.name %>">
                                         <i class="fas fa-history"></i>
                                     </button>
-                                    <% if (['sales', 'manager'].includes(user.role)) { %>
+                                    <% if (['sales', 'manager', 'operations_manager'].includes(user.role)) { %>
                                     <button class="btn btn-sm btn-warning edit-lead-btn" title="Edit"
                                         data-lead='<%- JSON.stringify(lead) %>'>
                                         <i class="fas fa-edit"></i>
@@ -130,7 +130,7 @@
                                         <i class="fas fa-calendar-plus"></i>
                                     </button>
                                     <% } %>
-                                    <% if (['reception', 'manager'].includes(user.role) && lead.status === 'trial_scheduled') { %>
+                                    <% if (['reception', 'manager', 'operations_manager'].includes(user.role) && lead.status === 'trial_scheduled') { %>
                                     <button class="btn btn-sm btn-success enroll-btn" title="Enrolled - Convert to Student"
                                         data-id="<%= lead.id %>" data-name="<%= lead.name %>">
                                         <i class="fas fa-user-plus"></i>
@@ -140,7 +140,7 @@
                                         <i class="fas fa-times"></i>
                                     </button>
                                     <% } %>
-                                    <% if (user.role === 'manager') { %>
+                                    <% if (['manager','operations_manager'].includes(user.role)) { %>
                                     <button class="btn btn-sm btn-danger delete-lead-btn" title="Delete" data-id="<%= lead.id %>">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -200,7 +200,7 @@
                         </select>
                     </div>
                 </div>
-                <% if (user.role === 'manager') { %>
+                <% if (['manager','operations_manager'].includes(user.role)) { %>
                 <div class="mb-3">
                     <label class="form-label">Assign To</label>
                     <select class="form-select" id="add-lead-assigned">
@@ -280,7 +280,7 @@
                         </select>
                     </div>
                 </div>
-                <% if (user.role === 'manager') { %>
+                <% if (['manager','operations_manager'].includes(user.role)) { %>
                 <div class="mb-3">
                     <label class="form-label">Assign To</label>
                     <select class="form-select" id="edit-lead-assigned">

@@ -611,11 +611,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(function(r) { return r.json(); }).then(function(d) {
                 if (d.success) {
                     var link = 'http://184.73.55.171:3000/feedback/' + d.token;
-                    navigator.clipboard.writeText(link).then(function() {
-                        alert('Link copied to clipboard!\n\n' + link);
-                        thisBtn.classList.remove('btn-outline-info');
-                        thisBtn.classList.add('btn-warning');
-                    });
+                    // Fallback clipboard copy for HTTP
+                    var textArea = document.createElement('textarea');
+                    textArea.value = link;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Link copied to clipboard!\n\n' + link);
+                    thisBtn.classList.remove('btn-outline-info');
+                    thisBtn.classList.add('btn-warning');
                 } else { alert('Error: ' + d.error); }
             });
         });

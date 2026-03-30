@@ -3154,6 +3154,8 @@ app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operati
     // Get students whose 4th session is attended in their current level
     db.all(`
         SELECT s.id, s.name, s.current_level, s.instrument, s.phone,
+            s.trainer_id,
+            (SELECT u.full_name FROM trainers t JOIN users u ON t.user_id = u.id WHERE t.id = s.trainer_id) as trainer_name,
             (SELECT COUNT(DISTINCT a.session_id) FROM attendance a 
              JOIN sessions sess ON a.session_id = sess.id 
              WHERE a.student_id = s.id AND sess.level = s.current_level 
@@ -3167,7 +3169,7 @@ app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operati
         FROM students s
         LEFT JOIN student_evaluations se ON se.student_id = s.id AND se.level = s.current_level
         WHERE s.status = 'active' ${trainerCondition}
-        ORDER BY s.current_level, s.name
+        ORDER BY trainer_name, s.current_level, s.name
     `, params, (err, students) => {
         if (err) {
             console.error('Error fetching students for evaluation:', err);

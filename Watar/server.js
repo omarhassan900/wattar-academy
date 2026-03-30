@@ -222,9 +222,9 @@ db.run(`
         student_id INTEGER NOT NULL,
         level TEXT NOT NULL,
         trainer_id INTEGER NOT NULL,
-        attitude_rating INTEGER,
-        commitment_rating INTEGER,
+        trainer_rating INTEGER,
         development_rating INTEGER,
+        experience_rating INTEGER,
         notes TEXT,
         evaluated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES students(id),
@@ -3165,7 +3165,7 @@ app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operati
              WHERE a.student_id = s.id AND sess.level = s.current_level 
              AND sess.session_number = 4 AND a.status IN ('present', 'attended')
              LIMIT 1) as session4_attended,
-            se.id as eval_id, se.attitude_rating, se.commitment_rating, se.development_rating, se.notes as eval_notes, se.evaluated_at
+            se.id as eval_id, se.trainer_rating, se.development_rating, se.experience_rating, se.notes as eval_notes, se.evaluated_at
         FROM students s
         LEFT JOIN student_evaluations se ON se.student_id = s.id AND se.level = s.current_level
         WHERE s.status = 'active' ${trainerCondition}
@@ -3223,15 +3223,15 @@ function renderEvalPage(res, user, students, sessionMap) {
 
 // Save evaluation
 app.post('/evaluations/save', requireAuth, requireRole(['trainer', 'manager']), (req, res) => {
-    const { student_id, level, attitude_rating, commitment_rating, development_rating, notes } = req.body;
+    const { student_id, level, trainer_rating, development_rating, experience_rating, notes } = req.body;
     const user = req.session.user;
     
     if (!student_id || !level) return res.json({ success: false, error: 'Missing required fields' });
     
     db.run(`
-        INSERT OR REPLACE INTO student_evaluations (student_id, level, trainer_id, attitude_rating, commitment_rating, development_rating, notes)
+        INSERT OR REPLACE INTO student_evaluations (student_id, level, trainer_id, trainer_rating, development_rating, experience_rating, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [student_id, level, user.id, attitude_rating || null, commitment_rating || null, development_rating || null, notes || null], function(err) {
+    `, [student_id, level, user.id, trainer_rating || null, development_rating || null, experience_rating || null, notes || null], function(err) {
         if (err) return res.json({ success: false, error: 'Database error' });
         res.json({ success: true });
     });

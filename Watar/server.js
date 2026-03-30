@@ -3151,13 +3151,18 @@ app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operati
         params.push(user.id);
     }
     
-    // Get students who completed all 4 sessions in their current level
+    // Get students whose 4th session is attended in their current level
     db.all(`
         SELECT s.id, s.name, s.current_level, s.instrument, s.phone,
             (SELECT COUNT(DISTINCT a.session_id) FROM attendance a 
              JOIN sessions sess ON a.session_id = sess.id 
              WHERE a.student_id = s.id AND sess.level = s.current_level 
              AND a.status IN ('present', 'attended')) as completed_sessions,
+            (SELECT 1 FROM attendance a 
+             JOIN sessions sess ON a.session_id = sess.id 
+             WHERE a.student_id = s.id AND sess.level = s.current_level 
+             AND sess.session_number = 4 AND a.status IN ('present', 'attended')
+             LIMIT 1) as session4_attended,
             se.id as eval_id, se.attitude_rating, se.commitment_rating, se.development_rating, se.notes as eval_notes, se.evaluated_at
         FROM students s
         LEFT JOIN student_evaluations se ON se.student_id = s.id AND se.level = s.current_level
@@ -3199,8 +3204,8 @@ app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operati
 });
 
 function renderEvalPage(res, user, students, sessionMap) {
-    // Split into pending (4 sessions done, no eval) and evaluated
-    const pending = students.filter(s => s.completed_sessions >= 4 && !s.eval_id);
+    // Split into pending (session 4 attended, no eval) and evaluated
+    const pending = students.filter(s => s.session4_attended && !s.eval_id);
     const evaluated = students.filter(s => s.eval_id);
     
     // Attach session dates

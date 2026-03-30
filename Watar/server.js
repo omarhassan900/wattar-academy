@@ -215,6 +215,27 @@ db.run(`
     else console.log('✓ band_attendance table ready');
 });
 
+// Student evaluations table
+db.run(`
+    CREATE TABLE IF NOT EXISTS student_evaluations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        level TEXT NOT NULL,
+        trainer_id INTEGER NOT NULL,
+        attitude_rating INTEGER,
+        commitment_rating INTEGER,
+        development_rating INTEGER,
+        notes TEXT,
+        evaluated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        FOREIGN KEY (trainer_id) REFERENCES users(id),
+        UNIQUE(student_id, level)
+    )
+`, (err) => {
+    if (err) console.error('Error creating student_evaluations table:', err);
+    else console.log('✓ student_evaluations table ready');
+});
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -419,7 +440,7 @@ app.get('/', requireAuth, (req, res) => {
     if(user.role == 'reception'){
         res.redirect('/attendance');
     } else if(user.role == 'trainer'){
-        res.redirect('/attendance');
+        res.redirect('/pre-schedule');
     } else if(user.role == 'operations_manager'){
         res.redirect('/session-confirmations');
     } else if(user.role == 'sales'){
@@ -3112,6 +3133,114 @@ app.post('/band/prev-cycle', requireAuth, requireRole(['manager', 'operations_ma
     db.run('UPDATE band_members SET current_cycle = MAX(current_cycle - 1, 1) WHERE is_active = 1', function(err) {
         if (err) return res.json({ success: false, error: 'Database error' });
         res.json({ success: true });
+    });
+});
+
+// ==================== STUDENT EVALUATIONS ROUTES ====================
+
+// Evaluations page (trainer sees their students, manager sees all)
+app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operations_manager']), (req, res) => {
+    const user = req.session.user;
+    
+    // Get trainer_id from trainers table for this user
+    let trainerCondition = '';
+    let params = [];
+    
+    if (user.role === 'trainer') {
+        trainerCondition = 'AND s.trainer_id IN (SELECT id FROM trainers WHERE user_id = ?)';
+        params.push(user.id);
+    }
+    
+    // Get students who completed all 4 sessions in their current level
+    db.all(`
+        SELECT s.id, s.name, s.current_level, s.instrument, s.phone,
+            (SELECT COUNT(DISTINCT a.session_id) FROM attendance a 
+             JOIN sessions sess ON a.session_id = sess.id 
+             WHERE a.student_id = s.id AND sess.level = s.current_level 
+             AND a.status IN ('present', 'attended')) as completed_sessions,
+            se.id as eval_id, se.attitude_rating, se.commitment_rating, se.development_rating, se.notes as eval_notes, se.evaluated_at
+        FROM students s
+        LEFT JOIN student_evaluations se ON se.student_id = s.id AND se.level = s.current_level
+        WHERE s.status = 'active' ${trainerCondition}
+        ORDER BY s.current_level, s.name
+    `, params, (err, students) => {
+        if (err) {
+            console.error('Error fetching students for evaluation:', err);
+            return res.status(500).send('Database error');
+        }
+        
+        // Get session dates for each student
+        const studentIds = (students || []).map(s => s.id);
+        if (studentIds.length === 0) {
+            return renderEvalPage(res, user, [], {});
+        }
+        
+        db.all(`
+            SELECT a.student_id, sess.session_number, a.date as session_date, a.status
+            FROM attendance a
+            JOIN sessions sess ON a.session_id = sess.id
+            JOIN students s ON a.student_id = s.id AND sess.level = s.current_level
+            WHERE a.student_id IN (${studentIds.join(',')})
+            AND a.status IN ('present', 'attended')
+            ORDER BY a.student_id, sess.session_number
+        `, (err, sessionDates) => {
+            if (err) sessionDates = [];
+            
+            // Group session dates by student
+            const sessionMap = {};
+            (sessionDates || []).forEach(sd => {
+                if (!sessionMap[sd.student_id]) sessionMap[sd.student_id] = [];
+                sessionMap[sd.student_id].push(sd);
+            });
+            
+            renderEvalPage(res, user, students || [], sessionMap);
+        });
+    });
+});
+
+function renderEvalPage(res, user, students, sessionMap) {
+    // Split into pending (4 sessions done, no eval) and evaluated
+    const pending = students.filter(s => s.completed_sessions >= 4 && !s.eval_id);
+    const evaluated = students.filter(s => s.eval_id);
+    
+    // Attach session dates
+    [...pending, ...evaluated].forEach(s => {
+        s.sessionDates = sessionMap[s.id] || [];
+    });
+    
+    res.render('evaluations', { user, pending, evaluated, moment }, (err, html) => {
+        if (err) { console.error(err); return res.status(500).send('Render error'); }
+        res.render('layout', { body: html, user, activemenu: 'evaluations' });
+    });
+}
+
+// Save evaluation
+app.post('/evaluations/save', requireAuth, requireRole(['trainer', 'manager']), (req, res) => {
+    const { student_id, level, attitude_rating, commitment_rating, development_rating, notes } = req.body;
+    const user = req.session.user;
+    
+    if (!student_id || !level) return res.json({ success: false, error: 'Missing required fields' });
+    
+    db.run(`
+        INSERT OR REPLACE INTO student_evaluations (student_id, level, trainer_id, attitude_rating, commitment_rating, development_rating, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [student_id, level, user.id, attitude_rating || null, commitment_rating || null, development_rating || null, notes || null], function(err) {
+        if (err) return res.json({ success: false, error: 'Database error' });
+        res.json({ success: true });
+    });
+});
+
+// Get evaluation history for a student
+app.get('/evaluations/history/:studentId', requireAuth, requireRole(['trainer', 'manager', 'operations_manager']), (req, res) => {
+    db.all(`
+        SELECT se.*, u.full_name as trainer_name
+        FROM student_evaluations se
+        LEFT JOIN users u ON se.trainer_id = u.id
+        WHERE se.student_id = ?
+        ORDER BY se.evaluated_at DESC
+    `, [req.params.studentId], (err, evals) => {
+        if (err) return res.json({ success: false, error: 'Database error' });
+        res.json({ success: true, evaluations: evals || [] });
     });
 });
 

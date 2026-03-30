@@ -1,7 +1,13 @@
 <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1><i class="fas fa-calendar-week text-primary me-2"></i>Weekly Schedule Template</h1>
+            <div>
+                <h1><i class="fas fa-calendar-week text-primary me-2"></i>Weekly Schedule Template</h1>
+                <div class="mt-1">
+                    <span class="badge bg-primary fs-6 me-2" id="stat-students"><i class="fas fa-users me-1"></i>0 Students</span>
+                    <span class="badge bg-info fs-6" id="stat-appointments"><i class="fas fa-calendar-check me-1"></i>0 Appointments</span>
+                </div>
+            </div>
             <% if (typeof isReadOnly === 'undefined' || !isReadOnly) { %>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
                 <i class="fas fa-plus me-2"></i>Add Student to Schedule
@@ -424,6 +430,13 @@ document.addEventListener('DOMContentLoaded', function() {
             ? scheduleData.filter(s => s.trainer_name === selectedTrainer)
             : scheduleData;
         
+        // Update stats based on filtered data
+        const activeFiltered = filteredData.filter(s => s.is_active === 1);
+        const uniqueStudents = new Set(activeFiltered.map(s => s.student_id)).size;
+        const uniqueSlots = new Set(activeFiltered.map(s => s.day_of_week + '_' + s.time_slot)).size;
+        document.getElementById('stat-students').innerHTML = '<i class="fas fa-users me-1"></i>' + uniqueStudents + ' Students';
+        document.getElementById('stat-appointments').innerHTML = '<i class="fas fa-calendar-check me-1"></i>' + uniqueSlots + ' Appointments';
+        
         // Build trainer color map first from ALL schedule data (not filtered)
         const uniqueTrainers = [...new Set(scheduleData.filter(s => s.trainer_name).map(s => s.trainer_name))];
         uniqueTrainers.forEach(name => getTrainerColor(name));
@@ -514,6 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             scheduleBody.appendChild(row);
         });
+        
     }
     
     function openGroupEditModal(group) {

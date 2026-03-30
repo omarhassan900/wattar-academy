@@ -3139,7 +3139,7 @@ app.post('/band/prev-cycle', requireAuth, requireRole(['manager', 'operations_ma
 // ==================== STUDENT EVALUATIONS ROUTES ====================
 
 // Evaluations page (trainer sees their students, manager sees all)
-app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operations_manager']), (req, res) => {
+app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operations_manager', 'reception']), (req, res) => {
     const user = req.session.user;
     
     // Get trainer_id from trainers table for this user

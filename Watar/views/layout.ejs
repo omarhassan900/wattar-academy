@@ -130,7 +130,7 @@
                     </a>
                     <% } %>
 
-                    <% if (typeof user !== 'undefined' && ['trainer', 'manager'].includes(user.role)) { %>
+                    <% if (typeof user !== 'undefined' && ['trainer', 'manager', 'reception', 'operations_manager'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/evaluations' ? 'active' : '' %>" href="/evaluations">
                         <i class="fas fa-star me-2"></i>Students Evaluation
                     </a>
@@ -250,7 +250,7 @@
                         <a class="nav-link text-white <%= currentUrl == '/pre-schedule' ? 'active' : '' %>" href="/pre-schedule">Weekly Schedule</a>
                         <% } %>
 
-                        <% if (typeof user !== 'undefined' && ['trainer', 'manager'].includes(user.role)) { %>
+                        <% if (typeof user !== 'undefined' && ['trainer', 'manager', 'reception', 'operations_manager'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/evaluations' ? 'active' : '' %>" href="/evaluations">Students Evaluation</a>
                         <% } %>
 

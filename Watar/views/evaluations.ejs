@@ -46,10 +46,14 @@
                                     </td>
                                 <% } %>
                                 <td>
+                                    <% if (['trainer', 'manager'].includes(user.role)) { %>
                                     <button class="btn btn-sm btn-warning evaluate-btn"
                                         data-id="<%= s.id %>" data-name="<%= s.name %>" data-level="<%= s.current_level %>">
                                         <i class="fas fa-star me-1"></i>Evaluate
                                     </button>
+                                    <% } else { %>
+                                    <span class="badge bg-secondary">View Only</span>
+                                    <% } %>
                                 </td>
                             </tr>
                             <% }); %>

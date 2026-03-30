@@ -433,9 +433,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update stats based on filtered data
         const activeFiltered = filteredData.filter(s => s.is_active === 1);
         const uniqueStudents = new Set(activeFiltered.map(s => s.student_id)).size;
-        const uniqueSlots = new Set(activeFiltered.map(s => s.day_of_week + '_' + s.time_slot)).size;
+        // Count grouped blocks (unique day+time+trainer combinations)
+        const groupedBlocks = new Set(activeFiltered.map(s => s.day_of_week + '_' + s.time_slot + '_' + (s.trainer_id || 'none'))).size;
         document.getElementById('stat-students').innerHTML = '<i class="fas fa-users me-1"></i>' + uniqueStudents + ' Students';
-        document.getElementById('stat-appointments').innerHTML = '<i class="fas fa-calendar-check me-1"></i>' + uniqueSlots + ' Appointments';
+        document.getElementById('stat-appointments').innerHTML = '<i class="fas fa-calendar-check me-1"></i>' + groupedBlocks + ' Appointments';
         
         // Build trainer color map first from ALL schedule data (not filtered)
         const uniqueTrainers = [...new Set(scheduleData.filter(s => s.trainer_name).map(s => s.trainer_name))];

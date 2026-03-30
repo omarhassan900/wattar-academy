@@ -128,6 +128,7 @@
                                     <th class="text-center" style="width: 80px;">Session 2</th>
                                     <th class="text-center" style="width: 80px;">Session 3</th>
                                     <th class="text-center" style="width: 80px;">Session 4</th>
+                                    <th class="text-center" style="width: 100px;">Feedback</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -229,6 +230,16 @@
                                             <% } %>
                                         </td>
                                     <% } %>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-warning feedback-btn" 
+                                            data-student-id="<%= student.id %>" 
+                                            data-student-name="<%= student.name %>"
+                                            data-level="<%= student.current_level %>"
+                                            title="Student Feedback"
+                                            <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 <% }); %>
                             </tbody>
@@ -264,6 +275,66 @@
     </div>
 </div>
 <% } %>
+
+<!-- Student Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fas fa-star me-2"></i>Student Feedback</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Student:</strong> <span id="fb-student-name"></span></p>
+                <p><strong>Level:</strong> <span id="fb-level"></span></p>
+                <input type="hidden" id="fb-student-id">
+                <input type="hidden" id="fb-level-hidden">
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Trainer Rating <span class="text-muted">(1-5)</span></label>
+                    <div class="fb-star-rating" data-field="trainer">
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="1" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="2" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="3" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="4" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="5" style="cursor:pointer;"></i>
+                        <input type="hidden" id="fb-trainer-rating" value="">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Student Development <span class="text-muted">(1-5)</span></label>
+                    <div class="fb-star-rating" data-field="development">
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="1" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="2" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="3" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="4" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="5" style="cursor:pointer;"></i>
+                        <input type="hidden" id="fb-development-rating" value="">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Overall Experience <span class="text-muted">(1-5)</span></label>
+                    <div class="fb-star-rating" data-field="experience">
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="1" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="2" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="3" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="4" style="cursor:pointer;"></i>
+                        <i class="fas fa-star fb-star text-muted fs-4" data-value="5" style="cursor:pointer;"></i>
+                        <input type="hidden" id="fb-experience-rating" value="">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Notes</label>
+                    <textarea class="form-control" id="fb-notes" rows="2" placeholder="Any feedback from the student..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="save-feedback-btn"><i class="fas fa-save me-2"></i>Save Feedback</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 // Save all attendance
@@ -425,6 +496,115 @@ document.addEventListener('change', function(e) {
             row.style.backgroundColor = '';
         }, 2000);
     }
+});
+
+// Student Feedback Modal
+document.addEventListener('DOMContentLoaded', function() {
+    const fbModalEl = document.getElementById('feedbackModal');
+    if (!fbModalEl) return;
+    const fbModal = new bootstrap.Modal(fbModalEl);
+    
+    // Star click handler
+    document.querySelectorAll('.fb-star-rating').forEach(group => {
+        const stars = group.querySelectorAll('.fb-star');
+        const hidden = group.querySelector('input[type="hidden"]');
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const val = parseInt(this.dataset.value);
+                hidden.value = val;
+                stars.forEach((s, i) => {
+                    s.classList.toggle('text-warning', i < val);
+                    s.classList.toggle('text-muted', i >= val);
+                });
+            });
+        });
+    });
+    
+    function setStars(field, val) {
+        const group = document.querySelector(`.fb-star-rating[data-field="${field}"]`);
+        if (!group) return;
+        group.querySelectorAll('.fb-star').forEach((s, i) => {
+            s.classList.toggle('text-warning', i < val);
+            s.classList.toggle('text-muted', i >= val);
+        });
+    }
+    
+    // Open feedback modal
+    document.querySelectorAll('.feedback-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const studentId = this.dataset.studentId;
+            const studentName = this.dataset.studentName;
+            const level = this.dataset.level;
+            
+            document.getElementById('fb-student-id').value = studentId;
+            document.getElementById('fb-student-name').textContent = studentName;
+            document.getElementById('fb-level').textContent = level;
+            document.getElementById('fb-level-hidden').value = level;
+            document.getElementById('fb-trainer-rating').value = '';
+            document.getElementById('fb-development-rating').value = '';
+            document.getElementById('fb-experience-rating').value = '';
+            document.getElementById('fb-notes').value = '';
+            document.querySelectorAll('.fb-star').forEach(s => { s.classList.remove('text-warning'); s.classList.add('text-muted'); });
+            
+            // Load existing feedback
+            fetch('/student-feedback/list').then(r=>r.json()).then(d => {
+                if (d.success) {
+                    const existing = d.feedback.find(f => f.student_id == studentId && f.level === level);
+                    if (existing) {
+                        if (existing.trainer_rating) { document.getElementById('fb-trainer-rating').value = existing.trainer_rating; setStars('trainer', existing.trainer_rating); }
+                        if (existing.development_rating) { document.getElementById('fb-development-rating').value = existing.development_rating; setStars('development', existing.development_rating); }
+                        if (existing.experience_rating) { document.getElementById('fb-experience-rating').value = existing.experience_rating; setStars('experience', existing.experience_rating); }
+                        if (existing.notes) document.getElementById('fb-notes').value = existing.notes;
+                    }
+                }
+                fbModal.show();
+            }).catch(() => fbModal.show());
+        });
+    });
+    
+    // Mark buttons for students who already have feedback
+    fetch('/student-feedback/list').then(r=>r.json()).then(d => {
+        if (d.success && d.feedback.length > 0) {
+            d.feedback.forEach(f => {
+                const btn = document.querySelector(`.feedback-btn[data-student-id="${f.student_id}"][data-level="${f.level}"]`);
+                if (btn) {
+                    btn.classList.remove('btn-outline-warning');
+                    btn.classList.add('btn-success');
+                    btn.innerHTML = '<i class="fas fa-check"></i>';
+                }
+            });
+        }
+    });
+
+    // Save feedback
+    document.getElementById('save-feedback-btn').addEventListener('click', function() {
+        fetch('/student-feedback/save', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                student_id: document.getElementById('fb-student-id').value,
+                level: document.getElementById('fb-level-hidden').value,
+                trainer_rating: document.getElementById('fb-trainer-rating').value || null,
+                development_rating: document.getElementById('fb-development-rating').value || null,
+                experience_rating: document.getElementById('fb-experience-rating').value || null,
+                notes: document.getElementById('fb-notes').value
+            })
+        }).then(r=>r.json()).then(d => {
+            if (d.success) { 
+                alert('Feedback saved!'); 
+                fbModal.hide();
+                // Mark button as submitted
+                const btn = document.querySelector(`.feedback-btn[data-student-id="${document.getElementById('fb-student-id').value}"]`);
+                if (btn) {
+                    btn.classList.remove('btn-outline-warning');
+                    btn.classList.add('btn-success');
+                    btn.innerHTML = '<i class="fas fa-check"></i>';
+                }
+            }
+            else alert('Error: ' + d.error);
+        });
+    });
 });
 
 // Change student month and reload page

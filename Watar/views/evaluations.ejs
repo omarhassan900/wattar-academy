@@ -83,9 +83,9 @@
                             <tr>
                                 <th>Student</th>
                                 <th>Level</th>
-                                <th>Trainer Rating</th>
+                                <th>Attitude</th>
+                                <th>Commitment</th>
                                 <th>Development</th>
-                                <th>Experience</th>
                                 <th>Notes</th>
                                 <th>Date</th>
                             </tr>
@@ -95,9 +95,9 @@
                             <tr>
                                 <td><strong><%= s.name %></strong></td>
                                 <td><span class="badge bg-primary"><%= s.current_level %></span></td>
-                                <td><%= '★'.repeat(s.trainer_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (s.trainer_rating || 0)) %></span></td>
+                                <td><%= '★'.repeat(s.attitude_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (s.attitude_rating || 0)) %></span></td>
+                                <td><%= '★'.repeat(s.commitment_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (s.commitment_rating || 0)) %></span></td>
                                 <td><%= '★'.repeat(s.development_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (s.development_rating || 0)) %></span></td>
-                                <td><%= '★'.repeat(s.experience_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (s.experience_rating || 0)) %></span></td>
                                 <td><small><%= s.eval_notes || '-' %></small></td>
                                 <td><small><%= new Date(s.evaluated_at).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) %></small></td>
                             </tr>
@@ -126,32 +126,32 @@
                 <input type="hidden" id="eval-level-hidden">
                 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Trainer Rating <span class="text-muted">(1-5)</span></label>
-                    <div class="star-rating" data-field="trainer">
+                    <label class="form-label fw-bold">Attitude <span class="text-muted">(1-5)</span></label>
+                    <div class="star-rating" data-field="attitude">
                         <% for (let i = 1; i <= 5; i++) { %>
                         <i class="fas fa-star star-btn text-muted fs-4" data-value="<%= i %>" style="cursor:pointer;"></i>
                         <% } %>
-                        <input type="hidden" id="eval-trainer-rating" value="">
+                        <input type="hidden" id="eval-attitude" value="">
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Student Development <span class="text-muted">(1-5)</span></label>
+                    <label class="form-label fw-bold">Commitment <span class="text-muted">(1-5)</span></label>
+                    <div class="star-rating" data-field="commitment">
+                        <% for (let i = 1; i <= 5; i++) { %>
+                        <i class="fas fa-star star-btn text-muted fs-4" data-value="<%= i %>" style="cursor:pointer;"></i>
+                        <% } %>
+                        <input type="hidden" id="eval-commitment" value="">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Development <span class="text-muted">(1-5)</span></label>
                     <div class="star-rating" data-field="development">
                         <% for (let i = 1; i <= 5; i++) { %>
                         <i class="fas fa-star star-btn text-muted fs-4" data-value="<%= i %>" style="cursor:pointer;"></i>
                         <% } %>
                         <input type="hidden" id="eval-development" value="">
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Overall Experience <span class="text-muted">(1-5)</span></label>
-                    <div class="star-rating" data-field="experience">
-                        <% for (let i = 1; i <= 5; i++) { %>
-                        <i class="fas fa-star star-btn text-muted fs-4" data-value="<%= i %>" style="cursor:pointer;"></i>
-                        <% } %>
-                        <input type="hidden" id="eval-experience" value="">
                     </div>
                 </div>
                 
@@ -197,9 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('eval-student-name').textContent = this.dataset.name;
             document.getElementById('eval-level').textContent = this.dataset.level;
             document.getElementById('eval-level-hidden').value = this.dataset.level;
-            document.getElementById('eval-trainer-rating').value = '';
+            document.getElementById('eval-attitude').value = '';
+            document.getElementById('eval-commitment').value = '';
             document.getElementById('eval-development').value = '';
-            document.getElementById('eval-experience').value = '';
             document.getElementById('eval-notes').value = '';
             // Reset stars
             document.querySelectorAll('.star-btn').forEach(s => {
@@ -212,11 +212,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Save evaluation
     document.getElementById('save-eval-btn').addEventListener('click', function() {
-        const trainerRating = document.getElementById('eval-trainer-rating').value;
+        const attitude = document.getElementById('eval-attitude').value;
+        const commitment = document.getElementById('eval-commitment').value;
         const development = document.getElementById('eval-development').value;
-        const experience = document.getElementById('eval-experience').value;
         
-        if (!trainerRating || !development || !experience) {
+        if (!attitude || !commitment || !development) {
             alert('Please rate all three criteria');
             return;
         }
@@ -226,9 +226,9 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({
                 student_id: document.getElementById('eval-student-id').value,
                 level: document.getElementById('eval-level-hidden').value,
-                trainer_rating: trainerRating,
+                attitude_rating: attitude,
+                commitment_rating: commitment,
                 development_rating: development,
-                experience_rating: experience,
                 notes: document.getElementById('eval-notes').value
             })
         }).then(r=>r.json()).then(d => {

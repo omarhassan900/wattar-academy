@@ -222,9 +222,9 @@ db.run(`
         student_id INTEGER NOT NULL,
         level TEXT NOT NULL,
         trainer_id INTEGER NOT NULL,
-        trainer_rating INTEGER,
+        attitude_rating INTEGER,
+        commitment_rating INTEGER,
         development_rating INTEGER,
-        experience_rating INTEGER,
         notes TEXT,
         evaluated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES students(id),
@@ -234,6 +234,41 @@ db.run(`
 `, (err) => {
     if (err) console.error('Error creating student_evaluations table:', err);
     else console.log('✓ student_evaluations table ready');
+});
+
+// Student feedback table (student rates their experience)
+db.run(`
+    CREATE TABLE IF NOT EXISTS student_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        level TEXT NOT NULL,
+        trainer_rating INTEGER,
+        development_rating INTEGER,
+        experience_rating INTEGER,
+        notes TEXT,
+        created_by INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        FOREIGN KEY (created_by) REFERENCES users(id),
+        UNIQUE(student_id, level)
+    )
+`, (err) => {
+    if (err) console.error('Error creating student_feedback table:', err);
+    else {
+        console.log('✓ student_feedback table ready');
+        // Migrate existing student_level_notes to student_feedback
+        db.get('SELECT COUNT(*) as c FROM student_feedback', (err, row) => {
+            if (!err && row && row.c === 0) {
+                db.all('SELECT * FROM student_level_notes WHERE notes IS NOT NULL AND notes != ""', (err, notes) => {
+                    if (!err && notes && notes.length > 0) {
+                        const stmt = db.prepare('INSERT OR IGNORE INTO student_feedback (student_id, level, notes) VALUES (?, ?, ?)');
+                        notes.forEach(n => stmt.run(n.student_id, n.level, n.notes));
+                        stmt.finalize(() => console.log(`✓ Migrated ${notes.length} level notes to student_feedback`));
+                    }
+                });
+            }
+        });
+    }
 });
 
 // Middleware
@@ -3136,6 +3171,32 @@ app.post('/band/prev-cycle', requireAuth, requireRole(['manager', 'operations_ma
     });
 });
 
+// ==================== STUDENT FEEDBACK (on attendance page) ====================
+
+// Save student feedback
+app.post('/student-feedback/save', requireAuth, requireRole(['manager', 'reception', 'operations_manager']), (req, res) => {
+    const { student_id, level, trainer_rating, development_rating, experience_rating, notes } = req.body;
+    const user = req.session.user;
+    
+    if (!student_id || !level) return res.json({ success: false, error: 'Missing required fields' });
+    
+    db.run(`
+        INSERT OR REPLACE INTO student_feedback (student_id, level, trainer_rating, development_rating, experience_rating, notes, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [student_id, level, trainer_rating || null, development_rating || null, experience_rating || null, notes || null, user.id], function(err) {
+        if (err) return res.json({ success: false, error: 'Database error' });
+        res.json({ success: true });
+    });
+});
+
+// Get student feedback for attendance page
+app.get('/student-feedback/list', requireAuth, (req, res) => {
+    db.all(`SELECT * FROM student_feedback`, (err, feedback) => {
+        if (err) return res.json({ success: false, error: 'Database error' });
+        res.json({ success: true, feedback: feedback || [] });
+    });
+});
+
 // ==================== STUDENT EVALUATIONS ROUTES ====================
 
 // Evaluations page (trainer sees their students, manager sees all)
@@ -3163,7 +3224,7 @@ app.get('/evaluations', requireAuth, requireRole(['trainer', 'manager', 'operati
              WHERE a.student_id = s.id AND sess.level = s.current_level 
              AND sess.session_number = 4 AND a.status IN ('present', 'attended')
              LIMIT 1) as session4_attended,
-            se.id as eval_id, se.trainer_rating, se.development_rating, se.experience_rating, se.notes as eval_notes, se.evaluated_at
+            se.id as eval_id, se.attitude_rating, se.commitment_rating, se.development_rating, se.notes as eval_notes, se.evaluated_at
         FROM students s
         LEFT JOIN student_evaluations se ON se.student_id = s.id AND se.level = s.current_level
         WHERE s.status = 'active' ${trainerCondition}
@@ -3221,15 +3282,15 @@ function renderEvalPage(res, user, students, sessionMap) {
 
 // Save evaluation
 app.post('/evaluations/save', requireAuth, requireRole(['trainer', 'manager']), (req, res) => {
-    const { student_id, level, trainer_rating, development_rating, experience_rating, notes } = req.body;
+    const { student_id, level, attitude_rating, commitment_rating, development_rating, notes } = req.body;
     const user = req.session.user;
     
     if (!student_id || !level) return res.json({ success: false, error: 'Missing required fields' });
     
     db.run(`
-        INSERT OR REPLACE INTO student_evaluations (student_id, level, trainer_id, trainer_rating, development_rating, experience_rating, notes)
+        INSERT OR REPLACE INTO student_evaluations (student_id, level, trainer_id, attitude_rating, commitment_rating, development_rating, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [student_id, level, user.id, trainer_rating || null, development_rating || null, experience_rating || null, notes || null], function(err) {
+    `, [student_id, level, user.id, attitude_rating || null, commitment_rating || null, development_rating || null, notes || null], function(err) {
         if (err) return res.json({ success: false, error: 'Database error' });
         res.json({ success: true });
     });

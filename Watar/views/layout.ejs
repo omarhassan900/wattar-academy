@@ -176,6 +176,12 @@
                     </a>
                     <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['manager', 'operations_manager', 'trainer', 'reception'].includes(user.role)) { %>
+                    <a class="nav-link <%= currentUrl == '/band' ? 'active' : '' %>" href="/band">
+                        <i class="fas fa-guitar me-2"></i>Wattar Band
+                    </a>
+                    <% } %>
+
                     <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/users' ? 'active' : '' %>" href="/users">
                         <i class="fas fa-user-cog me-2"></i>User Management
@@ -264,6 +270,10 @@
                         
                         <% if (typeof user !== 'undefined' && ['sales', 'manager', 'operations_manager', 'reception'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/leads' ? 'active' : '' %>" href="/leads">Leads</a>
+                        <% } %>
+                        
+                        <% if (typeof user !== 'undefined' && ['manager', 'operations_manager', 'trainer', 'reception'].includes(user.role)) { %>
+                        <a class="nav-link text-white <%= currentUrl == '/band' ? 'active' : '' %>" href="/band">Wattar Band</a>
                         <% } %>
                         
                         <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>

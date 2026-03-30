@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wattar Academy - Feedback</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; }
+        .feedback-card { border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 500px; margin: 20px auto; }
+        .star-btn { cursor: pointer; font-size: 2rem; transition: color 0.2s; }
+        .star-btn:hover { color: #f39c12 !important; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #667eea; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card feedback-card">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <i class="fas fa-music text-primary fa-2x mb-2"></i>
+                <h3 class="logo">Wattar Academy</h3>
+                <p class="text-muted">Rate your experience</p>
+                <hr>
+                <p><strong><%= feedback.student_name %></strong> - <span class="badge bg-primary"><%= feedback.level %></span></p>
+            </div>
+
+            <div id="feedback-form">
+                <div class="mb-4 text-center">
+                    <label class="form-label fw-bold d-block">Trainer Rating</label>
+                    <div class="star-group" data-field="trainer">
+                        <i class="fas fa-star star-btn text-muted" data-value="1"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="2"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="3"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="4"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="5"></i>
+                        <input type="hidden" id="r-trainer" value="">
+                    </div>
+                </div>
+                <div class="mb-4 text-center">
+                    <label class="form-label fw-bold d-block">Student Development</label>
+                    <div class="star-group" data-field="development">
+                        <i class="fas fa-star star-btn text-muted" data-value="1"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="2"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="3"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="4"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="5"></i>
+                        <input type="hidden" id="r-development" value="">
+                    </div>
+                </div>
+
+                <div class="mb-4 text-center">
+                    <label class="form-label fw-bold d-block">Overall Experience</label>
+                    <div class="star-group" data-field="experience">
+                        <i class="fas fa-star star-btn text-muted" data-value="1"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="2"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="3"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="4"></i>
+                        <i class="fas fa-star star-btn text-muted" data-value="5"></i>
+                        <input type="hidden" id="r-experience" value="">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Notes (Optional)</label>
+                    <textarea class="form-control" id="r-notes" rows="3" placeholder="Tell us about your experience..."></textarea>
+                </div>
+
+                <button class="btn btn-primary w-100 btn-lg" id="submit-btn">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Feedback
+                </button>
+            </div>
+
+            <div id="thank-you" style="display:none;" class="text-center py-4">
+                <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                <h3>Thank You!</h3>
+                <p class="text-muted">Your feedback has been submitted successfully.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.star-group').forEach(group => {
+    const stars = group.querySelectorAll('.star-btn');
+    const hidden = group.querySelector('input[type="hidden"]');
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const val = parseInt(this.dataset.value);
+            hidden.value = val;
+            stars.forEach((s, i) => {
+                s.classList.toggle('text-warning', i < val);
+                s.classList.toggle('text-muted', i >= val);
+            });
+        });
+    });
+});
+
+document.getElementById('submit-btn').addEventListener('click', function() {
+    const trainer = document.getElementById('r-trainer').value;
+    const dev = document.getElementById('r-development').value;
+    const exp = document.getElementById('r-experience').value;
+    if (!trainer || !dev || !exp) { alert('Please rate all three criteria'); return; }
+    
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    
+    fetch('/feedback/<%= token %>/submit', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            trainer_rating: trainer, development_rating: dev, experience_rating: exp,
+            notes: document.getElementById('r-notes').value
+        })
+    }).then(r=>r.json()).then(d => {
+        if (d.success) {
+            document.getElementById('feedback-form').style.display = 'none';
+            document.getElementById('thank-you').style.display = '';
+        } else { alert('Error: ' + d.error); this.disabled = false; this.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Feedback'; }
+    });
+});
+</script>
+</body>
+</html>

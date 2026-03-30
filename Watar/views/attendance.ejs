@@ -239,6 +239,14 @@
                                             <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
                                             <i class="fas fa-star"></i>
                                         </button>
+                                        <% if (['manager', 'reception'].includes(user.role)) { %>
+                                        <button type="button" class="btn btn-sm btn-outline-info generate-link-btn"
+                                            data-student-id="<%= student.id %>"
+                                            data-level="<%= student.current_level %>"
+                                            title="Generate feedback link">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                        <% } %>
                                     </td>
                                 </tr>
                                 <% }); %>
@@ -568,14 +576,49 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/student-feedback/list').then(r=>r.json()).then(d => {
         if (d.success && d.feedback.length > 0) {
             d.feedback.forEach(f => {
-                const btn = document.querySelector(`.feedback-btn[data-student-id="${f.student_id}"][data-level="${f.level}"]`);
-                if (btn) {
+                var btn = document.querySelector('.feedback-btn[data-student-id="' + f.student_id + '"][data-level="' + f.level + '"]');
+                if (btn && f.trainer_rating) {
                     btn.classList.remove('btn-outline-warning');
                     btn.classList.add('btn-success');
                     btn.innerHTML = '<i class="fas fa-check"></i>';
                 }
+                // Mark link button status
+                var linkBtn = document.querySelector('.generate-link-btn[data-student-id="' + f.student_id + '"][data-level="' + f.level + '"]');
+                if (linkBtn && f.token && f.trainer_rating) {
+                    linkBtn.classList.remove('btn-outline-info');
+                    linkBtn.classList.add('btn-success');
+                    linkBtn.innerHTML = '<i class="fas fa-check-circle"></i>';
+                } else if (linkBtn && f.token && !f.trainer_rating) {
+                    linkBtn.classList.remove('btn-outline-info');
+                    linkBtn.classList.add('btn-warning');
+                    linkBtn.title = 'Link sent - awaiting response';
+                }
             });
         }
+    });
+
+    // Generate feedback link
+    document.querySelectorAll('.generate-link-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var studentId = this.dataset.studentId;
+            var level = this.dataset.level;
+            var thisBtn = this;
+            fetch('/student-feedback/generate-link', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ student_id: studentId, level: level })
+            }).then(function(r) { return r.json(); }).then(function(d) {
+                if (d.success) {
+                    var link = 'http://184.73.55.171:3000/feedback/' + d.token;
+                    navigator.clipboard.writeText(link).then(function() {
+                        alert('Link copied to clipboard!\n\n' + link);
+                        thisBtn.classList.remove('btn-outline-info');
+                        thisBtn.classList.add('btn-warning');
+                    });
+                } else { alert('Error: ' + d.error); }
+            });
+        });
     });
 
     // Save feedback

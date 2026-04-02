@@ -2664,6 +2664,27 @@ app.post('/pre-schedule/delete', requireAuth, requireRole(['operations_manager',
     });
 });
 
+// API endpoint to get active students NOT in the weekly schedule
+app.get('/pre-schedule/unscheduled', requireAuth, requireRole(['operations_manager', 'manager', 'reception', 'trainer']), (req, res) => {
+    db.all(`
+        SELECT s.id, s.name, s.current_level, s.phone, s.instrument
+        FROM students s
+        WHERE s.status = 'active'
+          AND s.id NOT IN (
+              SELECT DISTINCT st.student_id 
+              FROM schedule_templates st 
+              WHERE st.is_active = 1
+          )
+        ORDER BY s.name
+    `, (err, students) => {
+        if (err) {
+            console.error('Error fetching unscheduled students:', err);
+            return res.json({ success: false, error: 'Database error' });
+        }
+        res.json({ success: true, students: students || [] });
+    });
+});
+
 // Session Confirmations Routes (Operations Manager)
 app.get('/session-confirmations', requireAuth, requireRole(['operations_manager', 'manager']), (req, res) => {
     const user = req.session.user;

@@ -90,6 +90,41 @@
     </div>
 </div>
 
+<!-- Unscheduled Active Students -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#unscheduledCollapse" aria-expanded="false">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-clock text-warning me-2"></i>Active Students Not in Schedule
+                    <span class="badge bg-warning text-dark ms-2" id="unscheduled-count">0</span>
+                </h5>
+                <i class="fas fa-chevron-down" id="unscheduled-chevron"></i>
+            </div>
+            <div class="collapse" id="unscheduledCollapse">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Student Name</th>
+                                    <th>Level</th>
+                                    <th>Instrument</th>
+                                    <th>Phone</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unscheduled-body">
+                                <tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Add Schedule Modal -->
 <div class="modal fade" id="addScheduleModal" tabindex="-1">
     <div class="modal-dialog">
@@ -404,6 +439,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load schedule data
     loadSchedule();
     
+    // Load unscheduled students
+    loadUnscheduled();
+    
+    // Toggle chevron icon on collapse
+    document.getElementById('unscheduledCollapse').addEventListener('shown.bs.collapse', function() {
+        document.getElementById('unscheduled-chevron').classList.replace('fa-chevron-down', 'fa-chevron-up');
+    });
+    document.getElementById('unscheduledCollapse').addEventListener('hidden.bs.collapse', function() {
+        document.getElementById('unscheduled-chevron').classList.replace('fa-chevron-up', 'fa-chevron-down');
+    });
+    
+    function loadUnscheduled() {
+        fetch('/pre-schedule/unscheduled')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('unscheduled-body');
+                    document.getElementById('unscheduled-count').textContent = data.students.length;
+                    if (data.students.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-success py-3"><i class="fas fa-check-circle me-2"></i>All active students are in the schedule</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.students.map((s, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td><strong>${s.name}</strong></td>
+                            <td><span class="badge bg-secondary">${s.current_level || '-'}</span></td>
+                            <td>${s.instrument || '-'}</td>
+                            <td>${s.phone || '-'}</td>
+                        </tr>
+                    `).join('');
+                }
+            })
+            .catch(err => console.error('Error loading unscheduled students:', err));
+    }
+    
     // Trainer filter
     document.getElementById('schedule-trainer-filter').addEventListener('change', function() {
         renderCalendar();
@@ -650,6 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('add-trainer').value = '';
                 document.getElementById('add-notes').value = '';
                 loadSchedule();
+                loadUnscheduled();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -717,6 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Schedule updated successfully!');
                 editScheduleModal.hide();
                 loadSchedule();
+                loadUnscheduled();
             } else {
                 alert('Error: ' + data.error);
             }
@@ -746,6 +819,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Student removed from schedule successfully!');
                 editScheduleModal.hide();
                 loadSchedule();
+                loadUnscheduled();
             } else {
                 alert('Error: ' + data.error);
             }

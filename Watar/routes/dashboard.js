@@ -140,29 +140,29 @@ module.exports = (app, db) => {
                                                             console.log(studentsByMonth);
                                                             
                                                             // Session progress: how many students are at each session (1-4) in their current level
+                                                            // A session is "done" if it has ANY attendance record (present OR absent)
                                                             db.all(`
                                                                 SELECT 
-                                                                    COALESCE(completed, 0) as completed_sessions,
+                                                                    COALESCE(last_session, 0) as last_session,
                                                                     COUNT(*) as student_count
                                                                 FROM (
                                                                     SELECT s.id,
-                                                                        (SELECT COUNT(DISTINCT a.session_id) 
+                                                                        (SELECT MAX(sess.session_number) 
                                                                          FROM attendance a 
                                                                          JOIN sessions sess ON a.session_id = sess.id 
-                                                                         WHERE a.student_id = s.id AND sess.level = s.current_level 
-                                                                         AND a.status IN ('present', 'attended')) as completed
+                                                                         WHERE a.student_id = s.id AND sess.level = s.current_level) as last_session
                                                                     FROM students s
                                                                     WHERE s.status = 'active'
                                                                 )
-                                                                GROUP BY completed
-                                                                ORDER BY completed
+                                                                GROUP BY last_session
+                                                                ORDER BY last_session
                                                             `, (err, sessionProgress) => {
                                                             if (err) { console.error('Error fetching session progress:', err); sessionProgress = []; }
                                                             
                                                             // Build array for sessions 0-4
-                                                            const progressData = [0, 0, 0, 0, 0]; // index 0=no sessions, 1=session1, 2=session2, 3=session3, 4=session4
+                                                            const progressData = [0, 0, 0, 0, 0];
                                                             (sessionProgress || []).forEach(row => {
-                                                                const idx = Math.min(row.completed_sessions, 4);
+                                                                const idx = Math.min(row.last_session, 4);
                                                                 progressData[idx] = row.student_count;
                                                             });
                                                             

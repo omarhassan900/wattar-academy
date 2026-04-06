@@ -25,22 +25,22 @@ module.exports = (app, db) => {
             queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
         }
         
-        // Session progress filter: filter by how many sessions completed in current level
+        // Session progress filter: filter by the last session done in current level
+        // Based on the highest session_number that has an attendance record
         if (sessionProgressFilter !== undefined && sessionProgressFilter !== '') {
             const progressNum = parseInt(sessionProgressFilter);
             if (progressNum === 0) {
-                // Students with NO attendance in their current level
+                // Students with NO attendance records in their current level
                 whereConditions.push(`s.id NOT IN (
                     SELECT DISTINCT a.student_id FROM attendance a 
                     JOIN sessions sess ON a.session_id = sess.id 
-                    WHERE sess.level = s.current_level AND a.status IN ('present', 'attended')
+                    WHERE sess.level = s.current_level
                 )`);
             } else if (progressNum >= 1 && progressNum <= 4) {
-                // Students with exactly N sessions completed in their current level
-                whereConditions.push(`(SELECT COUNT(DISTINCT a.session_id) FROM attendance a 
+                // Students whose last session done is exactly N
+                whereConditions.push(`(SELECT MAX(sess.session_number) FROM attendance a 
                     JOIN sessions sess ON a.session_id = sess.id 
-                    WHERE a.student_id = s.id AND sess.level = s.current_level 
-                    AND a.status IN ('present', 'attended')) = ?`);
+                    WHERE a.student_id = s.id AND sess.level = s.current_level) = ?`);
                 queryParams.push(progressNum);
             }
         }
@@ -62,6 +62,16 @@ module.exports = (app, db) => {
         }
         
         const whereClause = whereConditions.join(' AND ');
+        
+        // Debug session progress filter
+        if (sessionProgressFilter !== undefined) {
+            console.log('=== SESSION PROGRESS FILTER ===');
+            console.log('Raw value:', sessionProgressFilter, 'Type:', typeof sessionProgressFilter);
+            console.log('Parsed:', parseInt(sessionProgressFilter));
+            console.log('WHERE:', whereClause);
+            console.log('Params:', queryParams);
+            console.log('===============================');
+        }
         
         // Get total count with filters
         const countQuery = `SELECT COUNT(*) as total FROM students s WHERE ${whereClause}`;

@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ student_id: studentId, level: level })
             }).then(function(r) { return r.json(); }).then(function(d) {
                 if (d.success) {
-                    var link = 'http://184.73.55.171:3000/feedback/' + d.token;
+                    var link = window.location.origin + '/feedback/' + d.token;
                     // Fallback clipboard copy for HTTP
                     var textArea = document.createElement('textarea');
                     textArea.value = link;

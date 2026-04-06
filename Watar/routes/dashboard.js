@@ -138,16 +138,46 @@ module.exports = (app, db) => {
                                                             const financeChartData = { labels: monthLabels, income: incomeData, expenses: expenseData };
                                                             const revenueChartData = { labels: monthLabels, revenue: revenueData };
                                                             console.log(studentsByMonth);
+                                                            
+                                                            // Session progress: how many students are at each session (1-4) in their current level
+                                                            db.all(`
+                                                                SELECT 
+                                                                    COALESCE(completed, 0) as completed_sessions,
+                                                                    COUNT(*) as student_count
+                                                                FROM (
+                                                                    SELECT s.id,
+                                                                        (SELECT COUNT(DISTINCT a.session_id) 
+                                                                         FROM attendance a 
+                                                                         JOIN sessions sess ON a.session_id = sess.id 
+                                                                         WHERE a.student_id = s.id AND sess.level = s.current_level 
+                                                                         AND a.status IN ('present', 'attended')) as completed
+                                                                    FROM students s
+                                                                    WHERE s.status = 'active'
+                                                                )
+                                                                GROUP BY completed
+                                                                ORDER BY completed
+                                                            `, (err, sessionProgress) => {
+                                                            if (err) { console.error('Error fetching session progress:', err); sessionProgress = []; }
+                                                            
+                                                            // Build array for sessions 0-4
+                                                            const progressData = [0, 0, 0, 0, 0]; // index 0=no sessions, 1=session1, 2=session2, 3=session3, 4=session4
+                                                            (sessionProgress || []).forEach(row => {
+                                                                const idx = Math.min(row.completed_sessions, 4);
+                                                                progressData[idx] = row.student_count;
+                                                            });
+                                                            
                                                             res.render('dashboard', {
                                                                 user, transactions, categories, totalIncome, totalExpense, balance,
                                                                 financeChartData, revenueChartData, expenseByCategoryData, incomeByCategoryData,
                                                                 selectedYear, availableYears,
                                                                 stats: basicStats[0] || { total_students: 0, inactive_students: 0, graduated_students: 0, total_classes: 0, total_trainers: 0, today_attendance: 0 },
                                                                 studentsByMonth: studentsByMonth || [], studentsByInstrument: studentsByInstrument || [],
-                                                                recentAttendance: recentAttendance || [], attendancePercentage
+                                                                recentAttendance: recentAttendance || [], attendancePercentage,
+                                                                sessionProgress: progressData
                                                             }, (err, html) => {
                                                                 if (err) { console.error(err); return res.status(500).send('Render error'); }
                                                                 res.render('layout', { body: html, user: user, activemenu: 'dashboard' });
+                                                            });
                                                             });
                                                         });
                                                     });

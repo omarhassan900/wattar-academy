@@ -48,7 +48,39 @@
     </div>
 </div>
 
-<!-- Row 2: Financial Summary Cards -->
+<!-- Row 2: Session Progress Cards -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Attendance Progress (All Students)</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <% const progressColors = ['secondary', 'info', 'primary', 'warning', 'success']; %>
+                    <% const progressIcons = ['fa-hourglass-start', 'fa-play', 'fa-forward', 'fa-fast-forward', 'fa-check-double']; %>
+                    <% const progressLabels = ['Not Started', 'Session 1 Done', 'Session 2 Done', 'Session 3 Done', 'All 4 Done']; %>
+                    <% const sp = typeof sessionProgress !== 'undefined' ? sessionProgress : [0,0,0,0,0]; %>
+                    <% for (let i = 0; i <= 4; i++) { %>
+                    <div class="col">
+                        <a href="/attendance?session_progress=<%= i %>" class="text-decoration-none">
+                            <div class="card border-<%= progressColors[i] %> h-100" style="cursor:pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+                                <div class="card-body py-3">
+                                    <i class="fas <%= progressIcons[i] %> fa-2x text-<%= progressColors[i] %> mb-2"></i>
+                                    <h2 class="mb-1 text-<%= progressColors[i] %>"><%= sp[i] %></h2>
+                                    <p class="text-muted mb-0" style="font-size: 0.85rem;"><%= progressLabels[i] %></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2b: Financial Summary Cards -->
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card bg-success text-white h-100">

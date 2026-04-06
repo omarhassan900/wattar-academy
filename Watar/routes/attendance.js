@@ -14,6 +14,7 @@ module.exports = (app, db) => {
         const instrumentFilter = req.query.instrument || '';
         const statusFilter = req.query.status || '';
         const dateFilter = req.query.date || '';
+        const sessionProgressFilter = req.query.session_progress;
         
         // Build WHERE clause based on filters
         let whereConditions = ["s.status = 'active'"];
@@ -22,6 +23,26 @@ module.exports = (app, db) => {
         if (searchTerm) {
             whereConditions.push("(s.name LIKE ? OR s.phone LIKE ?)");
             queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
+        }
+        
+        // Session progress filter: filter by how many sessions completed in current level
+        if (sessionProgressFilter !== undefined && sessionProgressFilter !== '') {
+            const progressNum = parseInt(sessionProgressFilter);
+            if (progressNum === 0) {
+                // Students with NO attendance in their current level
+                whereConditions.push(`s.id NOT IN (
+                    SELECT DISTINCT a.student_id FROM attendance a 
+                    JOIN sessions sess ON a.session_id = sess.id 
+                    WHERE sess.level = s.current_level AND a.status IN ('present', 'attended')
+                )`);
+            } else if (progressNum >= 1 && progressNum <= 4) {
+                // Students with exactly N sessions completed in their current level
+                whereConditions.push(`(SELECT COUNT(DISTINCT a.session_id) FROM attendance a 
+                    JOIN sessions sess ON a.session_id = sess.id 
+                    WHERE a.student_id = s.id AND sess.level = s.current_level 
+                    AND a.status IN ('present', 'attended')) = ?`);
+                queryParams.push(progressNum);
+            }
         }
         if (monthFilter) {
             whereConditions.push("s.current_level = ?");

@@ -136,6 +136,63 @@
     </div>
 </div>
 
+<!-- Past Evaluations (from previous levels) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Past Evaluations (<%= pastEvaluations.length %>)</h5>
+            </div>
+            <div class="card-body">
+                <% if (pastEvaluations.length === 0) { %>
+                <p class="text-muted text-center py-3">No past evaluations from previous levels.</p>
+                <% } else { %>
+                <%
+                const pastGroups = {};
+                pastEvaluations.forEach(e => {
+                    const k = e.level || 'Unknown';
+                    if (!pastGroups[k]) pastGroups[k] = [];
+                    pastGroups[k].push(e);
+                });
+                const pastKeys = Object.keys(pastGroups).sort();
+                %>
+                <% pastKeys.forEach(level => { %>
+                <h6 class="mt-3 mb-2"><i class="fas fa-layer-group text-info me-2"></i>Level: <%= level %> <span class="badge bg-secondary"><%= pastGroups[level].length %></span></h6>
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Current Level</th>
+                                <th>Attitude</th>
+                                <th>Commitment</th>
+                                <th>Development</th>
+                                <th>Notes</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% pastGroups[level].forEach(e => { %>
+                            <tr>
+                                <td><strong><%= e.name %></strong></td>
+                                <td><span class="badge bg-primary"><%= e.current_level %></span></td>
+                                <td><%= '★'.repeat(e.attitude_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (e.attitude_rating || 0)) %></span></td>
+                                <td><%= '★'.repeat(e.commitment_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (e.commitment_rating || 0)) %></span></td>
+                                <td><%= '★'.repeat(e.development_rating || 0) %><span class="text-muted"><%= '☆'.repeat(5 - (e.development_rating || 0)) %></span></td>
+                                <td><small><%= e.notes || '-' %></small></td>
+                                <td><small><%= new Date(e.evaluated_at).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) %></small></td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% }); %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Evaluate Modal -->
 <div class="modal fade" id="evaluateModal" tabindex="-1">
     <div class="modal-dialog">

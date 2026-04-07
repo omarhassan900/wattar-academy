@@ -45,7 +45,7 @@ module.exports = (app, db) => {
             // Get session dates for each student
             const studentIds = (students || []).map(s => s.id);
             if (studentIds.length === 0) {
-                return renderEvalPage(res, user, [], {}, []);
+                return renderEvalPage(res, user, [], {}, [], []);
             }
             
             db.all(`
@@ -82,13 +82,26 @@ module.exports = (app, db) => {
                     ORDER BY se.evaluated_at DESC
                 `, pastParams, (err, pastEvals) => {
                     if (err) pastEvals = [];
-                    renderEvalPage(res, user, students || [], sessionMap, pastEvals || []);
+                    
+                    // Fetch all student feedback
+                    db.all(`
+                        SELECT sf.*, s.name, s.current_level, s.instrument,
+                            (SELECT u.full_name FROM users u WHERE u.id = sf.created_by) as created_by_name,
+                            (SELECT u.full_name FROM trainers t JOIN users u ON t.user_id = u.id WHERE t.id = s.trainer_id) as trainer_name
+                        FROM student_feedback sf
+                        JOIN students s ON sf.student_id = s.id
+                        WHERE s.status = 'active' AND sf.trainer_rating IS NOT NULL ${pastTrainerCond}
+                        ORDER BY sf.created_at DESC
+                    `, pastParams, (err, feedbackList) => {
+                        if (err) feedbackList = [];
+                        renderEvalPage(res, user, students || [], sessionMap, pastEvals || [], feedbackList || []);
+                    });
                 });
             });
         });
     });
 
-    function renderEvalPage(res, user, students, sessionMap, pastEvaluations) {
+    function renderEvalPage(res, user, students, sessionMap, pastEvaluations, feedbackList) {
         // Split into pending (session 4 attended, no eval) and evaluated
         const pending = students.filter(s => s.session4_attended && !s.eval_id);
         const evaluated = students.filter(s => s.eval_id);
@@ -98,8 +111,13 @@ module.exports = (app, db) => {
             s.sessionDates = sessionMap[s.id] || [];
         });
         
-        res.render('evaluations', { user, pending, evaluated, pastEvaluations: pastEvaluations || [], moment }, (err, html) => {
-            if (err) { console.error(err); return res.status(500).send('Render error'); }
+        res.render('evaluations', { user, pending, evaluated, pastEvaluations: pastEvaluations || [], feedbackList: feedbackList || [], moment }, (err, html) => {
+            if (err) {
+                console.error('Evaluations render error:', err.message);
+                console.error('Stack:', err.stack);
+                console.error('Data counts - pending:', pending.length, 'evaluated:', evaluated.length, 'past:', (pastEvaluations||[]).length, 'feedback:', (feedbackList||[]).length);
+                return res.status(500).send('<pre>Render error: ' + err.message + '\n' + err.stack + '</pre>');
+            }
             res.render('layout', { body: html, user, activemenu: 'evaluations' });
         });
     }

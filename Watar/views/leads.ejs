@@ -63,6 +63,7 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Phone</th>
+                                <th>Date Added</th>
                                 <th>Source</th>
                                 <th>Instrument</th>
                                 <th>Status</th>
@@ -87,6 +88,7 @@
                                     <% if (lead.phone) { %><a href="tel:<%= lead.phone %>"><i class="fas fa-phone me-1"></i><%= lead.phone %></a><% } else { %>-<% } %>
                                     <% if (lead.parent_phone) { %><br><small><a href="tel:<%= lead.parent_phone %>"><i class="fas fa-phone me-1"></i><%= lead.parent_phone %></a></small><% } %>
                                 </td>
+                                <td><small><%= lead.created_at ? new Date(lead.created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) : '-' %></small></td>
                                 <td><%= lead.source || '-' %></td>
                                 <td><%= lead.instrument || '-' %></td>
                                 <td>

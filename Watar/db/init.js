@@ -6,9 +6,19 @@ const db = new sqlite3.Database('wattar.db');
 // Migration: Sync trainer users into trainers table
 db.all("SELECT u.id FROM users u WHERE u.role = 'trainer' AND u.id NOT IN (SELECT user_id FROM trainers WHERE user_id IS NOT NULL)", (err, rows) => {
     if (!err && rows && rows.length > 0) {
-        const stmt = db.prepare('INSERT INTO trainers (user_id, status) VALUES (?, ?)');
+        const stmt = db.prepare('INSERT OR IGNORE INTO trainers (user_id, status) VALUES (?, ?)');
         rows.forEach(r => stmt.run(r.id, 'active'));
         stmt.finalize(() => console.log(`✓ Synced ${rows.length} trainer(s) into trainers table`));
+    }
+});
+
+// Migration: Remove duplicate trainers (keep the one with lowest id)
+db.all(`SELECT user_id, MIN(id) as keep_id FROM trainers WHERE user_id IS NOT NULL GROUP BY user_id HAVING COUNT(*) > 1`, (err, dupes) => {
+    if (!err && dupes && dupes.length > 0) {
+        dupes.forEach(d => {
+            db.run('DELETE FROM trainers WHERE user_id = ? AND id != ?', [d.user_id, d.keep_id]);
+        });
+        console.log(`✓ Removed ${dupes.length} duplicate trainer(s)`);
     }
 });
 

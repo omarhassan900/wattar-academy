@@ -15,6 +15,7 @@
 | 09 | [Views Reference](./09-VIEWS-REFERENCE.md) | All EJS templates and what data they receive |
 | 10 | [Node.js & server.js Guide](./10-NODEJS-SERVER-GUIDE.md) | Full syntax guide: routes, middleware, DB queries, callbacks, how to add features |
 | 11 | [HTTPS & Meta Webhook Setup](./11-HTTPS-AND-META-WEBHOOK-SETUP.md) | Step-by-step: add SSL, connect Meta Lead Ads to auto-import leads |
+| 12 | [Meta Integration Status](./12-META-INTEGRATION-STATUS.md) | Current progress, remaining steps, links, and key reference info |
 
 ## Quick Start
 

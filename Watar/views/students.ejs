@@ -46,7 +46,7 @@
                             <option value="">All Status</option>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
-                            <option value="graduated">Graduated</option>
+                            <option value="freez">Freez</option>
                         </select>
                     </div>
                     <div class="col-md-3 text-end">
@@ -137,8 +137,8 @@
                                         <span class="badge bg-success">Active</span>
                                     <% } else if (student.status === 'inactive') { %>
                                         <span class="badge bg-warning">Inactive</span>
-                                    <% } else if (student.status === 'graduated') { %>
-                                        <span class="badge bg-secondary">Graduated</span>
+                                    <% } else if (student.status === 'freez') { %>
+                                        <span class="badge bg-info">Freez</span>
                                     <% } else { %>
                                         <span class="badge bg-secondary"><%= student.status %></span>
                                     <% } %>
@@ -427,7 +427,7 @@
                                 <select class="form-control" id="edit_status" name="status" required>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
-                                    <option value="graduated">Graduated</option>
+                                    <option value="freez">Freez</option>
                                 </select>
                             </div>
                         </div>
@@ -649,8 +649,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusBadge.classList.add('bg-success');
             } else if (status === 'inactive') {
                 statusBadge.classList.add('bg-warning');
-            } else if (status === 'graduated') {
-                statusBadge.classList.add('bg-secondary');
+            } else if (status === 'freez') {
+                statusBadge.classList.add('bg-info');
             }
             
             // Show modal

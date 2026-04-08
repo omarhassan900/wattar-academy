@@ -52,7 +52,7 @@ db.serialize(() => {
                         email VARCHAR(100),
                         start_date DATE NOT NULL,
                         current_level TEXT,
-                        status TEXT CHECK(status IN ('active', 'inactive', 'graduated')) DEFAULT 'active',
+                        status TEXT CHECK(status IN ('active', 'inactive', 'freez')) DEFAULT 'active',
                         notes TEXT,
                         instrument VARCHAR(100),
                         address TEXT,

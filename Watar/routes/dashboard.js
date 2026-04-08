@@ -10,7 +10,7 @@ module.exports = (app, db) => {
                 SELECT 
                     (SELECT COUNT(*) FROM students WHERE status = 'active') as total_students,
                     (SELECT COUNT(*) FROM students WHERE status = 'inactive') as inactive_students,
-                    (SELECT COUNT(*) FROM students WHERE status = 'graduated') as graduated_students,
+                    (SELECT COUNT(*) FROM students WHERE status = 'freez') as freez_students,
                     (SELECT COUNT(*) FROM classes WHERE status = 'active') as total_classes,
                     (SELECT COUNT(*) FROM trainers WHERE status = 'active') as total_trainers,
                     (SELECT COUNT(*) FROM attendance WHERE date = date('now')) as today_attendance
@@ -170,7 +170,7 @@ module.exports = (app, db) => {
                                                                 user, transactions, categories, totalIncome, totalExpense, balance,
                                                                 financeChartData, revenueChartData, expenseByCategoryData, incomeByCategoryData,
                                                                 selectedYear, availableYears,
-                                                                stats: basicStats[0] || { total_students: 0, inactive_students: 0, graduated_students: 0, total_classes: 0, total_trainers: 0, today_attendance: 0 },
+                                                                stats: basicStats[0] || { total_students: 0, inactive_students: 0, freez_students: 0, total_classes: 0, total_trainers: 0, today_attendance: 0 },
                                                                 studentsByMonth: studentsByMonth || [], studentsByInstrument: studentsByInstrument || [],
                                                                 recentAttendance: recentAttendance || [], attendancePercentage,
                                                                 sessionProgress: progressData

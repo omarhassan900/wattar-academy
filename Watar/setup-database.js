@@ -31,7 +31,7 @@ db.serialize(() => {
         email VARCHAR(100),
         start_date DATE NOT NULL,
         current_level TEXT CHECK(current_level IN ('Level One', 'Level Two', 'Level Three', 'Level Four', 'Level Five', 'Level Six')) DEFAULT 'Level One',
-        status TEXT CHECK(status IN ('active', 'inactive', 'graduated')) DEFAULT 'active',
+        status TEXT CHECK(status IN ('active', 'inactive', 'freez')) DEFAULT 'active',
         notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

@@ -38,11 +38,14 @@ for (let i = 1; i < data.length; i++) {
     if (r[7] && typeof r[7] === 'number' && r[7] < 100000) {
         const dateStr = typeof curDate === 'number' ? serialToDate(curDate) : null;
         if (!dateStr) continue;
+        let incomeCode = (r[10] || '').trim();
+        // Map CA on income side to MGR_CASH
+        if (incomeCode === 'CA') incomeCode = 'MGR_CASH';
         transactions.push({
             type: 'income',
             amount: r[7],
             description: (r[8] || '').trim(),
-            category_code: (r[10] || '').trim(),
+            category_code: incomeCode,
             date: dateStr
         });
     }

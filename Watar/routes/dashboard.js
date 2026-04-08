@@ -1,7 +1,7 @@
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 module.exports = (app, db) => {
-    app.get('/dashboard', requireAuth, requireRole(['manager','reception']), (req, res) => {
+    app.get('/dashboard', requireAuth, requireRole(['manager','reception','operations_manager']), (req, res) => {
         const user = req.session.user;
         const selectedYear = parseInt(req.query.year) || new Date().getFullYear();
         

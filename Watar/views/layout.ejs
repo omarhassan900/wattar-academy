@@ -109,8 +109,8 @@
 
                 <nav class="nav flex-column">
 
-                    <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
-                    <a class="nav-link  <%= currentUrl == '/dashboard' ? 'active' : '' %>" href="/">
+                    <% if (typeof user !== 'undefined' && ['manager', 'reception', 'operations_manager'].includes(user.role)) { %>
+                    <a class="nav-link  <%= currentUrl == '/dashboard' ? 'active' : '' %>" href="/dashboard">
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                     </a>
                     <% } %>
@@ -237,8 +237,8 @@
 
                     <nav class="nav flex-column">
 
-                        <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
-                        <a class="nav-link text-white <%= currentUrl == '/dashboard' ? 'active' : '' %>"" href="/">Dashboard</a>
+                        <% if (typeof user !== 'undefined' && ['manager', 'reception', 'operations_manager'].includes(user.role)) { %>
+                        <a class="nav-link text-white <%= currentUrl == '/dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
                         <% } %>
                         
                         <% if (typeof user !== 'undefined' && ['operations_manager', 'manager'].includes(user.role)) { %>

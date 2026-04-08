@@ -81,6 +81,7 @@
 </div>
 
 <!-- Row 2b: Financial Summary Cards -->
+<% if (user.role === 'manager') { %>
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card bg-success text-white h-100">
@@ -107,8 +108,10 @@
         </div>
     </div>
 </div>
+<% } %>
 
 <!-- Row 3: Income vs Expenses & Revenue (side by side) -->
+<% if (user.role === 'manager') { %>
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card h-100">
@@ -162,6 +165,7 @@
         </div>
     </div>
 </div>
+<% } %>
 
 <!-- Row 6: Students by Month & Instruments (side by side) -->
 <div class="row mb-4">
@@ -291,6 +295,7 @@
 
 <!-- Charts JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<% if (user.role === 'manager') { %>
 <script>
     // Income vs Expenses
     const financeData = <%- JSON.stringify(financeChartData) %>;
@@ -337,3 +342,4 @@
         options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
     });
 </script>
+<% } %>

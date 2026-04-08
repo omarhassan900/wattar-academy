@@ -49,7 +49,16 @@ module.exports = (app, db) => {
                     console.error('Error adding user:', err);
                     return res.status(500).send('Database error');
                 }
-                res.redirect('/users');
+                const newUserId = this.lastID;
+                // Auto-create trainers entry for trainer role
+                if (role === 'trainer') {
+                    db.run('INSERT INTO trainers (user_id, status) VALUES (?, ?)', [newUserId, status || 'active'], (err) => {
+                        if (err) console.error('Error creating trainer entry:', err);
+                        res.redirect('/users');
+                    });
+                } else {
+                    res.redirect('/users');
+                }
             });
         });
     });

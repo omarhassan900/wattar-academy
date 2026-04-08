@@ -3,6 +3,15 @@ const bcrypt = require('bcrypt');
 
 const db = new sqlite3.Database('wattar.db');
 
+// Migration: Sync trainer users into trainers table
+db.all("SELECT u.id FROM users u WHERE u.role = 'trainer' AND u.id NOT IN (SELECT user_id FROM trainers WHERE user_id IS NOT NULL)", (err, rows) => {
+    if (!err && rows && rows.length > 0) {
+        const stmt = db.prepare('INSERT INTO trainers (user_id, status) VALUES (?, ?)');
+        rows.forEach(r => stmt.run(r.id, 'active'));
+        stmt.finalize(() => console.log(`✓ Synced ${rows.length} trainer(s) into trainers table`));
+    }
+});
+
 // Migration: Replace 'graduated' with 'freez' in students status constraint
 db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='students'", (err, row) => {
     if (row && row.sql && row.sql.includes("'graduated'")) {

@@ -6,40 +6,6 @@ const db = new sqlite3.Database('wattar.db');
 // Migration: Sync trainer users into trainers table (runs after tables are created)
 // Migration: Remove duplicate trainers (keep the one with lowest id)
 
-// Migration: Replace 'graduated' with 'freez' in students status constraint
-db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='students'", (err, row) => {
-    if (row && row.sql && row.sql.includes("'graduated'")) {
-        console.log('Migrating students table: replacing graduated with freez...');
-        db.serialize(() => {
-            db.run("UPDATE students SET status = 'active' WHERE status = 'graduated'");
-            db.run("ALTER TABLE students RENAME TO students_old");
-            db.run(`CREATE TABLE students (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name VARCHAR(100) NOT NULL,
-                national_id VARCHAR(20),
-                phone VARCHAR(20),
-                parent_phone VARCHAR(20),
-                email VARCHAR(100),
-                start_date DATE NOT NULL,
-                current_level TEXT,
-                status TEXT CHECK(status IN ('active', 'inactive', 'freez')) DEFAULT 'active',
-                notes TEXT,
-                instrument VARCHAR(100),
-                address TEXT,
-                date_of_birth DATE,
-                emergency_contact VARCHAR(100),
-                emergency_phone VARCHAR(20),
-                trainer_id INTEGER,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-            db.run("INSERT INTO students SELECT * FROM students_old");
-            db.run("DROP TABLE students_old");
-            console.log('✓ Students table migrated: graduated replaced with freez');
-        });
-    }
-});
-
 // Migration: Add 'sales' to users role constraint (SQLite requires table recreation)
 db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'", (err, row) => {
     if (row && row.sql && !row.sql.includes("'sales'")) {

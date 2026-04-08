@@ -247,7 +247,7 @@
                                     <option value="">Select Trainer</option>
                                     <% if (typeof trainers !== 'undefined' && trainers) { %>
                                         <% trainers.forEach(trainer => { %>
-                                            <option value="<%= trainer.id %>"><%= trainer.name %> (<%= trainer.specialization %>)</option>
+                                            <option value="<%= trainer.id %>"><%= trainer.name %><%= trainer.specialization ? ' (' + trainer.specialization + ')' : '' %></option>
                                         <% }); %>
                                     <% } %>
                                 </select>
@@ -384,7 +384,7 @@
                                     <option value="">Select Trainer</option>
                                     <% if (typeof trainers !== 'undefined' && trainers) { %>
                                         <% trainers.forEach(trainer => { %>
-                                            <option value="<%= trainer.id %>"><%= trainer.name %> (<%= trainer.specialization %>)</option>
+                                            <option value="<%= trainer.id %>"><%= trainer.name %><%= trainer.specialization ? ' (' + trainer.specialization + ')' : '' %></option>
                                         <% }); %>
                                     <% } %>
                                 </select>

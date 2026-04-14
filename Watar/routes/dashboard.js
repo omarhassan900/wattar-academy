@@ -34,11 +34,19 @@ module.exports = (app, db) => {
             `,
             recentAttendance: `
                 SELECT 
-                    DATE(a.date) as date,
+                    d.date,
                     COUNT(DISTINCT CASE WHEN a.status IN ('present', 'attended') THEN a.student_id END) as students_present,
                     COUNT(DISTINCT CASE WHEN a.status = 'absent' THEN a.student_id END) as students_absent,
-                    (SELECT COUNT(*) FROM confirmation_log cl WHERE cl.confirmation_date = DATE(a.date)) as students_confirmed
-                FROM attendance a GROUP BY DATE(a.date) ORDER BY date DESC LIMIT 7
+                    (SELECT COUNT(*) FROM confirmation_log cl WHERE cl.confirmation_date = d.date) as students_confirmed
+                FROM (
+                    SELECT DISTINCT DATE(date) as date FROM attendance
+                    UNION
+                    SELECT DISTINCT confirmation_date as date FROM confirmation_log
+                ) d
+                LEFT JOIN attendance a ON DATE(a.date) = d.date
+                GROUP BY d.date
+                ORDER BY d.date DESC
+                LIMIT 7
             `,
             attendanceRate: `
                 SELECT 

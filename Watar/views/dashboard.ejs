@@ -253,6 +253,8 @@
                                 <td>
                                     <% if (day.students_present > 0) { %>
                                         <span class="badge bg-success"><i class="fas fa-check"></i> Recorded</span>
+                                    <% } else if (day.students_confirmed > 0) { %>
+                                        <span class="badge bg-primary"><i class="fas fa-clock"></i> Confirmed</span>
                                     <% } else { %>
                                         <span class="badge bg-secondary"><i class="fas fa-minus"></i> No data</span>
                                     <% } %>

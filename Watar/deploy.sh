@@ -9,16 +9,29 @@ BACKUP_FILE="wattar-backup-${TIMESTAMP}.db"
 # Step 1: Backup database
 if [ -f wattar.db ]; then
     cp wattar.db "$BACKUP_FILE"
-    echo "✓ Database backed up to: $BACKUP_FILE"
+    echo "Database backed up to: $BACKUP_FILE"
 else
-    echo "⚠ No wattar.db found, skipping backup"
+    echo "No wattar.db found, skipping backup"
 fi
 
-# Step 2: Pull latest code
-echo "Pulling latest code..."
-git pull origin main 
+# Step 2: Stash any local changes to avoid merge conflicts
+echo "Stashing local changes..."
+git stash --include-untracked 2>/dev/null || true
 
-# Step 3: Build and deploy
+# Step 3: Pull latest code
+echo "Pulling latest code..."
+git pull origin main
+
+# Step 4: Drop stash
+git stash drop 2>/dev/null || true
+
+# Step 5: Restore database from backup
+if [ -f "$BACKUP_FILE" ] && [ ! -f wattar.db ]; then
+    cp "$BACKUP_FILE" wattar.db
+    echo "Database restored from backup"
+fi
+
+# Step 6: Build and deploy
 echo "Building and deploying..."
 docker-compose build && docker-compose up -d
 

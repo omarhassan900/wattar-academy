@@ -135,6 +135,9 @@ module.exports = (app, db) => {
                                                             const revenueData = Array(12).fill(0);
                                                             monthlyFinance.forEach(row => { const i = parseInt(row.month) - 1; incomeData[i] = row.total_income || 0; expenseData[i] = row.total_expense || 0; });
                                                             (monthlyRevenue || []).forEach(row => { const i = parseInt(row.month) - 1; revenueData[i] = (row.real_income || 0) - (row.real_expense || 0); });
+                                                            const realIncomeData = Array(12).fill(0);
+                                                            const realExpenseData = Array(12).fill(0);
+                                                            (monthlyRevenue || []).forEach(row => { const i = parseInt(row.month) - 1; realIncomeData[i] = row.real_income || 0; realExpenseData[i] = row.real_expense || 0; });
                                                             const catColors = { 'T': '#e74c3c', 'S': '#3498db', 'CA': '#f39c12', 'C': '#2ecc71', 'AR': '#9b59b6', 'B': '#1abc9c', 'E': '#e67e22', 'R': '#34495e', 'ST': '#e91e63', 'SI': '#00bcd4', 'BA': '#ff5722', 'D': '#795548' };
                                                             const catMap = {};
                                                             (expByCat || []).forEach(row => { const name = row.category_name || row.category_code; if (!catMap[name]) catMap[name] = { code: row.category_code, data: Array(12).fill(0) }; catMap[name].data[parseInt(row.month) - 1] = row.total; });
@@ -143,8 +146,8 @@ module.exports = (app, db) => {
                                                             const incCatMap = {};
                                                             (incByCat || []).forEach(row => { const name = row.category_name || row.category_code; if (!incCatMap[name]) incCatMap[name] = { code: row.category_code, data: Array(12).fill(0) }; incCatMap[name].data[parseInt(row.month) - 1] = row.total; });
                                                             const incomeByCategoryData = { labels: monthLabels, datasets: Object.entries(incCatMap).map(([name, val]) => ({ label: name, data: val.data, backgroundColor: incColors[val.code] || '#' + Math.floor(Math.random()*16777215).toString(16) })) };
-                                                            const financeChartData = { labels: monthLabels, income: incomeData, expenses: expenseData };
-                                                            const revenueChartData = { labels: monthLabels, revenue: revenueData };
+                                                            const financeChartData = { labels: monthLabels, income: realIncomeData, expenses: realExpenseData };
+                                                            const revenueChartData = { labels: monthLabels, revenue: revenueData, realIncome: realIncomeData, realExpense: realExpenseData };
                                                             console.log(studentsByMonth);
                                                             
                                                             // Session progress: how many students are at each session (1-4) in their current level

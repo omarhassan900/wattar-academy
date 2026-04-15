@@ -202,6 +202,26 @@ module.exports = (app, db) => {
                                     confirmationRecords = [];
                                 }
                                 
+                                // Get payment status for these students
+                                const paymentsQuery = `
+                                    SELECT student_id, level, paid
+                                    FROM student_level_payments
+                                    WHERE student_id IN (${studentPlaceholders})
+                                `;
+                                
+                                db.all(paymentsQuery, studentIds, (err, paymentRecords) => {
+                                if (err) {
+                                    console.error(err);
+                                    paymentRecords = [];
+                                }
+                                
+                                // Build payment map
+                                const paymentMap = {};
+                                (paymentRecords || []).forEach(record => {
+                                    const key = `${record.student_id}_${record.level}`;
+                                    paymentMap[key] = record.paid;
+                                });
+                                
                                 // Build confirmation map
                                 const confirmationMap = {};
                                 confirmationRecords.forEach(record => {
@@ -259,11 +279,16 @@ module.exports = (app, db) => {
                                 // Get confirmation status for this student
                                 const confirmation = confirmationMap[student.id] || null;
                                 
+                                // Get payment status for this student's current level
+                                const paymentKey = `${student.id}_${student.current_level}`;
+                                const paid = paymentMap[paymentKey] || 0;
+                                
                                 return {
                                     ...student,
                                     sessions: studentSessions,
-                                    notes: levelNotes,  // Notes for current level
-                                    confirmation: confirmation  // Confirmation status from operations manager
+                                    notes: levelNotes,
+                                    confirmation: confirmation,
+                                    paid: paid
                                 };
                             });
                             
@@ -298,6 +323,7 @@ module.exports = (app, db) => {
                                 });
                                 });
                             });
+                            }); // Close payments callback
                             }); // Close confirmations callback
                         });
                     });
@@ -457,6 +483,30 @@ module.exports = (app, db) => {
             
             res.json({ success: true, message: 'Attendance cleared successfully' });
         });
+    });
+
+    // API endpoint for toggling payment status
+    app.post('/api/toggle-payment', requireAuth, (req, res) => {
+        const { student_id, level, paid } = req.body;
+        const user = req.session.user;
+        
+        if (!student_id || !level) {
+            return res.json({ success: false, error: 'Missing student_id or level' });
+        }
+        
+        db.run(`INSERT INTO student_level_payments (student_id, level, paid, updated_by, updated_at)
+                VALUES (?, ?, ?, ?, datetime('now'))
+                ON CONFLICT(student_id, level)
+                DO UPDATE SET paid = ?, updated_by = ?, updated_at = datetime('now')`,
+            [student_id, level, paid ? 1 : 0, user.id, paid ? 1 : 0, user.id],
+            (err) => {
+                if (err) {
+                    console.error('Error toggling payment:', err);
+                    return res.json({ success: false, error: 'Database error' });
+                }
+                res.json({ success: true });
+            }
+        );
     });
 
     // Export attendance to CSV

@@ -78,6 +78,22 @@ db.run(`CREATE TABLE IF NOT EXISTS confirmation_log (
     else console.log('✓ confirmation_log table ready');
 });
 
+// Student level payments - track if student paid for a level
+db.run(`CREATE TABLE IF NOT EXISTS student_level_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    level TEXT NOT NULL,
+    paid INTEGER DEFAULT 0,
+    updated_by INTEGER,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id),
+    UNIQUE(student_id, level)
+)`, (err) => {
+    if (err) console.error('Error creating student_level_payments table:', err);
+    else console.log('✓ student_level_payments table ready');
+});
+
 // Ensure sessions exist for all 48 months (4 sessions per month)
 db.get(`SELECT COUNT(DISTINCT level) as levelCount FROM sessions`, (err, row) => {
     if (!err && row && row.levelCount < 48) {

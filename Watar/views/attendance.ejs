@@ -128,6 +128,7 @@
                                     <th class="text-center" style="width: 80px;">Session 2</th>
                                     <th class="text-center" style="width: 80px;">Session 3</th>
                                     <th class="text-center" style="width: 80px;">Session 4</th>
+                                    <th class="text-center" style="width: 60px;">Paid</th>
                                     <th class="text-center" style="width: 100px;">Feedback</th>
                                 </tr>
                             </thead>
@@ -230,6 +231,13 @@
                                             <% } %>
                                         </td>
                                     <% } %>
+                                    <td class="text-center">
+                                        <input class="form-check-input paid-toggle" type="checkbox" 
+                                            data-student-id="<%= student.id %>" 
+                                            data-level="<%= student.current_level %>"
+                                            <%= student.paid ? 'checked' : '' %>
+                                            <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
+                                    </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-warning feedback-btn" 
                                             data-student-id="<%= student.id %>" 
@@ -491,6 +499,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Add visual feedback for attendance changes
 document.addEventListener('change', function(e) {
+    // Handle paid toggle
+    if (e.target.classList.contains('paid-toggle')) {
+        const studentId = e.target.dataset.studentId;
+        const level = e.target.dataset.level;
+        const paid = e.target.checked;
+        fetch('/api/toggle-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: studentId, level: level, paid: paid })
+        }).then(r => r.json()).then(d => {
+            if (!d.success) { e.target.checked = !paid; alert('Error saving payment status'); }
+        }).catch(() => { e.target.checked = !paid; });
+    }
     if (e.target.type === 'radio' && e.target.name.includes('att_')) {
         const row = e.target.closest('tr');
         if (e.target.value === 'attended') {

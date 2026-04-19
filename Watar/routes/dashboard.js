@@ -185,10 +185,11 @@ module.exports = (app, db) => {
                                                                     COUNT(DISTINCT a.student_id) as student_count
                                                                 FROM attendance a
                                                                 JOIN students s ON a.student_id = s.id
-                                                                JOIN users u ON s.trainer_id = u.id
+                                                                JOIN trainers t ON s.trainer_id = t.id
+                                                                JOIN users u ON t.user_id = u.id
                                                                 WHERE a.status IN ('present', 'attended')
                                                                 AND s.trainer_id IS NOT NULL
-                                                                GROUP BY DATE(a.date), s.trainer_id
+                                                                GROUP BY DATE(a.date), t.id
                                                                 ORDER BY DATE(a.date) DESC
                                                                 LIMIT 200
                                                             `, (err, trainerAttRows) => {

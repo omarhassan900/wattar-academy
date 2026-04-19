@@ -295,6 +295,45 @@
     </div>
 </div>
 
+<!-- Row 8: Trainer Attendance by Date -->
+<% if (typeof trainerAttDates !== 'undefined' && trainerAttDates.length > 0) { %>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-purple text-white" style="background-color: #6f42c1;">
+                <h5 class="mb-0"><i class="fas fa-chalkboard-teacher me-2"></i>Trainer Attendance by Date</h5>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="table table-bordered table-hover table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <% trainerNames.forEach(function(name) { %>
+                            <th class="text-center"><%= name %></th>
+                            <% }); %>
+                            <th class="text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% trainerAttDates.forEach(function(date) { %>
+                        <tr>
+                            <td><%= new Date(date).toLocaleDateString('en-GB', {weekday: 'short', day: '2-digit', month: 'short'}) %></td>
+                            <% var rowTotal = 0; %>
+                            <% trainerNames.forEach(function(name) { %>
+                            <% var count = (trainerAttData[name] && trainerAttData[name][date]) || 0; rowTotal += count; %>
+                            <td class="text-center"><span class="badge <%= count > 0 ? 'bg-success' : 'bg-secondary' %>"><%= count %></span></td>
+                            <% }); %>
+                            <td class="text-center"><span class="badge bg-primary"><%= rowTotal %></span></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<% } %>
+
 <!-- Charts JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <% if (user.role === 'manager') { %>

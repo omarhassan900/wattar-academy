@@ -177,6 +177,34 @@ module.exports = (app, db) => {
                                                                 progressData[idx] = row.student_count;
                                                             });
                                                             
+                                                            // Trainer attendance by date
+                                                            db.all(`
+                                                                SELECT 
+                                                                    DATE(a.date) as att_date,
+                                                                    u.full_name as trainer_name,
+                                                                    COUNT(DISTINCT a.student_id) as student_count
+                                                                FROM attendance a
+                                                                JOIN students s ON a.student_id = s.id
+                                                                JOIN users u ON s.trainer_id = u.id
+                                                                WHERE a.status IN ('present', 'attended')
+                                                                AND s.trainer_id IS NOT NULL
+                                                                GROUP BY DATE(a.date), s.trainer_id
+                                                                ORDER BY DATE(a.date) DESC
+                                                                LIMIT 200
+                                                            `, (err, trainerAttRows) => {
+                                                            if (err) { console.error('Error fetching trainer attendance:', err); trainerAttRows = []; }
+                                                            
+                                                            // Build trainer attendance data: { dates: [...], trainers: [...], data: { trainerName: { date: count } } }
+                                                            const trainerAttDates = [...new Set((trainerAttRows || []).map(r => r.att_date))].sort().reverse().slice(0, 15).reverse();
+                                                            const trainerNames = [...new Set((trainerAttRows || []).map(r => r.trainer_name))].sort();
+                                                            const trainerAttData = {};
+                                                            trainerNames.forEach(t => { trainerAttData[t] = {}; });
+                                                            (trainerAttRows || []).forEach(r => {
+                                                                if (trainerAttData[r.trainer_name] && trainerAttDates.includes(r.att_date)) {
+                                                                    trainerAttData[r.trainer_name][r.att_date] = r.student_count;
+                                                                }
+                                                            });
+                                                            
                                                             res.render('dashboard', {
                                                                 user, transactions, categories, totalIncome, totalExpense, balance,
                                                                 financeChartData, revenueChartData, expenseByCategoryData, incomeByCategoryData,
@@ -184,11 +212,13 @@ module.exports = (app, db) => {
                                                                 stats: basicStats[0] || { total_students: 0, inactive_students: 0, freez_students: 0, total_classes: 0, total_trainers: 0, today_attendance: 0 },
                                                                 studentsByMonth: studentsByMonth || [], studentsByInstrument: studentsByInstrument || [],
                                                                 recentAttendance: recentAttendance || [], attendancePercentage,
-                                                                sessionProgress: progressData
+                                                                sessionProgress: progressData,
+                                                                trainerAttDates, trainerNames, trainerAttData
                                                             }, (err, html) => {
                                                                 if (err) { console.error(err); return res.status(500).send('Render error'); }
                                                                 res.render('layout', { body: html, user: user, activemenu: 'dashboard' });
                                                             });
+                                                            }); // close trainer attendance
                                                             });
                                                         });
                                                     });

@@ -5,7 +5,14 @@ module.exports = (app, db) => {
     app.get('/students', requireAuth, (req, res) => {
         const user = req.session.user;
         let query = `
-            SELECT s.*, u.full_name as trainer_name
+            SELECT s.*, u.full_name as trainer_name,
+                (SELECT CASE WHEN (SELECT COUNT(*) FROM schedule_templates st2 
+                    WHERE st2.day_of_week = st.day_of_week 
+                    AND st2.time_slot = st.time_slot 
+                    AND st2.trainer_id = st.trainer_id 
+                    AND st2.is_active = 1) > 1 
+                THEN 'Group' ELSE 'Private' END 
+                FROM schedule_templates st WHERE st.student_id = s.id AND st.is_active = 1 LIMIT 1) as session_type
             FROM students s
             LEFT JOIN trainers t ON s.trainer_id = t.id
             LEFT JOIN users u ON t.user_id = u.id
@@ -16,7 +23,14 @@ module.exports = (app, db) => {
         // If trainer, only show their students
         if (user.role === 'trainer') {
             query = `
-                SELECT s.*, u.full_name as trainer_name
+                SELECT s.*, u.full_name as trainer_name,
+                    (SELECT CASE WHEN (SELECT COUNT(*) FROM schedule_templates st2 
+                        WHERE st2.day_of_week = st.day_of_week 
+                        AND st2.time_slot = st.time_slot 
+                        AND st2.trainer_id = st.trainer_id 
+                        AND st2.is_active = 1) > 1 
+                    THEN 'Group' ELSE 'Private' END 
+                    FROM schedule_templates st WHERE st.student_id = s.id AND st.is_active = 1 LIMIT 1) as session_type
                 FROM students s
                 LEFT JOIN trainers t ON s.trainer_id = t.id
                 LEFT JOIN users u ON t.user_id = u.id

@@ -178,6 +178,12 @@
                     </a>
                     <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['manager'].includes(user.role)) { %>
+                    <a class="nav-link <%= currentUrl == '/cash-forecast' ? 'active' : '' %>" href="/cash-forecast">
+                        <i class="fas fa-chart-line me-2"></i>Cash Forecast
+                    </a>
+                    <% } %>
+
                     <% if (typeof user !== 'undefined' && ['sales', 'manager', 'operations_manager', 'reception'].includes(user.role)) { %>
                     <a class="nav-link <%= currentUrl == '/leads' ? 'active' : '' %>" href="/leads">
                         <i class="fas fa-headset me-2"></i>Leads

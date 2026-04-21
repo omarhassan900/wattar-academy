@@ -38,6 +38,7 @@ require('./routes/students')(app, db);
 require('./routes/classes')(app, db);
 require('./routes/attendance')(app, db);
 require('./routes/cash')(app, db);
+require('./routes/cash-forecast')(app, db);
 require('./routes/schedule')(app, db);
 require('./routes/confirmations')(app, db);
 require('./routes/leads')(app, db);

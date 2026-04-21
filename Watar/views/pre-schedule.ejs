@@ -50,6 +50,12 @@
             <% } %>
         </select>
     </div>
+    <div class="col-md-3">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" id="schedule-student-search" placeholder="Search student...">
+        </div>
+    </div>
 </div>
 
 <!-- Calendar View -->
@@ -478,6 +484,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Trainer filter
     document.getElementById('schedule-trainer-filter').addEventListener('change', function() {
         renderCalendar();
+    });
+    
+    // Student search - highlight matching slots
+    document.getElementById('schedule-student-search').addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        document.querySelectorAll('.schedule-slot').forEach(slot => {
+            if (!query) {
+                slot.style.opacity = '1';
+                slot.style.transform = '';
+                slot.style.boxShadow = '';
+                return;
+            }
+            const names = slot.querySelectorAll('.student-name-item');
+            const match = Array.from(names).some(n => n.textContent.toLowerCase().includes(query));
+            slot.style.opacity = match ? '1' : '0.15';
+            slot.style.boxShadow = match ? '0 0 0 3px #ffc107' : '';
+        });
     });
     
     function loadSchedule() {

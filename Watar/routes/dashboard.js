@@ -177,19 +177,20 @@ module.exports = (app, db) => {
                                                                 progressData[idx] = row.student_count;
                                                             });
                                                             
-                                                            // Trainer attendance by date
+                                                            // Trainer attendance by date - count sessions not students
+                                                            // Students in the same schedule slot count as 1 session
                                                             db.all(`
                                                                 SELECT 
                                                                     DATE(a.date) as att_date,
                                                                     u.full_name as trainer_name,
-                                                                    COUNT(DISTINCT a.student_id) as student_count
+                                                                    COUNT(DISTINCT st.time_slot) as session_count
                                                                 FROM attendance a
                                                                 JOIN students s ON a.student_id = s.id
-                                                                JOIN trainers t ON s.trainer_id = t.id
-                                                                JOIN users u ON t.user_id = u.id
+                                                                JOIN schedule_templates st ON st.student_id = s.id AND st.is_active = 1
+                                                                JOIN users u ON st.trainer_id = u.id
                                                                 WHERE a.status IN ('present', 'attended')
-                                                                AND s.trainer_id IS NOT NULL
-                                                                GROUP BY DATE(a.date), t.id
+                                                                AND st.trainer_id IS NOT NULL
+                                                                GROUP BY DATE(a.date), st.trainer_id
                                                                 ORDER BY DATE(a.date) DESC
                                                                 LIMIT 200
                                                             `, (err, trainerAttRows) => {
@@ -202,7 +203,7 @@ module.exports = (app, db) => {
                                                             trainerNames.forEach(t => { trainerAttData[t] = {}; });
                                                             (trainerAttRows || []).forEach(r => {
                                                                 if (trainerAttData[r.trainer_name] && trainerAttDates.includes(r.att_date)) {
-                                                                    trainerAttData[r.trainer_name][r.att_date] = r.student_count;
+                                                                    trainerAttData[r.trainer_name][r.att_date] = r.session_count;
                                                                 }
                                                             });
                                                             

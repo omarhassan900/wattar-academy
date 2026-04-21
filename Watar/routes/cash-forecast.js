@@ -54,12 +54,15 @@ module.exports = (app, db) => {
                 let daysRemaining = null;
 
                 if (startDate) {
-                    expectedEndDate = new Date(startDate);
-                    expectedEndDate.setDate(expectedEndDate.getDate() + 28); // 4 weeks
+                    // Parse date parts to avoid timezone issues
+                    const parts = s.first_session_date.split('-');
+                    startDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    expectedEndDate = new Date(parts[0], parts[1] - 1, parseInt(parts[2]) + 28);
                     const totalDays = 28;
-                    const elapsed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+                    const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const elapsed = Math.floor((todayLocal - startDate) / (1000 * 60 * 60 * 24));
                     progress = Math.min(Math.round((elapsed / totalDays) * 100), 100);
-                    daysRemaining = Math.floor((expectedEndDate - today) / (1000 * 60 * 60 * 24));
+                    daysRemaining = Math.floor((expectedEndDate - todayLocal) / (1000 * 60 * 60 * 24));
                 }
 
                 return {

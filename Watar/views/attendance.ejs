@@ -129,6 +129,7 @@
                                     <th class="text-center" style="width: 80px;">Session 3</th>
                                     <th class="text-center" style="width: 80px;">Session 4</th>
                                     <th class="text-center" style="width: 60px;">Paid</th>
+                                    <th class="text-center" style="width: 60px;">Type</th>
                                     <th class="text-center" style="width: 100px;">Feedback</th>
                                 </tr>
                             </thead>
@@ -237,6 +238,11 @@
                                             data-level="<%= student.current_level %>"
                                             <%= student.paid ? 'checked' : '' %>
                                             <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge <%= student.session_type === 'Group' ? 'bg-info' : student.session_type === 'Private' ? 'bg-warning' : 'bg-secondary' %>" style="font-size: 0.7rem;">
+                                            <%= student.session_type || '-' %>
+                                        </span>
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-warning feedback-btn" 

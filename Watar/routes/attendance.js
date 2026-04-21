@@ -222,6 +222,27 @@ module.exports = (app, db) => {
                                     paymentMap[key] = record.paid;
                                 });
                                 
+                                // Get schedule type (group/private) for these students
+                                const scheduleTypeQuery = `
+                                    SELECT st.student_id,
+                                        CASE WHEN (SELECT COUNT(*) FROM schedule_templates st2 
+                                            WHERE st2.day_of_week = st.day_of_week 
+                                            AND st2.time_slot = st.time_slot 
+                                            AND st2.trainer_id = st.trainer_id 
+                                            AND st2.is_active = 1) > 1 
+                                        THEN 'Group' ELSE 'Private' END as session_type
+                                    FROM schedule_templates st
+                                    WHERE st.student_id IN (${studentPlaceholders}) AND st.is_active = 1
+                                `;
+                                
+                                db.all(scheduleTypeQuery, studentIds, (err, scheduleTypeRecords) => {
+                                if (err) { console.error(err); scheduleTypeRecords = []; }
+                                
+                                const scheduleTypeMap = {};
+                                (scheduleTypeRecords || []).forEach(r => {
+                                    scheduleTypeMap[r.student_id] = r.session_type;
+                                });
+                                
                                 // Build confirmation map
                                 const confirmationMap = {};
                                 confirmationRecords.forEach(record => {
@@ -283,12 +304,15 @@ module.exports = (app, db) => {
                                 const paymentKey = `${student.id}_${student.current_level}`;
                                 const paid = paymentMap[paymentKey] || 0;
                                 
+                                const sessionType = scheduleTypeMap[student.id] || '-';
+                                
                                 return {
                                     ...student,
                                     sessions: studentSessions,
                                     notes: levelNotes,
                                     confirmation: confirmation,
-                                    paid: paid
+                                    paid: paid,
+                                    session_type: sessionType
                                 };
                             });
                             
@@ -323,6 +347,7 @@ module.exports = (app, db) => {
                                 });
                                 });
                             });
+                            }); // Close schedule type callback
                             }); // Close payments callback
                             }); // Close confirmations callback
                         });

@@ -22,6 +22,14 @@ module.exports = (app, db) => {
                 (SELECT MAX(sess.session_number) FROM attendance a 
                     JOIN sessions sess ON a.session_id = sess.id 
                     WHERE a.student_id = s.id AND sess.level = s.current_level) as last_session,
+                (SELECT COUNT(*) FROM attendance a 
+                    JOIN sessions sess ON a.session_id = sess.id 
+                    WHERE a.student_id = s.id AND sess.level = s.current_level 
+                    AND a.status IN ('present', 'attended')) as attended_count,
+                (SELECT COUNT(*) FROM attendance a 
+                    JOIN sessions sess ON a.session_id = sess.id 
+                    WHERE a.student_id = s.id AND sess.level = s.current_level 
+                    AND a.status = 'absent') as absent_count,
                 (SELECT slp.paid FROM student_level_payments slp 
                     WHERE slp.student_id = s.id AND slp.level = s.current_level) as paid
             FROM students s
@@ -58,6 +66,8 @@ module.exports = (app, db) => {
                     ...s,
                     fee,
                     sessions_completed: sessionsCompleted,
+                    attended_count: s.attended_count || 0,
+                    absent_count: s.absent_count || 0,
                     expected_end_date: expectedEndDate ? expectedEndDate.toISOString().split('T')[0] : null,
                     progress,
                     days_remaining: daysRemaining

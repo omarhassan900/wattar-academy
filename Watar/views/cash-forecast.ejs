@@ -72,6 +72,8 @@
                                 <th>Fee</th>
                                 <th>Session 1 Date</th>
                                 <th>Sessions</th>
+                                <th>Attended</th>
+                                <th>Absent</th>
                                 <th>Progress</th>
                                 <th>Expected End</th>
                                 <th>Days Left</th>
@@ -91,6 +93,8 @@
                                 <td><%= s.fee.toLocaleString() %> LE</td>
                                 <td><%= s.first_session_date ? new Date(s.first_session_date).toLocaleDateString('en-GB', {day: '2-digit', month: 'short'}) : '-' %></td>
                                 <td><%= s.sessions_completed %>/4</td>
+                                <td><span class="badge bg-success"><%= s.attended_count %></span></td>
+                                <td><span class="badge bg-danger"><%= s.absent_count %></span></td>
                                 <td style="min-width: 120px;">
                                     <% if (s.first_session_date) { %>
                                     <div class="progress" style="height: 20px;">

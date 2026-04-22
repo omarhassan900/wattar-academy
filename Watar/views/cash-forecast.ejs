@@ -62,6 +62,7 @@
                 </select>
             </div>
             <div class="card-body p-0">
+                <div id="chart-filter-info" class="alert alert-warning m-2" style="display:none;"></div>
                 <div class="table-responsive">
                     <table class="table table-hover table-sm mb-0" id="forecast-table">
                         <thead class="table-light">
@@ -82,7 +83,7 @@
                         </thead>
                         <tbody>
                             <% students.forEach(function(s) { %>
-                            <tr data-type="<%= s.session_type || '' %>" data-paid="<%= s.paid ? '1' : '0' %>">
+                            <tr data-type="<%= s.session_type || '' %>" data-paid="<%= s.paid ? '1' : '0' %>" data-end="<%= s.expected_end_date || '' %>" data-start="<%= s.first_session_date || '' %>">
                                 <td><strong><%= s.name %></strong></td>
                                 <td><span class="badge bg-secondary"><%= s.current_level %></span></td>
                                 <td>
@@ -151,53 +152,163 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Build renewal chart data grouped by week
+// Build renewal chart data grouped by week - fixed 2 month range
 const students = <%- JSON.stringify(students) %>;
-const weekMap = {};
+const today = new Date();
+today.setHours(0,0,0,0);
+
+// Generate all weeks from 2 months ago to 2 months ahead
+function getMonday(d) {
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.getFullYear(), d.getMonth(), diff);
+}
+
+const startRange = new Date(today);
+startRange.setDate(startRange.getDate() - 60);
+const endRange = new Date(today);
+endRange.setDate(endRange.getDate() + 60);
+
+const allWeeks = [];
+let current = getMonday(startRange);
+while (current <= endRange) {
+    allWeeks.push(current.toISOString().split('T')[0]);
+    current = new Date(current);
+    current.setDate(current.getDate() + 7);
+}
+
+const weekMapOverdue = {};
+const weekMapUpcoming = {};
+const weekMapRenewal = {};
+allWeeks.forEach(w => { weekMapOverdue[w] = 0; weekMapUpcoming[w] = 0; weekMapRenewal[w] = 0; });
+
 students.forEach(s => {
-    if (s.expected_end_date && !s.paid) {
-        const parts = s.expected_end_date.split('-');
-        const d = new Date(parts[0], parts[1] - 1, parts[2]);
-        // Get Monday of that week
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(d.getFullYear(), d.getMonth(), diff);
-        const weekKey = monday.toISOString().split('T')[0];
-        if (!weekMap[weekKey]) weekMap[weekKey] = 0;
-        weekMap[weekKey] += s.fee;
+    if (!s.expected_end_date) return;
+    const parts = s.expected_end_date.split('-');
+    const endDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    
+    if (s.paid) {
+        const renewalDate = new Date(endDate);
+        renewalDate.setDate(renewalDate.getDate() + 28);
+        const wk = getMonday(renewalDate).toISOString().split('T')[0];
+        if (weekMapRenewal[wk] !== undefined) weekMapRenewal[wk] += s.fee;
+    } else {
+        const startParts = s.first_session_date ? s.first_session_date.split('-') : null;
+        const dueDate = startParts ? new Date(startParts[0], startParts[1]-1, startParts[2]) : endDate;
+        const wk = getMonday(dueDate).toISOString().split('T')[0];
+        
+        if (dueDate < today) {
+            if (weekMapOverdue[wk] !== undefined) weekMapOverdue[wk] += s.fee;
+        } else {
+            if (weekMapUpcoming[wk] !== undefined) weekMapUpcoming[wk] += s.fee;
+        }
     }
 });
-const sortedWeeks = Object.keys(weekMap).sort();
-const labels = sortedWeeks.map(w => {
+
+const filteredWeeks = allWeeks.filter(w => weekMapOverdue[w] > 0 || weekMapUpcoming[w] > 0 || weekMapRenewal[w] > 0);
+
+const labels = filteredWeeks.map(w => {
     const parts = w.split('-');
     const d = new Date(parts[0], parts[1] - 1, parts[2]);
-    return 'Week of ' + d.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'});
+    return d.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'});
 });
-const data = sortedWeeks.map(w => weekMap[w]);
+const overdueData = filteredWeeks.map(w => weekMapOverdue[w]);
+const upcomingData = filteredWeeks.map(w => weekMapUpcoming[w]);
+const renewalData = filteredWeeks.map(w => weekMapRenewal[w]);
 
 new Chart(document.getElementById('renewalChart'), {
     type: 'bar',
     data: {
         labels: labels,
-        datasets: [{
-            label: 'Expected Cash (LE)',
-            data: data,
-            backgroundColor: data.map((_, i) => {
-                const parts = sortedWeeks[i].split('-');
-                const d = new Date(parts[0], parts[1] - 1, parts[2]);
-                const today = new Date();
-                today.setHours(0,0,0,0);
-                return d <= today ? 'rgba(220,53,69,0.7)' : 'rgba(40,167,69,0.7)';
-            }),
-            borderWidth: 1
-        }]
+        datasets: [
+            {
+                label: 'Overdue (Unpaid)',
+                data: overdueData,
+                backgroundColor: 'rgba(220,53,69,0.7)',
+                borderColor: 'rgba(220,53,69,1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Due Soon (Unpaid)',
+                data: upcomingData,
+                backgroundColor: 'rgba(255,193,7,0.7)',
+                borderColor: 'rgba(255,193,7,1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Expected Renewal (Paid)',
+                data: renewalData,
+                backgroundColor: 'rgba(40,167,69,0.7)',
+                borderColor: 'rgba(40,167,69,1)',
+                borderWidth: 1
+            }
+        ]
     },
     options: {
         responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() + ' LE' } } }
+        plugins: { legend: { position: 'top' } },
+        scales: { 
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true, ticks: { callback: v => v.toLocaleString() + ' LE' } } 
+        },
+        onClick: function(evt, elements) {
+            if (!elements.length) {
+                // Click on empty area - reset filter
+                document.querySelectorAll('#forecast-table tbody tr').forEach(r => r.style.display = '');
+                document.getElementById('chart-filter-info').style.display = 'none';
+                return;
+            }
+            const idx = elements[0].index;
+            const datasetIdx = elements[0].datasetIndex;
+            const weekKey = filteredWeeks[idx];
+            const isPaid = datasetIdx === 2; // 0=overdue, 1=upcoming, 2=renewal
+            const isOverdue = datasetIdx === 0;
+            const isCollected = false;
+            
+            document.querySelectorAll('#forecast-table tbody tr').forEach(row => {
+                const endDate = row.dataset.end;
+                const startDate = row.dataset.start;
+                const rowPaid = row.dataset.paid === '1';
+                if (!endDate) { row.style.display = 'none'; return; }
+                
+                let targetDate;
+                const p = endDate.split('-');
+                const rowEndDate = new Date(p[0], p[1]-1, p[2]);
+                
+                if (rowPaid && isPaid) {
+                    targetDate = new Date(rowEndDate);
+                    targetDate.setDate(targetDate.getDate() + 28);
+                } else if (startDate) {
+                    const sp = startDate.split('-');
+                    targetDate = new Date(sp[0], sp[1]-1, sp[2]);
+                } else {
+                    targetDate = rowEndDate;
+                }
+                const day = targetDate.getDay();
+                const diff = targetDate.getDate() - day + (day === 0 ? -6 : 1);
+                const monday = new Date(targetDate.getFullYear(), targetDate.getMonth(), diff);
+                const rowWeek = monday.toISOString().split('T')[0];
+                
+                let match = false;
+                if (rowWeek === weekKey) {
+                    if (isPaid && rowPaid) match = true;
+                    else if (isOverdue && !rowPaid && targetDate < today) match = true;
+                    else if (datasetIdx === 1 && !rowPaid && targetDate >= today) match = true;
+                }
+                row.style.display = match ? '' : 'none';
+            });
+            
+            const info = document.getElementById('chart-filter-info');
+            info.style.display = 'block';
+            info.innerHTML = '<i class="fas fa-filter me-2"></i>Showing ' + ['overdue', 'due soon', 'renewals'][datasetIdx] + ' for ' + labels[idx] + ' <button class="btn btn-sm btn-outline-secondary ms-2" onclick="clearChartFilter()">Clear</button>';
+        }
     }
 });
+
+function clearChartFilter() {
+    document.querySelectorAll('#forecast-table tbody tr').forEach(r => r.style.display = '');
+    document.getElementById('chart-filter-info').style.display = 'none';
+}
 
 function filterForecast() {
     const val = document.getElementById('filterType').value;

@@ -52,6 +52,7 @@ module.exports = (app, db) => {
                 let expectedEndDate = null;
                 let progress = 0;
                 let daysRemaining = null;
+                let daysSinceDue = 0;
 
                 if (startDate) {
                     // Parse date parts to avoid timezone issues
@@ -63,6 +64,7 @@ module.exports = (app, db) => {
                     const elapsed = Math.floor((todayLocal - startDate) / (1000 * 60 * 60 * 24));
                     progress = Math.min(Math.round((elapsed / totalDays) * 100), 100);
                     daysRemaining = Math.floor((expectedEndDate - todayLocal) / (1000 * 60 * 60 * 24));
+                    daysSinceDue = elapsed; // days since payment was due (Session 1)
                 }
 
                 return {
@@ -73,7 +75,8 @@ module.exports = (app, db) => {
                     absent_count: s.absent_count || 0,
                     expected_end_date: expectedEndDate ? expectedEndDate.toISOString().split('T')[0] : null,
                     progress,
-                    days_remaining: daysRemaining
+                    days_remaining: daysRemaining,
+                    days_since_due: daysSinceDue
                 };
             });
 

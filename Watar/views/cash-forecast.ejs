@@ -135,7 +135,70 @@
     </div>
 </div>
 
+<!-- Expected Cash by Renewal Date Chart -->
+<div class="row mt-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Expected Cash by Week</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="renewalChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Build renewal chart data grouped by week
+const students = <%- JSON.stringify(students) %>;
+const weekMap = {};
+students.forEach(s => {
+    if (s.expected_end_date && !s.paid) {
+        const parts = s.expected_end_date.split('-');
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        // Get Monday of that week
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(d.getFullYear(), d.getMonth(), diff);
+        const weekKey = monday.toISOString().split('T')[0];
+        if (!weekMap[weekKey]) weekMap[weekKey] = 0;
+        weekMap[weekKey] += s.fee;
+    }
+});
+const sortedWeeks = Object.keys(weekMap).sort();
+const labels = sortedWeeks.map(w => {
+    const parts = w.split('-');
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    return 'Week of ' + d.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'});
+});
+const data = sortedWeeks.map(w => weekMap[w]);
+
+new Chart(document.getElementById('renewalChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Expected Cash (LE)',
+            data: data,
+            backgroundColor: data.map((_, i) => {
+                const parts = sortedWeeks[i].split('-');
+                const d = new Date(parts[0], parts[1] - 1, parts[2]);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                return d <= today ? 'rgba(220,53,69,0.7)' : 'rgba(40,167,69,0.7)';
+            }),
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() + ' LE' } } }
+    }
+});
+
 function filterForecast() {
     const val = document.getElementById('filterType').value;
     document.querySelectorAll('#forecast-table tbody tr').forEach(row => {

@@ -1,6 +1,13 @@
 const { requireAuth, requireRole } = require('../middleware/auth');
+const path = require('path');
 
 module.exports = (app, db) => {
+    // Database download - manager only
+    app.get('/admin/download-db', requireAuth, requireRole(['manager']), (req, res) => {
+        const dbPath = path.join(__dirname, '..', 'wattar.db');
+        res.download(dbPath, 'wattar.db');
+    });
+
     // Reports Routes
     app.get('/reports', requireAuth, (req, res) => {
         const user = req.session.user;

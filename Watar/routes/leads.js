@@ -16,7 +16,8 @@ module.exports = (app, db) => {
                 (SELECT COUNT(*) FROM lead_calls lc WHERE lc.lead_id = l.id) as call_count,
                 (SELECT lc.notes FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_notes,
                 (SELECT lc.outcome FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_outcome,
-                (SELECT lc.call_date FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_date
+                (SELECT lc.call_date FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_date,
+                (SELECT lc.callback_time FROM lead_calls lc WHERE lc.lead_id = l.id AND lc.callback_time IS NOT NULL ORDER BY lc.call_date DESC LIMIT 1) as callback_date
             FROM leads l
             LEFT JOIN users u1 ON l.assigned_to = u1.id
             LEFT JOIN users u2 ON l.created_by = u2.id
@@ -117,15 +118,15 @@ module.exports = (app, db) => {
     // Log a call
     app.post('/leads/:id/call', requireAuth, requireRole(['sales', 'manager', 'operations_manager']), (req, res) => {
         const { id } = req.params;
-        const { outcome, notes } = req.body;
+        const { outcome, notes, callback_time } = req.body;
         const user = req.session.user;
         
         if (!outcome) return res.json({ success: false, error: 'Outcome is required' });
         
         db.run(`
-            INSERT INTO lead_calls (lead_id, called_by, outcome, notes)
-            VALUES (?, ?, ?, ?)
-        `, [id, user.id, outcome, notes || null], function(err) {
+            INSERT INTO lead_calls (lead_id, called_by, outcome, notes, callback_time)
+            VALUES (?, ?, ?, ?, ?)
+        `, [id, user.id, outcome, notes || null, callback_time || null], function(err) {
             if (err) {
                 console.error('Error logging call:', err);
                 return res.json({ success: false, error: 'Database error' });

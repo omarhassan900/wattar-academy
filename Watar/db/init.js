@@ -160,7 +160,10 @@ db.run(`CREATE TABLE IF NOT EXISTS lead_calls (
     FOREIGN KEY (called_by) REFERENCES users(id)
 )`, (err) => {
     if (err) console.error('Error creating lead_calls table:', err);
-    else console.log('✓ lead_calls table ready');
+    else {
+        console.log('✓ lead_calls table ready');
+        db.run('ALTER TABLE lead_calls ADD COLUMN callback_time DATE', () => {});
+    }
 });
 
 // Band members table

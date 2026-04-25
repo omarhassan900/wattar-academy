@@ -106,6 +106,14 @@
                                     <% if (lead.last_call_date) { %>
                                         <small><%= new Date(lead.last_call_date).toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) %></small>
                                         <% if (lead.last_call_outcome) { %><br><small class="text-muted"><%= lead.last_call_outcome.replace('_',' ') %></small><% } %>
+                                        <% if (lead.callback_date) { %>
+                                            <% const cbDate = new Date(lead.callback_date); const now = new Date(); %>
+                                            <% if (cbDate <= now) { %>
+                                                <br><span class="badge bg-danger"><i class="fas fa-phone-alt"></i> Call now!</span>
+                                            <% } else { %>
+                                                <br><small class="text-warning"><i class="fas fa-clock"></i> <%= cbDate.toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) %></small>
+                                            <% } %>
+                                        <% } %>
                                     <% } else { %>-<% } %>
                                 </td>
                                 <% if (['manager','operations_manager'].includes(user.role)) { %><td><small><%= lead.assigned_to_name || 'Unassigned' %></small></td><% } %>
@@ -319,7 +327,7 @@
                 <input type="hidden" id="call-lead-id">
                 <div class="mb-3">
                     <label class="form-label">Outcome *</label>
-                    <select class="form-select" id="call-outcome" required>
+                    <select class="form-select" id="call-outcome" required onchange="document.getElementById('callback-time-group').style.display = this.value === 'callback' ? '' : 'none';">
                         <option value="">Select outcome</option>
                         <option value="no_answer">No Answer</option>
                         <option value="callback">Callback Later</option>
@@ -327,6 +335,10 @@
                         <option value="not_interested">Not Interested</option>
                         <option value="enrolled">Enrolled</option>
                     </select>
+                </div>
+                <div class="mb-3" id="callback-time-group" style="display:none;">
+                    <label class="form-label">Callback in (days) *</label>
+                    <input type="number" class="form-control" id="call-callback-days" min="1" max="30" placeholder="e.g. 3">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Notes</label>
@@ -506,6 +518,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('call-lead-name').textContent = this.dataset.name;
             document.getElementById('call-outcome').value = '';
             document.getElementById('call-notes').value = '';
+            document.getElementById('call-callback-days').value = '';
+            document.getElementById('callback-time-group').style.display = 'none';
             callModal.show();
         });
     });
@@ -514,9 +528,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = document.getElementById('call-lead-id').value;
         const outcome = document.getElementById('call-outcome').value;
         if (!outcome) return alert('Please select an outcome');
+        const callbackTime = document.getElementById('call-callback-days').value;
+        if (outcome === 'callback' && !callbackTime) return alert('Please enter number of days for callback');
+        let callbackDate = null;
+        if (outcome === 'callback' && callbackTime) {
+            const d = new Date();
+            d.setDate(d.getDate() + parseInt(callbackTime));
+            callbackDate = d.toISOString().split('T')[0];
+        }
         fetch(`/leads/${id}/call`, {
             method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ outcome, notes: document.getElementById('call-notes').value })
+            body: JSON.stringify({ outcome, notes: document.getElementById('call-notes').value, callback_time: callbackDate })
         }).then(r=>r.json()).then(d => {
             if (d.success) { alert('Call logged!'); location.reload(); }
             else alert('Error: ' + d.error);
@@ -535,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     d.calls.forEach(c => {
                         const date = new Date(c.call_date).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
                         const outcomeColors = {no_answer:'secondary',callback:'warning',interested:'primary',not_interested:'danger',enrolled:'success'};
-                        html += `<tr><td><small>${date}</small></td><td>${c.caller_name||'-'}</td><td><span class="badge bg-${outcomeColors[c.outcome]||'secondary'}">${c.outcome.replace('_',' ')}</span></td><td>${c.notes||'-'}</td></tr>`;
+                        html += `<tr><td><small>${date}</small></td><td>${c.caller_name||'-'}</td><td><span class="badge bg-${outcomeColors[c.outcome]||'secondary'}">${c.outcome.replace('_',' ')}</span>${c.callback_time ? '<br><small class="text-warning"><i class="fas fa-clock"></i> ' + new Date(c.callback_time).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) + '</small>' : ''}</td><td>${c.notes||'-'}</td></tr>`;
                     });
                     html += '</tbody></table>';
                     document.getElementById('call-history-content').innerHTML = html;

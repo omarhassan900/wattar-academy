@@ -9,6 +9,20 @@
     </div>
 </div>
 
+<% 
+const overdueCallbacks = leads.filter(l => l.callback_date && new Date(l.callback_date) <= new Date());
+%>
+<% if (overdueCallbacks.length > 0) { %>
+<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+    <i class="fas fa-bell fa-shake me-2"></i>
+    <strong><%= overdueCallbacks.length %> overdue callback<%= overdueCallbacks.length > 1 ? 's' : '' %>!</strong>
+    <% overdueCallbacks.forEach(l => { %>
+        <span class="badge bg-light text-dark ms-2"><%= l.name %></span>
+    <% }); %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
 <!-- Stats -->
 <div class="row mb-4">
     <% const statusCounts = { new: 0, contacted: 0, interested: 0, callback: 0, trial_scheduled: 0, enrolled: 0, not_interested: 0 };

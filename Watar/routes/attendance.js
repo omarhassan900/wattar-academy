@@ -225,6 +225,8 @@ module.exports = (app, db) => {
                                 // Get schedule type (group/private) for these students
                                 const scheduleTypeQuery = `
                                     SELECT st.student_id,
+                                        st.day_of_week,
+                                        u.full_name as schedule_trainer,
                                         CASE WHEN (SELECT COUNT(*) FROM schedule_templates st2 
                                             WHERE st2.day_of_week = st.day_of_week 
                                             AND st2.time_slot = st.time_slot 
@@ -232,6 +234,7 @@ module.exports = (app, db) => {
                                             AND st2.is_active = 1) > 1 
                                         THEN 'Group' ELSE 'Private' END as session_type
                                     FROM schedule_templates st
+                                    LEFT JOIN users u ON st.trainer_id = u.id
                                     WHERE st.student_id IN (${studentPlaceholders}) AND st.is_active = 1
                                 `;
                                 
@@ -240,7 +243,11 @@ module.exports = (app, db) => {
                                 
                                 const scheduleTypeMap = {};
                                 (scheduleTypeRecords || []).forEach(r => {
-                                    scheduleTypeMap[r.student_id] = r.session_type;
+                                    scheduleTypeMap[r.student_id] = {
+                                        session_type: r.session_type,
+                                        day_of_week: r.day_of_week,
+                                        trainer_name: r.schedule_trainer
+                                    };
                                 });
                                 
                                 // Build confirmation map
@@ -304,7 +311,9 @@ module.exports = (app, db) => {
                                 const paymentKey = `${student.id}_${student.current_level}`;
                                 const paid = paymentMap[paymentKey] || 0;
                                 
-                                const sessionType = scheduleTypeMap[student.id] || '-';
+                                const sessionType = (scheduleTypeMap[student.id] || {}).session_type || '-';
+                                const scheduleDay = (scheduleTypeMap[student.id] || {}).day_of_week || '-';
+                                const trainerName = (scheduleTypeMap[student.id] || {}).trainer_name || '-';
                                 
                                 return {
                                     ...student,
@@ -312,7 +321,9 @@ module.exports = (app, db) => {
                                     notes: levelNotes,
                                     confirmation: confirmation,
                                     paid: paid,
-                                    session_type: sessionType
+                                    session_type: sessionType,
+                                    schedule_day: scheduleDay,
+                                    trainer_name: trainerName
                                 };
                             });
                             

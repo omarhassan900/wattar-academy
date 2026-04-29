@@ -129,8 +129,9 @@
                                     <th style="width: 150px;">Student Name</th>
                                     <th style="width: 100px;">Month</th>
                                     <th style="width: 100px;">Instrument</th>
-                                    <th style="width: 80px;">Status</th>
+                                    <th style="width: 70px;">Trainer</th>
                                     <th style="width: 100px;">Phone</th>
+                                    <th class="text-center" style="width: 60px;">Day</th>
                                     <th class="text-center" style="width: 80px;">Session 1</th>
                                     <th class="text-center" style="width: 80px;">Session 2</th>
                                     <th class="text-center" style="width: 80px;">Session 3</th>
@@ -179,13 +180,12 @@
                                         <span class="badge bg-success"><%= student.instrument || 'N/A' %></span>
                                     </td>
                                     <td>
-                                        <span class="badge <%= student.status === 'active' ? 'bg-success' : student.status === 'inactive' ? 'bg-warning' : 'bg-secondary' %>">
-                                            <%= student.status %>
-                                        </span>
+                                        <span class="badge" style="background-color: #198754; border: 2px solid #146c43; color: white;"><%= student.trainer_name || '-' %></span>
                                     </td>
                                     <td>
                                         <small class="text-muted"><%= student.phone || 'N/A' %></small>
                                     </td>
+                                    <td class="text-center"><small><%= student.schedule_day || '-' %></small></td>
                                     <% for (let sessionNum = 1; sessionNum <= 4; sessionNum++) { %>
                                         <% 
                                         const sessionData = student.sessions.find(s => s.session_number === sessionNum);

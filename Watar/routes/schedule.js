@@ -64,7 +64,7 @@ module.exports = (app, db) => {
             FROM schedule_templates st
             JOIN students s ON st.student_id = s.id
             LEFT JOIN users u ON st.trainer_id = u.id AND u.role = 'trainer'
-            WHERE st.is_active = 1
+            WHERE st.is_active = 1 AND s.status = 'active'
         `;
         
         let params = [];

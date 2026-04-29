@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact — Wattar Academy</title>
+    <meta name="description" content="Get in touch with Wattar Academy. Start your musical journey today.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="container">
+        <a href="index.html" class="navbar-logo">
+            <img src="images/logo.jpg" alt="Wattar Academy">
+            <span>Wattar Academy</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html" data-i18n="navHome">Home</a></li>
+            <li><a href="about.html" data-i18n="navAbout">About</a></li>
+            <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
+            <li><a href="contact.html" class="active" data-i18n="navContact">Contact</a></li>
+            <li><button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button></li>
+        </ul>
+        <button class="menu-toggle" onclick="openMobileNav()" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+    <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close menu">&times;</button>
+    <a href="index.html" data-i18n="navHome" onclick="closeMobileNav()">Home</a>
+    <a href="about.html" data-i18n="navAbout" onclick="closeMobileNav()">About</a>
+    <a href="programs.html" data-i18n="navPrograms" onclick="closeMobileNav()">Programs</a>
+    <a href="contact.html" data-i18n="navContact" onclick="closeMobileNav()">Contact</a>
+    <button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+</div>
+
+<!-- Hero -->
+<section class="hero" style="min-height:50vh;">
+    <div class="container" style="display:block;text-align:center;">
+        <h1 data-i18n="contHeroTitle">Get in Touch</h1>
+        <p style="color:var(--gray-300);font-size:1.15rem;max-width:600px;margin:1rem auto 0;" data-i18n="contHeroSubtitle">Ready to start your musical journey? We'd love to hear from you.</p>
+    </div>
+</section>
+
+<!-- Contact Form + Info -->
+<section class="section">
+    <div class="container">
+        <div class="contact-grid">
+            <!-- Form -->
+            <div>
+                <h2 style="margin-bottom:2rem;" data-i18n="heroContact">Get in Touch</h2>
+
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label data-i18n="formName">Full Name</label>
+                        <input type="text" name="name" required data-i18n="formName">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="formPhone">Phone Number</label>
+                        <input type="tel" name="phone" required data-i18n="formPhone">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="formEmail">Email (optional)</label>
+                        <input type="email" name="email" data-i18n="formEmail">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="formInstrument">Instrument of Interest</label>
+                        <select name="instrument">
+                            <option value="" data-i18n="formSelect">Select an instrument</option>
+                            <option value="Guitar" data-i18n="guitar">Guitar</option>
+                            <option value="Piano" data-i18n="piano">Piano</option>
+                            <option value="Violin" data-i18n="violin">Violin</option>
+                            <option value="Drums" data-i18n="drums">Drums</option>
+                            <option value="Oud" data-i18n="oud">Oud</option>
+                            <option value="Vocals" data-i18n="vocals">Vocals</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="formAge">Age (optional)</label>
+                        <input type="number" name="age" min="3" max="99">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="formMessage">Message (optional)</label>
+                        <textarea name="message" rows="4" data-i18n="formMessage"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;" data-i18n="formSubmit">Send Message</button>
+                </form>
+
+                <div id="formSuccess" class="form-success">
+                    <div style="font-size:3rem;margin-bottom:1rem;">✓</div>
+                    <h3 data-i18n="formSuccess">Thank you! We'll be in touch soon.</h3>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div>
+                <ul class="contact-info-list">
+                    <li class="contact-info-item">
+                        <div class="contact-info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div>
+                            <strong data-i18n="contAddress">Address</strong>
+                            <p data-i18n="contAddressVal">Your address here</p>
+                        </div>
+                    </li>
+                    <li class="contact-info-item">
+                        <div class="contact-info-icon"><i class="fas fa-phone"></i></div>
+                        <div>
+                            <strong data-i18n="contPhone">Phone</strong>
+                            <p data-i18n="contPhoneVal">+966 XX XXX XXXX</p>
+                        </div>
+                    </li>
+                    <li class="contact-info-item">
+                        <div class="contact-info-icon"><i class="fas fa-envelope"></i></div>
+                        <div>
+                            <strong data-i18n="contEmail">Email</strong>
+                            <p data-i18n="contEmailVal">info@wattaracademy.com</p>
+                        </div>
+                    </li>
+                    <li class="contact-info-item">
+                        <div class="contact-info-icon"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <strong data-i18n="contHours">Working Hours</strong>
+                            <p data-i18n="contHoursVal">Sun – Thu: 10AM – 9PM</p>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="social-links">
+                    <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                    <a href="#" class="social-link" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                </div>
+
+                <!-- Map placeholder -->
+                <div class="map-placeholder">
+                    <span data-i18n="contMap">Map will be embedded here</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div>
+                <div class="footer-logo">
+                    <img src="images/logo.jpg" alt="Wattar Academy">
+                    <span>Wattar Academy</span>
+                </div>
+                <p data-i18n="footerDesc">Professional music education for all ages and skill levels.</p>
+            </div>
+            <div>
+                <h4 data-i18n="footerPages">Pages</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html" data-i18n="navHome">Home</a></li>
+                    <li><a href="about.html" data-i18n="navAbout">About</a></li>
+                    <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
+                    <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footerPrograms">Programs</h4>
+                <ul class="footer-links">
+                    <li><a href="programs.html" data-i18n="guitar">Guitar</a></li>
+                    <li><a href="programs.html" data-i18n="piano">Piano</a></li>
+                    <li><a href="programs.html" data-i18n="violin">Violin</a></li>
+                    <li><a href="programs.html" data-i18n="drums">Drums</a></li>
+                    <li><a href="programs.html" data-i18n="oud">Oud</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footerConnect">Connect</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                    <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                    <li><a href="#"><i class="fab fa-tiktok"></i> TikTok</a></li>
+                    <li><a href="#"><i class="fab fa-youtube"></i> YouTube</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span data-i18n="footerRights">© 2026 Wattar Academy. All rights reserved.</span>
+            <div class="footer-social">
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

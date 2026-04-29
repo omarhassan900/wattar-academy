@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wattar Academy — Where Music Begins</title>
+    <meta name="description" content="Wattar Academy is a professional music education center offering structured programs for all ages and skill levels.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="container">
+        <a href="index.html" class="navbar-logo">
+            <img src="images/logo.jpg" alt="Wattar Academy">
+            <span>Wattar Academy</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active" data-i18n="navHome">Home</a></li>
+            <li><a href="about.html" data-i18n="navAbout">About</a></li>
+            <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
+            <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+            <li><button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button></li>
+        </ul>
+        <button class="menu-toggle" onclick="openMobileNav()" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+    <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close menu">&times;</button>
+    <a href="index.html" data-i18n="navHome" onclick="closeMobileNav()">Home</a>
+    <a href="about.html" data-i18n="navAbout" onclick="closeMobileNav()">About</a>
+    <a href="programs.html" data-i18n="navPrograms" onclick="closeMobileNav()">Programs</a>
+    <a href="contact.html" data-i18n="navContact" onclick="closeMobileNav()">Contact</a>
+    <button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1 data-i18n="heroTitle">Where Music Begins</h1>
+            <p data-i18n="heroSubtitle">Wattar Academy is a professional music education center offering structured programs for all ages and skill levels.</p>
+            <div class="hero-buttons">
+                <a href="programs.html" class="btn btn-white" data-i18n="heroCta">Explore Programs</a>
+                <a href="contact.html" class="btn btn-outline" style="color:#fff;border-color:#fff;" data-i18n="heroContact">Get in Touch</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <img src="images/logo.jpg" alt="Wattar Academy Logo" class="hero-logo">
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="section">
+    <div class="container">
+        <div class="section-header center">
+            <h2 data-i18n="featTitle">Why Wattar Academy</h2>
+            <p class="section-subtitle" data-i18n="featSubtitle">A structured approach to music education that builds real skills.</p>
+        </div>
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-icon">📚</div>
+                <h3 data-i18n="feat1Title">Structured Curriculum</h3>
+                <p data-i18n="feat1Desc">A 4-year progressive program with 48 levels, each with 4 sessions designed to build skills step by step.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🎓</div>
+                <h3 data-i18n="feat2Title">Expert Trainers</h3>
+                <p data-i18n="feat2Desc">Learn from professional musicians who are passionate about teaching and dedicated to your growth.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🎵</div>
+                <h3 data-i18n="feat3Title">Multiple Instruments</h3>
+                <p data-i18n="feat3Desc">Guitar, Piano, Violin, Drums, Oud and more. Find the instrument that speaks to you.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🎸</div>
+                <h3 data-i18n="feat4Title">Wattar Band</h3>
+                <p data-i18n="feat4Desc">Join our academy band program and experience the thrill of performing with fellow musicians.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="section section-dark">
+    <div class="container text-center">
+        <h2 data-i18n="heroCta">Explore Programs</h2>
+        <p class="section-subtitle" style="margin:0 auto 2rem;" data-i18n="heroSubtitle">Wattar Academy is a professional music education center offering structured programs for all ages and skill levels.</p>
+        <a href="contact.html" class="btn btn-white" data-i18n="heroContact">Get in Touch</a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div>
+                <div class="footer-logo">
+                    <img src="images/logo.jpg" alt="Wattar Academy">
+                    <span>Wattar Academy</span>
+                </div>
+                <p data-i18n="footerDesc">Professional music education for all ages and skill levels.</p>
+            </div>
+            <div>
+                <h4 data-i18n="footerPages">Pages</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html" data-i18n="navHome">Home</a></li>
+                    <li><a href="about.html" data-i18n="navAbout">About</a></li>
+                    <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
+                    <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footerPrograms">Programs</h4>
+                <ul class="footer-links">
+                    <li><a href="programs.html" data-i18n="guitar">Guitar</a></li>
+                    <li><a href="programs.html" data-i18n="piano">Piano</a></li>
+                    <li><a href="programs.html" data-i18n="violin">Violin</a></li>
+                    <li><a href="programs.html" data-i18n="drums">Drums</a></li>
+                    <li><a href="programs.html" data-i18n="oud">Oud</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footerConnect">Connect</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                    <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                    <li><a href="#"><i class="fab fa-tiktok"></i> TikTok</a></li>
+                    <li><a href="#"><i class="fab fa-youtube"></i> YouTube</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span data-i18n="footerRights">© 2026 Wattar Academy. All rights reserved.</span>
+            <div class="footer-social">
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

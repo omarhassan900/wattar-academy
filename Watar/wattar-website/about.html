@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — Wattar Academy</title>
+    <meta name="description" content="Learn about Wattar Academy's mission, story, and values.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="container">
+        <a href="index.html" class="navbar-logo">
+            <img src="images/logo.jpg" alt="Wattar Academy">
+            <span>Wattar Academy</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html" data-i18n="navHome">Home</a></li>
+            <li><a href="about.html" class="active" data-i18n="navAbout">About</a></li>
+            <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
+            <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+            <li><button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button></li>
+        </ul>
+        <button class="menu-toggle" onclick="openMobileNav()" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+    <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close menu">&times;</button>
+    <a href="index.html" data-i18n="navHome" onclick="closeMobileNav()">Home</a>
+    <a href="about.html" data-i18n="navAbout" onclick="closeMobileNav()">About</a>
+    <a href="programs.html" data-i18n="navPrograms" onclick="closeMobileNav()">Programs</a>
+    <a href="contact.html" data-i18n="navContact" onclick="closeMobileNav()">Contact</a>
+    <button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+</div>
+
+<!-- Hero -->
+<section class="hero" style="min-height:50vh;">
+    <div class="container" style="display:block;text-align:center;">
+        <h1 data-i18n="aboutHeroTitle">About Wattar Academy</h1>
+        <p style="color:var(--gray-300);font-size:1.15rem;max-width:600px;margin:1rem auto 0;" data-i18n="aboutHeroSubtitle">Building musicians, one note at a time.</p>
+    </div>
+</section>
+
+<!-- Our Story -->
+<section class="section">
+    <div class="container">
+        <div class="about-grid">
+            <div>
+                <h2 data-i18n="aboutTitle">Our Story</h2>
+                <p data-i18n="aboutText1">Wattar Academy was founded with a simple mission: to make quality music education accessible to everyone. We believe that music is a universal language that connects people and enriches lives.</p>
+                <p data-i18n="aboutText2">Our structured 4-year curriculum takes students from their very first note to confident performance, with personalized attention and professional guidance at every step.</p>
+                <a href="programs.html" class="btn btn-primary mt-2" data-i18n="heroCta">Explore Programs</a>
+            </div>
+            <div class="about-image">
+                <img src="images/logo.jpg" alt="Wattar Academy">
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-number">100+</div>
+                <div class="stat-label" data-i18n="statStudents">Active Students</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">6+</div>
+                <div class="stat-label" data-i18n="statInstruments">Instruments</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">10+</div>
+                <div class="stat-label" data-i18n="statTrainers">Expert Trainers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4</div>
+                <div class="stat-label" data-i18n="statYears">Years of Curriculum</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Values -->
+<section class="section section-gray">
+    <div class="container">
+        <div class="section-header center">
+            <h2 data-i18n="valuesTitle">Our Values</h2>
+        </div>
+        <div class="values-grid">
+            <div class="value-item">
+                <h3><span>⭐</span> <span data-i18n="val1Title">Excellence</span></h3>
+                <p data-i18n="val1Desc">We hold ourselves and our students to the highest standards of musical education.</p>
+            </div>
+            <div class="value-item">
+                <h3><span>🔥</span> <span data-i18n="val2Title">Passion</span></h3>
+                <p data-i18n="val2Desc">Music is not just what we teach — it's who we are. That passion drives everything we do.</p>
+            </div>
+            <div class="value-item">
+                <h3><span>🤝</span> <span data-i18n="val3Title">Community</span></h3>
+                <p data-i18n="val3Desc">We build a supportive environment where students inspire and learn from each other.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="section section-dark text-center">
+    <div class="container">
+        <h2 data-i18n="heroContact">Get in Touch</h2>
+        <p class="section-subtitle" style="margin:0 auto 2rem;" data-i18n="contHeroSubtitle">Ready to start your musical journey? We'd love to hear from you.</p>
+        <a href="contact.html" class="btn btn-white" data-i18n="navContact">Contact</a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div>
+                <div class="footer-logo">
+                    <img src="images/logo.jpg" alt="Wattar Academy">
+                    <span>Wattar Academy</span>
+                </div>
+                <p data-i18n="footerDesc">Professional music education for all ages and skill levels.</p>
+            </div>
+            <div>
+                <h4 data-i18n="footerPages">Pages</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html" data-i18n="navHome">Home</a></li>
+                    <li><a href="about.html" data-i18n="navAbout">About</a></li>
+                    <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
+                    <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footerPrograms">Programs</h4>
+                <ul class="footer-links">
+                    <li><a href="programs.html" data-i18n="guitar">Guitar</a></li>
+                    <li><a href="programs.html" data-i18n="piano">Piano</a></li>
+                    <li><a href="programs.html" data-i18n="violin">Violin</a></li>
+                    <li><a href="programs.html" data-i18n="drums">Drums</a></li>
+                    <li><a href="programs.html" data-i18n="oud">Oud</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footerConnect">Connect</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                    <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                    <li><a href="#"><i class="fab fa-tiktok"></i> TikTok</a></li>
+                    <li><a href="#"><i class="fab fa-youtube"></i> YouTube</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span data-i18n="footerRights">© 2026 Wattar Academy. All rights reserved.</span>
+            <div class="footer-social">
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

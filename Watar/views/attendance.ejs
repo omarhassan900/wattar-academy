@@ -95,12 +95,21 @@
                                 <% } %>
                             </select>
                         </div>
-                        <div class="col-md-2  mb-2">
-                            <select class="form-select" name="status" id="statusFilter">
-                                <option value="">All Status</option>
-                                <option value="active" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'active') ? 'selected' : '' %>>Active</option>
-                                <option value="inactive" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'inactive') ? 'selected' : '' %>>Inactive</option>
-                                <option value="freez" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'freez') ? 'selected' : '' %>>Freez</option>
+                        <div class="col-md-1 mb-2">
+                            <select class="form-select" id="dayFilter" onchange="filterAttendance()">
+                                <option value="">All Days</option>
+                                <option value="sunday">Sun</option>
+                                <option value="monday">Mon</option>
+                                <option value="tuesday">Tue</option>
+                                <option value="wednesday">Wed</option>
+                                <option value="thursday">Thu</option>
+                                <option value="friday">Fri</option>
+                                <option value="saturday">Sat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 mb-2">
+                            <select class="form-select" id="trainerFilter" onchange="filterAttendance()">
+                                <option value="">All Trainers</option>
                             </select>
                         </div>
                         <div class="col-md-2 mb-2">
@@ -109,7 +118,7 @@
                                    placeholder="Filter by date">
                         </div>
                         <div class="col-md-1 mb-2">
-                            <select class="form-select" id="typeFilter" onchange="filterByType()">
+                            <select class="form-select" id="typeFilter" onchange="filterAttendance()">
                                 <option value="">All Types</option>
                                 <option value="Private">Private</option>
                                 <option value="Group">Group</option>
@@ -147,6 +156,8 @@
                                     data-student-name="<%= student.name.toLowerCase() %>" 
                                     data-month="<%= student.current_level.toLowerCase() %>"
                                     data-instrument="<%= (student.instrument || '').toLowerCase() %>"
+                                    data-day="<%= (student.schedule_day || '').toLowerCase() %>"
+                                    data-trainer="<%= (student.trainer_name || '').toLowerCase() %>"
                                     data-status="<%= student.status.toLowerCase() %>">
                                     <td>
                                         <strong><%= student.name %></strong>
@@ -452,16 +463,70 @@ function saveAllAttendance() {
     });
 }
 
-// Filter by session type (Group/Private)
-function filterByType() {
-    const selected = document.getElementById('typeFilter').value;
+// Populate trainer filter from table data
+(function() {
+    const trainers = new Set();
     document.querySelectorAll('#attendance-table tbody tr').forEach(row => {
-        if (!selected) { row.style.display = ''; return; }
-        const typeBadge = row.querySelector('.type-badge');
-        const typeText = typeBadge ? typeBadge.textContent.trim() : '';
-        row.style.display = typeText === selected ? '' : 'none';
+        const t = row.dataset.trainer;
+        if (t && t !== '-' && t !== '') trainers.add(t);
+    });
+    const sel = document.getElementById('trainerFilter');
+    if (sel) [...trainers].sort().forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+        sel.appendChild(opt);
+    });
+})();
+
+// Combined filter for Day, Trainer, Type
+function filterAttendance() {
+    const day = (document.getElementById('dayFilter') || {}).value || '';
+    const trainer = (document.getElementById('trainerFilter') || {}).value || '';
+    const type = (document.getElementById('typeFilter') || {}).value || '';
+    
+    // Save to URL so filters persist on page change
+    const url = new URL(window.location);
+    if (day) url.searchParams.set('day', day); else url.searchParams.delete('day');
+    if (trainer) url.searchParams.set('trainer', trainer); else url.searchParams.delete('trainer');
+    if (type) url.searchParams.set('type', type); else url.searchParams.delete('type');
+    window.history.replaceState({}, '', url);
+    
+    // Update pagination links
+    document.querySelectorAll('.page-link').forEach(link => {
+        try {
+            const href = new URL(link.href);
+            if (day) href.searchParams.set('day', day); else href.searchParams.delete('day');
+            if (trainer) href.searchParams.set('trainer', trainer); else href.searchParams.delete('trainer');
+            if (type) href.searchParams.set('type', type); else href.searchParams.delete('type');
+            link.href = href.pathname + href.search;
+        } catch(e) {}
+    });
+    
+    document.querySelectorAll('#attendance-table tbody tr').forEach(row => {
+        let show = true;
+        if (day && row.dataset.day !== day) show = false;
+        if (trainer && row.dataset.trainer !== trainer) show = false;
+        if (type) {
+            const typeBadge = row.querySelector('.type-badge');
+            const typeText = typeBadge ? typeBadge.textContent.trim() : '';
+            if (typeText !== type) show = false;
+        }
+        row.style.display = show ? '' : 'none';
     });
 }
+
+// Restore filters from URL on page load
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const day = params.get('day') || '';
+    const trainer = params.get('trainer') || '';
+    const type = params.get('type') || '';
+    if (day) document.getElementById('dayFilter').value = day;
+    if (trainer) document.getElementById('trainerFilter').value = trainer;
+    if (type) document.getElementById('typeFilter').value = type;
+    if (day || trainer || type) filterAttendance();
+})();
 
 // Clear attendance for a specific student and session
 function clearAttendance(studentId, sessionId) {

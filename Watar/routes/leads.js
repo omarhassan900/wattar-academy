@@ -17,7 +17,7 @@ module.exports = (app, db) => {
                 (SELECT lc.notes FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_notes,
                 (SELECT lc.outcome FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_outcome,
                 (SELECT lc.call_date FROM lead_calls lc WHERE lc.lead_id = l.id ORDER BY lc.call_date DESC LIMIT 1) as last_call_date,
-                (SELECT lc.callback_time FROM lead_calls lc WHERE lc.lead_id = l.id AND lc.callback_time IS NOT NULL ORDER BY lc.call_date DESC LIMIT 1) as callback_date
+                (CASE WHEN l.status = 'callback' THEN (SELECT lc.callback_time FROM lead_calls lc WHERE lc.lead_id = l.id AND lc.callback_time IS NOT NULL ORDER BY lc.call_date DESC LIMIT 1) ELSE NULL END) as callback_date
             FROM leads l
             LEFT JOIN users u1 ON l.assigned_to = u1.id
             LEFT JOIN users u2 ON l.created_by = u2.id

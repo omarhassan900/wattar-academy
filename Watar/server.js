@@ -17,6 +17,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+// Serve public website at /site (for local testing and production)
+app.use('/site', express.static('wattar-website'));
+
 // Session middleware
 app.use(session({
     secret: 'wattar-academy-secret-key',

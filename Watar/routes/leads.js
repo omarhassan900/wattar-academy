@@ -68,6 +68,26 @@ module.exports = (app, db) => {
         });
     });
 
+    // Public lead submission (from website contact form - no auth)
+    app.post('/api/public/lead', (req, res) => {
+        const { name, phone, email, instrument, age, message } = req.body;
+
+        if (!name || !phone) {
+            return res.json({ success: false, error: 'Name and phone are required' });
+        }
+
+        db.run(`
+            INSERT INTO leads (name, phone, email, instrument, age, source, status, notes)
+            VALUES (?, ?, ?, ?, ?, 'website', 'new', ?)
+        `, [name, phone, email || null, instrument || null, age || null, message || null], function(err) {
+            if (err) {
+                console.error('Error saving public lead:', err);
+                return res.json({ success: false, error: 'Something went wrong' });
+            }
+            res.json({ success: true });
+        });
+    });
+
     // Add lead
     app.post('/leads/add', requireAuth, requireRole(['sales', 'manager', 'operations_manager']), (req, res) => {
         const { name, phone, parent_phone, email, age, instrument, source, notes, assigned_to } = req.body;

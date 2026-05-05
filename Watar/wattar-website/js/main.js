@@ -89,13 +89,13 @@ const translations = {
         formSubmit: "Send Message",
         formSuccess: "Thank you! We'll be in touch soon.",
         contAddress: "Address",
-        contAddressVal: "Your address here",
+        contAddressVal: "Mokattam, Behind Hosny",
         contPhone: "Phone",
-        contPhoneVal: "+966 XX XXX XXXX",
+        contPhoneVal: "01009205520",
         contEmail: "Email",
         contEmailVal: "info@wattaracademy.com",
         contHours: "Working Hours",
-        contHoursVal: "Sun – Thu: 10AM – 9PM",
+        contHoursVal: "Sun – Thu: 3PM – 10PM | Sat: 12PM – 10PM",
         contMap: "Map will be embedded here",
 
         // Footer
@@ -108,103 +108,103 @@ const translations = {
     ar: {
         // Navbar
         navHome: "الرئيسية",
-        navAbout: "من نحن",
+        navAbout: "مين احنا",
         navPrograms: "البرامج",
-        navContact: "تواصل معنا",
+        navContact: "كلمنا",
         langToggle: "English",
 
         // Home
-        heroTitle: "حيث تبدأ الموسيقى",
-        heroSubtitle: "أكاديمية وتر هي مركز تعليم موسيقي احترافي يقدم برامج منظمة لجميع الأعمار والمستويات.",
-        heroCta: "استكشف البرامج",
-        heroContact: "تواصل معنا",
-        featTitle: "لماذا أكاديمية وتر",
-        featSubtitle: "نهج منظم لتعليم الموسيقى يبني مهارات حقيقية.",
+        heroTitle: "هنا الموسيقى بتبدأ",
+        heroSubtitle: "أكاديمية وتر مركز تعليم موسيقى محترف بيقدم برامج منظمة لكل الأعمار والمستويات.",
+        heroCta: "اعرف برامجنا",
+        heroContact: "كلمنا",
+        featTitle: "ليه أكاديمية وتر",
+        featSubtitle: "طريقة منظمة لتعليم الموسيقى بتبني مهارات حقيقية.",
         feat1Title: "منهج منظم",
-        feat1Desc: "برنامج تدريجي مدته 4 سنوات يتكون من 48 مستوى، كل مستوى يحتوي على 4 جلسات مصممة لبناء المهارات خطوة بخطوة.",
-        feat2Title: "مدربون محترفون",
-        feat2Desc: "تعلم من موسيقيين محترفين شغوفين بالتدريس ومكرسين لتطويرك.",
-        feat3Title: "آلات متعددة",
-        feat3Desc: "جيتار، بيانو، كمان، درامز، عود والمزيد. اعثر على الآلة التي تناسبك.",
+        feat1Desc: "برنامج 4 سنين فيه 48 مستوى، كل مستوى فيه 4 حصص مصممة تبني مهاراتك خطوة بخطوة.",
+        feat2Title: "مدربين محترفين",
+        feat2Desc: "اتعلم من موسيقيين محترفين بيحبوا التدريس ومهتمين بتطويرك.",
+        feat3Title: "آلات كتير",
+        feat3Desc: "جيتار، بيانو، كمان، درامز، عود وغيرهم. لاقي الآلة اللي تناسبك.",
         feat4Title: "فرقة وتر",
-        feat4Desc: "انضم إلى برنامج فرقة الأكاديمية واستمتع بتجربة العزف مع زملائك الموسيقيين.",
+        feat4Desc: "انضم لفرقة الأكاديمية وجرب إحساس العزف مع زمايلك.",
 
         // About
-        aboutHeroTitle: "عن أكاديمية وتر",
-        aboutHeroSubtitle: "نبني موسيقيين، نغمة تلو الأخرى.",
-        aboutTitle: "قصتنا",
-        aboutText1: "تأسست أكاديمية وتر بمهمة بسيطة: جعل تعليم الموسيقى عالي الجودة متاحاً للجميع. نؤمن بأن الموسيقى لغة عالمية تربط الناس وتثري الحياة.",
-        aboutText2: "منهجنا المنظم على مدى 4 سنوات يأخذ الطلاب من أول نغمة إلى الأداء بثقة، مع اهتمام شخصي وتوجيه احترافي في كل خطوة.",
+        aboutHeroTitle: "مين احنا",
+        aboutHeroSubtitle: "بنبني موسيقيين، نغمة ورا نغمة.",
+        aboutTitle: "حكايتنا",
+        aboutText1: "أكاديمية وتر اتأسست بهدف بسيط: إن تعليم الموسيقى الكويس يبقى متاح للكل. بنؤمن إن الموسيقى لغة عالمية بتربط الناس ببعض وبتغني حياتهم.",
+        aboutText2: "المنهج بتاعنا اللي مدته 4 سنين بياخد الطالب من أول نغمة لحد ما يعزف بثقة، مع اهتمام شخصي وتوجيه محترف في كل خطوة.",
         statStudents: "طالب نشط",
         statInstruments: "آلة موسيقية",
         statTrainers: "مدرب محترف",
-        statYears: "سنوات منهج",
+        statYears: "سنين منهج",
         valuesTitle: "قيمنا",
         val1Title: "التميز",
-        val1Desc: "نلتزم بأعلى معايير التعليم الموسيقي لأنفسنا ولطلابنا.",
+        val1Desc: "بنلتزم بأعلى معايير التعليم الموسيقي لينا ولطلابنا.",
         val2Title: "الشغف",
-        val2Desc: "الموسيقى ليست فقط ما نعلمه — إنها من نحن. هذا الشغف يقود كل ما نفعله.",
+        val2Desc: "الموسيقى مش بس اللي بنعلمه — دي احنا. الشغف ده بيحرك كل حاجة بنعملها.",
         val3Title: "المجتمع",
-        val3Desc: "نبني بيئة داعمة حيث يلهم الطلاب بعضهم البعض ويتعلمون من بعضهم.",
+        val3Desc: "بنبني بيئة داعمة الطلاب فيها بيلهموا بعض ويتعلموا من بعض.",
 
         // Programs
         progHeroTitle: "برامجنا",
-        progHeroSubtitle: "اكتشف المسار الموسيقي المناسب لك.",
-        instrTitle: "الآلات التي نعلمها",
-        instrSubtitle: "اختر من مجموعة واسعة من الآلات، كل منها يُدرّس بواسطة مدربين متخصصين.",
+        progHeroSubtitle: "اكتشف المسار الموسيقي المناسب ليك.",
+        instrTitle: "الآلات اللي بنعلمها",
+        instrSubtitle: "اختار من آلات كتير، كل واحدة بيدرسها مدربين متخصصين.",
         guitar: "جيتار",
         piano: "بيانو",
         violin: "كمان",
         drums: "درامز",
         oud: "عود",
         vocals: "غناء",
-        currTitle: "منهج 4 سنوات",
-        currSubtitle: "رحلة تدريجية من المبتدئ إلى الموسيقي المتقدم.",
+        currTitle: "منهج 4 سنين",
+        currSubtitle: "رحلة من المبتدئ للموسيقي المحترف.",
         year1: "السنة الأولى",
         year1Title: "الأساسيات",
-        year1Desc: "الأشهر 1–12. بناء المهارات الأساسية وتعلم الأساسيات وتطوير التقنية الصحيحة وقراءة الموسيقى.",
-        year2: "السنة الثانية",
+        year1Desc: "شهر 1–12. بناء المهارات الأساسية وتعلم الأساسيات وتطوير التكنيك الصح وقراءة النوتة.",
+        year2: "السنة التانية",
         year2Title: "التطوير",
-        year2Desc: "الأشهر 13–24. توسيع المقطوعات واستكشاف الأنماط والبدء بالعزف الجماعي.",
-        year3: "السنة الثالثة",
+        year2Desc: "شهر 13–24. توسيع المقطوعات واستكشاف أنماط مختلفة والبدء بالعزف الجماعي.",
+        year3: "السنة التالتة",
         year3Title: "الصقل",
-        year3Desc: "الأشهر 25–36. تقنيات متقدمة والتحضير للأداء والتعبير الموسيقي.",
+        year3Desc: "شهر 25–36. تكنيكات متقدمة والتحضير للأداء والتعبير الموسيقي.",
         year4: "السنة الرابعة",
         year4Title: "الإتقان",
-        year4Desc: "الأشهر 37–48. مهارات احترافية وأداء منفرد وحفل تخرج.",
+        year4Desc: "شهر 37–48. مهارات احترافية وأداء منفرد وحفل تخرج.",
         bandTitle: "برنامج فرقة وتر",
-        bandSubtitle: "أكثر من دروس — تجربة فرقة حقيقية.",
-        bandDesc: "يتم اختيار طلاب للانضمام إلى فرقة وتر، حيث يتدربون معاً ويقدمون عروضاً حية ويختبرون الجانب التعاوني من الموسيقى. تعمل الفرقة بدورات مع تدريبات وعروض منتظمة.",
+        bandSubtitle: "أكتر من دروس — تجربة فرقة حقيقية.",
+        bandDesc: "بيتم اختيار طلاب ينضموا لفرقة وتر، بيتدربوا مع بعض ويعملوا عروض لايف ويجربوا الجانب الجماعي من الموسيقى. الفرقة بتشتغل بدورات مع بروفات وعروض منتظمة.",
         bandCta: "انضم للفرقة",
 
         // Contact
-        contHeroTitle: "تواصل معنا",
-        contHeroSubtitle: "مستعد لبدء رحلتك الموسيقية؟ يسعدنا سماعك.",
-        formName: "الاسم الكامل",
-        formPhone: "رقم الهاتف",
-        formEmail: "البريد الإلكتروني (اختياري)",
-        formInstrument: "الآلة المطلوبة",
-        formSelect: "اختر آلة",
-        formAge: "العمر (اختياري)",
+        contHeroTitle: "كلمنا",
+        contHeroSubtitle: "مستعد تبدأ رحلتك الموسيقية؟ يسعدنا نسمع منك.",
+        formName: "الاسم بالكامل",
+        formPhone: "رقم الموبايل",
+        formEmail: "الإيميل (اختياري)",
+        formInstrument: "الآلة اللي عايز تتعلمها",
+        formSelect: "اختار آلة",
+        formAge: "السن (اختياري)",
         formMessage: "رسالة (اختياري)",
-        formSubmit: "إرسال",
-        formSuccess: "شكراً لك! سنتواصل معك قريباً.",
+        formSubmit: "ابعت",
+        formSuccess: "شكراً ليك! هنتواصل معاك قريب.",
         contAddress: "العنوان",
-        contAddressVal: "عنوانك هنا",
-        contPhone: "الهاتف",
-        contPhoneVal: "+966 XX XXX XXXX",
-        contEmail: "البريد الإلكتروني",
+        contAddressVal: "المقطم، خلف حسني",
+        contPhone: "الموبايل",
+        contPhoneVal: "01009205520",
+        contEmail: "الإيميل",
         contEmailVal: "info@wattaracademy.com",
-        contHours: "ساعات العمل",
-        contHoursVal: "الأحد – الخميس: 10 صباحاً – 9 مساءً",
-        contMap: "سيتم تضمين الخريطة هنا",
+        contHours: "مواعيد العمل",
+        contHoursVal: "الحد – الخميس: 3 العصر – 10 بليل | السبت: 12 الضهر – 10 بليل",
+        contMap: "الخريطة هتبقى هنا",
 
         // Footer
-        footerDesc: "تعليم موسيقي احترافي لجميع الأعمار والمستويات.",
+        footerDesc: "تعليم موسيقى محترف لكل الأعمار والمستويات.",
         footerPages: "الصفحات",
         footerPrograms: "البرامج",
-        footerConnect: "تواصل",
-        footerRights: "© 2026 أكاديمية وتر. جميع الحقوق محفوظة."
+        footerConnect: "تابعنا",
+        footerRights: "© 2026 أكاديمية وتر. كل الحقوق محفوظة."
     }
 };
 
@@ -249,9 +249,40 @@ function closeMobileNav() {
 function handleContactForm(e) {
     e.preventDefault();
     const form = e.target;
-    // For now, just show success (no backend)
-    form.style.display = 'none';
-    document.getElementById('formSuccess').classList.add('show');
+    const data = {
+        name: form.querySelector('[name="name"]').value,
+        phone: form.querySelector('[name="phone"]').value,
+        email: form.querySelector('[name="email"]').value,
+        instrument: form.querySelector('[name="instrument"]').value,
+        age: form.querySelector('[name="age"]').value,
+        message: form.querySelector('[name="message"]').value
+    };
+
+    const submitBtn = form.querySelector('[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = currentLang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
+
+    fetch('/api/public/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            form.style.display = 'none';
+            document.getElementById('formSuccess').classList.add('show');
+        } else {
+            alert(d.error || 'Something went wrong');
+            submitBtn.disabled = false;
+            submitBtn.textContent = currentLang === 'ar' ? 'إرسال' : 'Send Message';
+        }
+    })
+    .catch(() => {
+        alert('Connection error. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = currentLang === 'ar' ? 'إرسال' : 'Send Message';
+    });
 }
 
 // Init

@@ -35,7 +35,13 @@ fi
 echo "Building and deploying..."
 docker-compose build && docker-compose up -d
 
+# Step 7: Update public website files
+echo "Updating public website..."
+sudo cp -r ~/wattar-academy/Watar/wattar-website/* /var/www/wattar-website/
+
 echo ""
 echo "=== Deployment complete ==="
 echo "Backup: $BACKUP_FILE"
 echo "To restore: cp $BACKUP_FILE wattar.db && docker-compose restart"
+
+chmod +x deploy.sh

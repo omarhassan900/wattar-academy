@@ -222,6 +222,27 @@ module.exports = (app, db) => {
                                     paymentMap[key] = record.paid;
                                 });
                                 
+                                // Get actual cash amounts paid per student per level
+                                const cashAmountsQuery = `
+                                    SELECT student_id, student_level, SUM(amount) as total_paid
+                                    FROM cash_transactions
+                                    WHERE student_id IN (${studentPlaceholders})
+                                    AND type = 'income'
+                                    AND student_id IS NOT NULL
+                                    AND student_level IS NOT NULL
+                                    GROUP BY student_id, student_level
+                                `;
+                                
+                                db.all(cashAmountsQuery, studentIds, (err, cashAmountRecords) => {
+                                if (err) { console.error(err); cashAmountRecords = []; }
+                                
+                                // Build cash amount map
+                                const cashAmountMap = {};
+                                (cashAmountRecords || []).forEach(record => {
+                                    const key = `${record.student_id}_${record.student_level}`;
+                                    cashAmountMap[key] = record.total_paid;
+                                });
+                                
                                 // Get schedule type (group/private) for these students
                                 const scheduleTypeQuery = `
                                     SELECT st.student_id,
@@ -311,6 +332,9 @@ module.exports = (app, db) => {
                                 const paymentKey = `${student.id}_${student.current_level}`;
                                 const paid = paymentMap[paymentKey] || 0;
                                 
+                                // Get actual amount paid for this student's current level
+                                const amountPaid = cashAmountMap[paymentKey] || 0;
+                                
                                 const sessionType = (scheduleTypeMap[student.id] || {}).session_type || '-';
                                 const scheduleDay = (scheduleTypeMap[student.id] || {}).day_of_week || '-';
                                 const trainerName = (scheduleTypeMap[student.id] || {}).trainer_name || '-';
@@ -321,6 +345,7 @@ module.exports = (app, db) => {
                                     notes: levelNotes,
                                     confirmation: confirmation,
                                     paid: paid,
+                                    amount_paid: amountPaid,
                                     session_type: sessionType,
                                     schedule_day: scheduleDay,
                                     trainer_name: trainerName
@@ -359,6 +384,7 @@ module.exports = (app, db) => {
                                 });
                             });
                             }); // Close schedule type callback
+                            }); // Close cash amounts callback
                             }); // Close payments callback
                             }); // Close confirmations callback
                         });

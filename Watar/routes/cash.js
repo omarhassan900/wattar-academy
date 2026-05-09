@@ -26,9 +26,10 @@ module.exports = (app, db) => {
         
         // Get paginated transactions
         db.all(`
-            SELECT ct.*, cc.name as category_name, cc.type as category_type
+            SELECT ct.*, cc.name as category_name, cc.type as category_type, s.name as student_name
             FROM cash_transactions ct
             LEFT JOIN cash_categories cc ON ct.category_code = cc.code
+            LEFT JOIN students s ON ct.student_id = s.id
             ORDER BY ct.transaction_date DESC, ct.created_at DESC
             LIMIT ? OFFSET ?
         `, [limit, offset], (err, transactions) => {
@@ -44,22 +45,28 @@ module.exports = (app, db) => {
                     return res.status(500).send('Database error');
                 }
                 
-                // Render cash view and wrap in layout
-                res.render('cash', {
-                    user,
-                    transactions,
-                    categories,
-                    totalIncome,
-                    totalExpense,
-                    balance,
-                    currentPage: page,
-                    totalPages: totalPages
-                }, (err, html) => {
-                    if (err) {
-                        console.error('Error rendering cash view:', err);
-                        return res.status(500).send('Render error');
-                    }
-                    res.render('layout', { body: html, user: user });
+                // Get active students for the student dropdown
+                db.all("SELECT id, name, current_level FROM students WHERE status = 'active' ORDER BY name", (err, students) => {
+                    if (err) students = [];
+                    
+                    // Render cash view and wrap in layout
+                    res.render('cash', {
+                        user,
+                        transactions,
+                        categories,
+                        students: students || [],
+                        totalIncome,
+                        totalExpense,
+                        balance,
+                        currentPage: page,
+                        totalPages: totalPages
+                    }, (err, html) => {
+                        if (err) {
+                            console.error('Error rendering cash view:', err);
+                            return res.status(500).send('Render error');
+                        }
+                        res.render('layout', { body: html, user: user });
+                    });
                 });
             });
         });
@@ -68,13 +75,13 @@ module.exports = (app, db) => {
 
     // Add Cash Transaction
     app.post('/cash', requireAuth, requireRole(['manager','reception']), (req, res) => {
-        const { transaction_date, type, amount, category_code, description, payment_method, reference_number } = req.body;
+        const { transaction_date, type, amount, category_code, description, payment_method, reference_number, student_id, student_level } = req.body;
         const user = req.session.user;
         
         db.run(`
-            INSERT INTO cash_transactions (transaction_date, type, amount, category_code, description, payment_method, reference_number, created_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [transaction_date, type, amount, category_code, description, payment_method, reference_number, user.id], function(err) {
+            INSERT INTO cash_transactions (transaction_date, type, amount, category_code, description, payment_method, reference_number, created_by, student_id, student_level)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [transaction_date, type, amount, category_code, description, payment_method, reference_number, user.id, student_id || null, student_level || null], function(err) {
             if (err) {
                 console.error('Error adding transaction:', err);
                 return res.status(500).send('Database error');

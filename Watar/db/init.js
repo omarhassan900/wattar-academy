@@ -119,6 +119,9 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_cash_date ON cash_transactions(transactio
 db.run(`CREATE INDEX IF NOT EXISTS idx_cash_type ON cash_transactions(type)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_cash_category ON cash_transactions(category_code)`);
 
+// Migration: Add student_id and student_level to cash_transactions
+db.run(`ALTER TABLE cash_transactions ADD COLUMN student_id INTEGER`, () => {});
+db.run(`ALTER TABLE cash_transactions ADD COLUMN student_level TEXT`, () => {});
 // Leads table for sales pipeline
 db.run(`CREATE TABLE IF NOT EXISTS leads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

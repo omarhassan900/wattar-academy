@@ -256,6 +256,9 @@
                                             data-level="<%= student.current_level %>"
                                             <%= student.paid ? 'checked' : '' %>
                                             <%= user.role === 'operations_manager' ? 'disabled' : '' %>>
+                                        <% if (student.amount_paid) { %>
+                                            <br><small class="text-success fw-bold"><%= student.amount_paid %> EGP</small>
+                                        <% } %>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge type-badge <%= student.session_type === 'Group' ? 'bg-info' : student.session_type === 'Private' ? 'bg-warning' : 'bg-secondary' %>" style="font-size: 0.7rem;">

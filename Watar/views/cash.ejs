@@ -213,6 +213,26 @@
                         <input type="text" class="form-control" id="payment_method" name="payment_method" placeholder="e.g., Cash, InstaPay, Bank Transfer">
                     </div>
                     
+                    <div class="mb-3" id="student-assign-group" style="display:none;">
+                        <label for="student_id" class="form-label">Assign to Student</label>
+                        <select class="form-control" id="student_id" name="student_id">
+                            <option value="">-- Select Student --</option>
+                            <% if (typeof students !== 'undefined') { students.forEach(s => { %>
+                                <option value="<%= s.id %>" data-level="<%= s.current_level %>"><%= s.name %> (<%= s.current_level || 'No level' %>)</option>
+                            <% }); } %>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="student-level-group" style="display:none;">
+                        <label for="student_level" class="form-label">For Level</label>
+                        <select class="form-control" id="student_level" name="student_level">
+                            <option value="">-- Select Level --</option>
+                            <% for (let m = 1; m <= 48; m++) { %>
+                                <option value="Month <%= m %>">Month <%= m %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    
                     <div class="mb-3">
                         <label for="reference_number" class="form-label">Reference Number</label>
                         <input type="text" class="form-control" id="reference_number" name="reference_number">
@@ -419,4 +439,40 @@ function updateCategoryOptions(selectId, type) {
         select.appendChild(option);
     });
 }
+
+// Course-related income categories (not SI=Instrument Sell, not MGR_CASH)
+const courseCategories = ['P','V','G','VO','O','D','DR','A','BA'];
+
+function toggleStudentFields() {
+    const type = document.getElementById('type').value;
+    const category = document.getElementById('category_code').value;
+    const studentGroup = document.getElementById('student-assign-group');
+    const levelGroup = document.getElementById('student-level-group');
+    
+    if (type === 'income' && courseCategories.includes(category)) {
+        studentGroup.style.display = '';
+        levelGroup.style.display = '';
+    } else {
+        studentGroup.style.display = 'none';
+        levelGroup.style.display = 'none';
+        document.getElementById('student_id').value = '';
+        document.getElementById('student_level').value = '';
+    }
+}
+
+// Auto-set level when student is selected
+document.getElementById('student_id').addEventListener('change', function() {
+    const selected = this.options[this.selectedIndex];
+    const level = selected.getAttribute('data-level');
+    if (level) {
+        document.getElementById('student_level').value = level;
+    }
+});
+
+document.getElementById('type').addEventListener('change', function() {
+    updateCategoryOptions('category_code', this.value);
+    toggleStudentFields();
+});
+
+document.getElementById('category_code').addEventListener('change', toggleStudentFields);
 </script>

@@ -122,6 +122,29 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_cash_category ON cash_transactions(catego
 // Migration: Add student_id and student_level to cash_transactions
 db.run(`ALTER TABLE cash_transactions ADD COLUMN student_id INTEGER`, () => {});
 db.run(`ALTER TABLE cash_transactions ADD COLUMN student_level TEXT`, () => {});
+
+// Tickets table for event ticket sales
+db.run(`CREATE TABLE IF NOT EXISTS tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_name TEXT NOT NULL,
+    buyer_phone TEXT NOT NULL,
+    buyer_email TEXT,
+    payment_screenshot TEXT,
+    status TEXT CHECK(status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    ticket_token TEXT UNIQUE,
+    seat_number TEXT,
+    approved_by INTEGER,
+    approved_at DATETIME,
+    rejection_reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (approved_by) REFERENCES users(id)
+)`, (err) => {
+    if (err && !err.message.includes('already exists')) console.error('Error creating tickets table:', err);
+    else {
+        console.log('✓ tickets table ready');
+        db.run(`ALTER TABLE tickets ADD COLUMN seat_number TEXT`, () => {});
+    }
+});
 // Leads table for sales pipeline
 db.run(`CREATE TABLE IF NOT EXISTS leads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

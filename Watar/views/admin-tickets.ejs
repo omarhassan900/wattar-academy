@@ -1,0 +1,149 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-ticket-alt text-primary me-2"></i>Concert Tickets</h1>
+            <span class="badge bg-dark fs-6"><%= stats.approved %>/<%= TICKET_LIMIT %> sold</span>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body py-2">
+                <h4 class="mb-0 text-warning"><%= stats.pending %></h4>
+                <small class="text-muted">Pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body py-2">
+                <h4 class="mb-0 text-success"><%= stats.approved %></h4>
+                <small class="text-muted">Approved</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-danger">
+            <div class="card-body py-2">
+                <h4 class="mb-0 text-danger"><%= stats.rejected %></h4>
+                <small class="text-muted">Rejected</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-info">
+            <div class="card-body py-2">
+                <h4 class="mb-0 text-info"><%= stats.total %></h4>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tickets Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Seat</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (tickets.length === 0) { %>
+                    <tr><td colspan="9" class="text-center py-4 text-muted">No ticket reservations yet</td></tr>
+                    <% } %>
+                    <% tickets.forEach(ticket => { %>
+                    <tr>
+                        <td><%= ticket.id %></td>
+                        <td><strong><%= ticket.buyer_name %></strong></td>
+                        <td><a href="tel:<%= ticket.buyer_phone %>"><%= ticket.buyer_phone %></a></td>
+                        <td><%= ticket.buyer_email || '-' %></td>
+                        <td>
+                            <% if (ticket.payment_screenshot) { %>
+                                <a href="<%= ticket.payment_screenshot %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-image me-1"></i>View
+                                </a>
+                            <% } else { %>-<% } %>
+                        </td>
+                        <td>
+                            <% if (ticket.status === 'pending') { %>
+                                <span class="badge bg-warning">Pending</span>
+                            <% } else if (ticket.status === 'approved') { %>
+                                <span class="badge bg-success">Approved</span>
+                            <% } else { %>
+                                <span class="badge bg-danger">Rejected</span>
+                            <% } %>
+                        </td>
+                        <td><strong><%= ticket.seat_number || '-' %></strong></td>
+                        <td><small><%= new Date(ticket.created_at).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) %></small></td>
+                        <td>
+                            <% if (ticket.status === 'pending') { %>
+                                <button class="btn btn-sm btn-success approve-btn" data-id="<%= ticket.id %>">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger reject-btn" data-id="<%= ticket.id %>">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            <% } else if (ticket.status === 'approved' && ticket.ticket_token) { %>
+                                <a href="/concert/ticket/<%= ticket.ticket_token %>" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-external-link-alt me-1"></i>Ticket
+                                </a>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const seat = prompt('Enter seat number for this ticket:');
+            if (!seat) return alert('Seat number is required to approve');
+            const id = this.dataset.id;
+            fetch(`/admin/tickets/${id}/approve`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ seat_number: seat })
+            }).then(r => r.json()).then(d => {
+                    if (d.success) {
+                        alert('Ticket approved! Link: ' + window.location.origin + '/concert/ticket/' + d.token);
+                        location.reload();
+                    } else alert('Error: ' + d.error);
+                });
+        });
+    });
+
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reason = prompt('Rejection reason (optional):');
+            if (reason === null) return;
+            const id = this.dataset.id;
+            fetch(`/admin/tickets/${id}/reject`, {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ reason })
+            }).then(r => r.json()).then(d => {
+                if (d.success) location.reload();
+                else alert('Error: ' + d.error);
+            });
+        });
+    });
+});
+</script>

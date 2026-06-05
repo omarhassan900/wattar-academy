@@ -59,6 +59,18 @@
             <div class="sold-out"><i class="fas fa-ticket-alt me-2"></i>SOLD OUT</div>
         <% } else { %>
 
+        <!-- Seat Map -->
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:16px;margin-bottom:1.5rem;">
+            <div style="text-align:center;margin-bottom:8px;">
+                <span style="background:#333;color:#fff;padding:4px 16px;border-radius:3px;font-size:0.7rem;font-weight:600;">STAGE</span>
+            </div>
+            <div id="seatMapReserve"></div>
+            <div style="display:flex;gap:12px;justify-content:center;margin-top:10px;font-size:0.7rem;color:#888;">
+                <span><span style="display:inline-block;width:10px;height:10px;background:#28a745;border-radius:2px;vertical-align:middle;"></span> Available</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:#dc3545;border-radius:2px;vertical-align:middle;"></span> Taken</span>
+            </div>
+        </div>
+
         <div id="reserveForm">
             <div class="instapay-box">
                 <div class="label mb-1">Send <%= ticketPrice %> EGP via InstaPay to</div>
@@ -101,6 +113,38 @@
 </div>
 
 <script>
+const rows = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+const cols = 12;
+const takenSeats = <%- JSON.stringify(takenSeats) %>;
+
+function buildReserveMap() {
+    const container = document.getElementById('seatMapReserve');
+    if (!container) return;
+    let html = '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">';
+    // Column labels
+    html += '<div style="display:flex;gap:3px;margin-left:18px;margin-bottom:3px;">';
+    for (let c = 1; c <= cols; c++) {
+        html += `<div style="width:18px;text-align:center;font-size:0.5rem;font-weight:600;color:#666;">${c}</div>`;
+        if (c === 6) html += '<div style="width:12px;"></div>';
+    }
+    html += '</div>';
+    for (let r = 0; r < rows.length; r++) {
+        html += '<div style="display:flex;align-items:center;gap:3px;">';
+        html += `<div style="width:14px;font-weight:700;font-size:0.5rem;text-align:center;color:#666;">${rows[r]}</div>`;
+        for (let c = 1; c <= cols; c++) {
+            const seatId = rows[r] + c;
+            const isTaken = takenSeats[seatId];
+            const bg = isTaken ? '#dc3545' : '#28a745';
+            html += `<div style="width:18px;height:18px;border-radius:2px;background:${bg};" title="${seatId}"></div>`;
+            if (c === 6) html += '<div style="width:12px;"></div>';
+        }
+        html += '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+}
+buildReserveMap();
+
 function submitReservation() {
     const name = document.getElementById('buyer_name').value.trim();
     const phone = document.getElementById('buyer_phone').value.trim();

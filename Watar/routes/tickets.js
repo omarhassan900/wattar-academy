@@ -25,8 +25,8 @@ const upload = multer({
     }
 });
 
-const TICKET_PRICE = 100;
-const TICKET_LIMIT = 150;
+const TICKET_PRICE = 150;
+const TICKET_LIMIT = 144;
 const EVENT_NAME = 'Watar Academy Concert';
 const EVENT_DATE = '27 June 2026';
 const INSTAPAY_NUMBER = '01026502916';
@@ -38,13 +38,21 @@ module.exports = (app, db) => {
         db.get("SELECT COUNT(*) as sold FROM tickets WHERE status IN ('pending', 'approved')", (err, row) => {
             const ticketsSold = row ? row.sold : 0;
             const available = TICKET_LIMIT - ticketsSold;
-            res.render('public-ticket', {
-                eventName: EVENT_NAME,
-                eventDate: EVENT_DATE,
-                ticketPrice: TICKET_PRICE,
-                instapayNumber: INSTAPAY_NUMBER,
-                available,
-                soldOut: available <= 0
+            // Get taken seats for the visual
+            db.all("SELECT seat_number, buyer_name FROM tickets WHERE status = 'approved' AND seat_number IS NOT NULL", (err, rows) => {
+                const takenSeats = {};
+                (rows || []).forEach(r => {
+                    r.seat_number.split(',').forEach(s => { takenSeats[s.trim()] = r.buyer_name; });
+                });
+                res.render('public-ticket', {
+                    eventName: EVENT_NAME,
+                    eventDate: EVENT_DATE,
+                    ticketPrice: TICKET_PRICE,
+                    instapayNumber: INSTAPAY_NUMBER,
+                    available,
+                    soldOut: available <= 0,
+                    takenSeats
+                });
             });
         });
     });
@@ -98,10 +106,20 @@ module.exports = (app, db) => {
             if (err || !ticket) {
                 return res.status(404).send('<html><body style="font-family:sans-serif;text-align:center;padding:50px;background:#000;color:#fff;"><h2>Ticket not found</h2><p>This ticket link is invalid.</p></body></html>');
             }
-            res.render('public-ticket-view', {
-                ticket,
-                eventName: EVENT_NAME,
-                eventDate: EVENT_DATE
+            // Get taken seats for the map
+            db.all("SELECT seat_number, buyer_name FROM tickets WHERE status = 'approved' AND seat_number IS NOT NULL", (err, rows) => {
+                const takenSeats = {};
+                (rows || []).forEach(r => {
+                    r.seat_number.split(',').forEach(s => {
+                        takenSeats[s.trim()] = r.buyer_name;
+                    });
+                });
+                res.render('public-ticket-view', {
+                    ticket,
+                    eventName: EVENT_NAME,
+                    eventDate: EVENT_DATE,
+                    takenSeats
+                });
             });
         });
     });
@@ -132,14 +150,45 @@ module.exports = (app, db) => {
 
         if (!seat_number) return res.json({ success: false, error: 'Seat number is required' });
 
-        db.run(`UPDATE tickets SET status = 'approved', seat_number = ?, approved_by = ?, approved_at = datetime('now') WHERE id = ?`,
-            [seat_number, user.id, id], function(err) {
-                if (err) return res.json({ success: false, error: 'Database error' });
-                db.get("SELECT ticket_token FROM tickets WHERE id = ?", [id], (err, row) => {
-                    res.json({ success: true, token: row ? row.ticket_token : null });
-                });
+        // Parse multiple seats (comma-separated)
+        const seats = seat_number.split(',').map(s => s.trim()).filter(s => s);
+        
+        // Check if any seat is already taken
+        db.all("SELECT seat_number FROM tickets WHERE status = 'approved' AND seat_number IS NOT NULL", (err, rows) => {
+            const allTaken = new Set();
+            (rows || []).forEach(r => {
+                r.seat_number.split(',').forEach(s => allTaken.add(s.trim()));
+            });
+            
+            const conflicts = seats.filter(s => allTaken.has(s));
+            if (conflicts.length > 0) {
+                return res.json({ success: false, error: 'Seats already taken: ' + conflicts.join(', ') });
             }
-        );
+
+            db.run(`UPDATE tickets SET status = 'approved', seat_number = ?, approved_by = ?, approved_at = datetime('now') WHERE id = ?`,
+                [seat_number, user.id, id], function(err) {
+                    if (err) return res.json({ success: false, error: 'Database error' });
+                    db.get("SELECT ticket_token FROM tickets WHERE id = ?", [id], (err, row) => {
+                        res.json({ success: true, token: row ? row.ticket_token : null });
+                    });
+                }
+            );
+        });
+    });
+
+    // API: Get taken seats
+    app.get('/admin/tickets/seats', requireAuth, requireRole(['manager', 'reception']), (req, res) => {
+        db.all("SELECT seat_number, buyer_name FROM tickets WHERE status = 'approved' AND seat_number IS NOT NULL", (err, rows) => {
+            if (err) return res.json({ success: false });
+            const taken = {};
+            (rows || []).forEach(r => {
+                // Handle multiple seats per ticket (comma-separated)
+                r.seat_number.split(',').forEach(s => {
+                    taken[s.trim()] = r.buyer_name;
+                });
+            });
+            res.json({ success: true, taken });
+        });
     });
 
     // Admin: Reject ticket
@@ -149,6 +198,18 @@ module.exports = (app, db) => {
 
         db.run(`UPDATE tickets SET status = 'rejected', rejection_reason = ? WHERE id = ?`,
             [reason || 'Payment not verified', id], function(err) {
+                if (err) return res.json({ success: false, error: 'Database error' });
+                res.json({ success: true });
+            }
+        );
+    });
+
+    // Admin: Cancel (revoke) an approved ticket — frees up the seats
+    app.post('/admin/tickets/:id/cancel', requireAuth, requireRole(['manager', 'reception']), (req, res) => {
+        const { id } = req.params;
+
+        db.run(`UPDATE tickets SET status = 'rejected', seat_number = NULL, rejection_reason = 'Cancelled by admin' WHERE id = ?`,
+            [id], function(err) {
                 if (err) return res.json({ success: false, error: 'Database error' });
                 res.json({ success: true });
             }

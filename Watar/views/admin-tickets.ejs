@@ -11,40 +11,45 @@
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card text-center border-warning">
-            <div class="card-body py-2">
-                <h4 class="mb-0 text-warning"><%= stats.pending %></h4>
-                <small class="text-muted">Pending</small>
-            </div>
+            <div class="card-body py-2"><h4 class="mb-0 text-warning"><%= stats.pending %></h4><small class="text-muted">Pending</small></div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card text-center border-success">
-            <div class="card-body py-2">
-                <h4 class="mb-0 text-success"><%= stats.approved %></h4>
-                <small class="text-muted">Approved</small>
-            </div>
+            <div class="card-body py-2"><h4 class="mb-0 text-success"><%= stats.approved %></h4><small class="text-muted">Approved</small></div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card text-center border-danger">
-            <div class="card-body py-2">
-                <h4 class="mb-0 text-danger"><%= stats.rejected %></h4>
-                <small class="text-muted">Rejected</small>
-            </div>
+            <div class="card-body py-2"><h4 class="mb-0 text-danger"><%= stats.rejected %></h4><small class="text-muted">Rejected</small></div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card text-center border-info">
-            <div class="card-body py-2">
-                <h4 class="mb-0 text-info"><%= stats.total %></h4>
-                <small class="text-muted">Total</small>
-            </div>
+            <div class="card-body py-2"><h4 class="mb-0 text-info"><%= stats.total %></h4><small class="text-muted">Total</small></div>
+        </div>
+    </div>
+</div>
+
+<!-- Seat Map -->
+<div class="card mb-4">
+    <div class="card-header"><h5 class="mb-0"><i class="fas fa-th me-2"></i>Seat Map</h5></div>
+    <div class="card-body">
+        <div class="text-center mb-3">
+            <div style="background:#333;color:#fff;padding:8px 40px;display:inline-block;border-radius:4px;font-weight:600;">STAGE</div>
+        </div>
+        <div id="seatMap" style="overflow-x:auto;"></div>
+        <div class="mt-3 d-flex gap-3 justify-content-center" style="font-size:0.85rem;">
+            <span><span style="display:inline-block;width:16px;height:16px;background:#28a745;border-radius:3px;vertical-align:middle;"></span> Available</span>
+            <span><span style="display:inline-block;width:16px;height:16px;background:#dc3545;border-radius:3px;vertical-align:middle;"></span> Taken</span>
+            <span><span style="display:inline-block;width:16px;height:16px;background:#ffc107;border-radius:3px;vertical-align:middle;"></span> Selected</span>
         </div>
     </div>
 </div>
 
 <!-- Tickets Table -->
 <div class="card">
+    <div class="card-header"><h5 class="mb-0"><i class="fas fa-list me-2"></i>Reservations</h5></div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover table-sm mb-0">
@@ -91,7 +96,7 @@
                         <td><small><%= new Date(ticket.created_at).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) %></small></td>
                         <td>
                             <% if (ticket.status === 'pending') { %>
-                                <button class="btn btn-sm btn-success approve-btn" data-id="<%= ticket.id %>">
+                                <button class="btn btn-sm btn-success approve-btn" data-id="<%= ticket.id %>" data-name="<%= ticket.buyer_name %>">
                                     <i class="fas fa-check"></i>
                                 </button>
                                 <button class="btn btn-sm btn-danger reject-btn" data-id="<%= ticket.id %>">
@@ -99,8 +104,11 @@
                                 </button>
                             <% } else if (ticket.status === 'approved' && ticket.ticket_token) { %>
                                 <a href="/concert/ticket/<%= ticket.ticket_token %>" target="_blank" class="btn btn-sm btn-outline-success">
-                                    <i class="fas fa-external-link-alt me-1"></i>Ticket
+                                    <i class="fas fa-external-link-alt"></i>
                                 </a>
+                                <button class="btn btn-sm btn-outline-danger cancel-btn" data-id="<%= ticket.id %>" data-name="<%= ticket.buyer_name %>" title="Cancel ticket">
+                                    <i class="fas fa-ban"></i>
+                                </button>
                             <% } %>
                         </td>
                     </tr>
@@ -111,23 +119,131 @@
     </div>
 </div>
 
+<style>
+    .seat-grid { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .seat-row { display: flex; align-items: center; gap: 4px; }
+    .seat-label { width: 24px; font-weight: 700; font-size: 0.8rem; text-align: center; color: #666; }
+    .seat {
+        width: 32px; height: 32px; border-radius: 4px; border: none; cursor: pointer;
+        font-size: 0.65rem; font-weight: 600; display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .seat.available { background: #28a745; color: #fff; }
+    .seat.available:hover { background: #218838; transform: scale(1.1); }
+    .seat.taken { background: #dc3545; color: #fff; cursor: not-allowed; }
+    .seat.selected { background: #ffc107; color: #000; transform: scale(1.15); }
+    .col-labels { display: flex; gap: 4px; margin-left: 28px; margin-bottom: 4px; }
+    .col-label { width: 32px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #666; }
+</style>
+
 <script>
+const rows = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+const cols = 12;
+let takenSeats = {};
+let selectedSeats = [];
+let approvingTicketId = null;
+
+function renderSeatMap() {
+    fetch('/admin/tickets/seats').then(r => r.json()).then(d => {
+        if (d.success) takenSeats = d.taken;
+        buildMap();
+    });
+}
+
+function buildMap() {
+    const container = document.getElementById('seatMap');
+    let html = '<div class="seat-grid">';
+    
+    // Column labels
+    html += '<div class="col-labels">';
+    for (let c = 1; c <= cols; c++) {
+        html += `<div class="col-label">${c}</div>`;
+        if (c === 6) html += '<div class="col-label"></div>'; // corridor gap
+    }
+    html += '</div>';
+    
+    // Rows
+    for (let r = 0; r < rows.length; r++) {
+        html += '<div class="seat-row">';
+        html += `<div class="seat-label">${rows[r]}</div>`;
+        for (let c = 1; c <= cols; c++) {
+            const seatId = rows[r] + c;
+            const isTaken = takenSeats[seatId];
+            const isSelected = selectedSeats.includes(seatId);
+            let cls = 'seat ';
+            if (isTaken) cls += 'taken';
+            else if (isSelected) cls += 'selected';
+            else cls += 'available';
+            
+            const title = isTaken ? `${seatId} - ${takenSeats[seatId]}` : seatId;
+            html += `<button class="${cls}" title="${title}" data-seat="${seatId}" ${isTaken ? 'disabled' : ''}>${seatId}</button>`;
+            if (c === 6) html += '<div style="width:24px;"></div>'; // corridor gap
+        }
+        html += '</div>';
+    }
+    html += '</div>';
+    
+    if (approvingTicketId && selectedSeats.length > 0) {
+        html += `<div class="text-center mt-3"><strong>Selected: ${selectedSeats.join(', ')}</strong>`;
+        html += `<br><button class="btn btn-success btn-sm mt-2" id="confirmSeatsBtn"><i class="fas fa-check me-1"></i>Confirm ${selectedSeats.length} seat(s)</button>`;
+        html += ` <button class="btn btn-outline-secondary btn-sm mt-2" id="clearSeatsBtn">Clear</button></div>`;
+    }
+    
+    container.innerHTML = html;
+    
+    // Add click handlers for seats
+    container.querySelectorAll('.seat.available, .seat.selected').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const seat = this.dataset.seat;
+            if (selectedSeats.includes(seat)) {
+                selectedSeats = selectedSeats.filter(s => s !== seat);
+            } else {
+                selectedSeats.push(seat);
+            }
+            buildMap();
+        });
+    });
+    
+    // Confirm button
+    const confirmBtn = document.getElementById('confirmSeatsBtn');
+    if (confirmBtn) confirmBtn.addEventListener('click', confirmApproval);
+    
+    const clearBtn = document.getElementById('clearSeatsBtn');
+    if (clearBtn) clearBtn.addEventListener('click', () => { selectedSeats = []; buildMap(); });
+}
+
+function confirmApproval() {
+    if (selectedSeats.length === 0 || !approvingTicketId) return;
+    const seatStr = selectedSeats.join(', ');
+    if (!confirm(`Assign seats ${seatStr} to this ticket?`)) return;
+    
+    fetch(`/admin/tickets/${approvingTicketId}/approve`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ seat_number: seatStr })
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            alert('Ticket approved! Seats: ' + seatStr + '\nLink: ' + window.location.origin + '/concert/ticket/' + d.token);
+            location.reload();
+        } else {
+            alert('Error: ' + d.error);
+        }
+        selectedSeats = [];
+        approvingTicketId = null;
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    renderSeatMap();
+
     document.querySelectorAll('.approve-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const seat = prompt('Enter seat number for this ticket:');
-            if (!seat) return alert('Seat number is required to approve');
-            const id = this.dataset.id;
-            fetch(`/admin/tickets/${id}/approve`, {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ seat_number: seat })
-            }).then(r => r.json()).then(d => {
-                    if (d.success) {
-                        alert('Ticket approved! Link: ' + window.location.origin + '/concert/ticket/' + d.token);
-                        location.reload();
-                    } else alert('Error: ' + d.error);
-                });
+            approvingTicketId = this.dataset.id;
+            const name = this.dataset.name;
+            selectedSeats = [];
+            buildMap();
+            alert(`Select seat(s) on the map for "${name}", then click "Confirm"`);
+            document.getElementById('seatMap').scrollIntoView({ behavior: 'smooth' });
         });
     });
 
@@ -139,6 +255,20 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`/admin/tickets/${id}/reject`, {
                 method: 'POST', headers: {'Content-Type':'application/json'},
                 body: JSON.stringify({ reason })
+            }).then(r => r.json()).then(d => {
+                if (d.success) location.reload();
+                else alert('Error: ' + d.error);
+            });
+        });
+    });
+
+    document.querySelectorAll('.cancel-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const name = this.dataset.name;
+            if (!confirm(`Cancel ticket for "${name}"? This will free up their seats.`)) return;
+            const id = this.dataset.id;
+            fetch(`/admin/tickets/${id}/cancel`, {
+                method: 'POST', headers: {'Content-Type':'application/json'}
             }).then(r => r.json()).then(d => {
                 if (d.success) location.reload();
                 else alert('Error: ' + d.error);

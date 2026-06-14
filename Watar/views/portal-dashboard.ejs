@@ -202,9 +202,41 @@
             <% } %>
         </div>
     </div>
+    <!-- Change Password -->
+    <div class="section-card">
+        <div class="section-header"><i class="fas fa-lock"></i> Change Password</div>
+        <div class="section-body">
+            <div style="max-width:300px;">
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Current Password</label>
+                    <input type="password" id="current-pw" style="width:100%;padding:8px 12px;border:1px solid #e5e5e5;border-radius:6px;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">New Password</label>
+                    <input type="password" id="new-pw" style="width:100%;padding:8px 12px;border:1px solid #e5e5e5;border-radius:6px;">
+                </div>
+                <button onclick="changePassword()" style="background:#000;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;">Update Password</button>
+                <span id="pw-msg" style="margin-left:10px;font-size:0.85rem;"></span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
+function changePassword() {
+    const current = document.getElementById('current-pw').value;
+    const newPw = document.getElementById('new-pw').value;
+    if (!current || !newPw) return alert('Fill in both fields');
+    fetch('/portal/change-password', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ current_password: current, new_password: newPw })
+    }).then(r=>r.json()).then(d => {
+        const msg = document.getElementById('pw-msg');
+        if (d.success) { msg.textContent = '✓ Updated!'; msg.style.color='#28a745'; document.getElementById('current-pw').value=''; document.getElementById('new-pw').value=''; }
+        else { msg.textContent = d.error; msg.style.color='#dc3545'; }
+    });
+}
+</script>
 const ABC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const SOL = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
 const openStrNotes = [4,11,7,2,9,4];

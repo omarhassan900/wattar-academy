@@ -47,6 +47,27 @@ module.exports = (app, db) => {
         res.redirect('/portal/login');
     });
 
+    // Change password
+    app.post('/portal/change-password', requireStudent, (req, res) => {
+        const { current_password, new_password } = req.body;
+        const studentId = req.session.student.account_id;
+
+        if (!current_password || !new_password) return res.json({ success: false, error: 'Both fields are required' });
+        if (new_password.length < 6) return res.json({ success: false, error: 'New password must be at least 6 characters' });
+
+        db.get('SELECT password_hash FROM student_accounts WHERE id = ?', [studentId], (err, account) => {
+            if (err || !account) return res.json({ success: false, error: 'Account not found' });
+            if (!bcrypt.compareSync(current_password, account.password_hash)) {
+                return res.json({ success: false, error: 'Current password is incorrect' });
+            }
+            const newHash = bcrypt.hashSync(new_password, 10);
+            db.run('UPDATE student_accounts SET password_hash = ? WHERE id = ?', [newHash, studentId], (err) => {
+                if (err) return res.json({ success: false, error: 'Database error' });
+                res.json({ success: true });
+            });
+        });
+    });
+
     // Student Dashboard
     app.get('/portal', requireStudent, (req, res) => {
         const student = req.session.student;

@@ -1,0 +1,486 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-guitar text-primary me-2"></i>Assignments</h1>
+            <div>
+                <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#templatesModal"><i class="fas fa-book me-1"></i>Templates (<%= templates.length %>)</button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssignmentModal"><i class="fas fa-plus me-1"></i>New Assignment</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Recent Assignments</h5></div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead class="table-light">
+                    <tr><th>Student</th><th>Instrument</th><th>Level</th><th>Session</th><th>Title</th><th>Steps</th><th>Date</th><th></th></tr>
+                </thead>
+                <tbody>
+                    <% if (assignments.length === 0) { %><tr><td colspan="8" class="text-center py-4 text-muted">No assignments yet</td></tr><% } %>
+                    <% assignments.forEach(a => { %>
+                    <tr>
+                        <td><strong><%= a.student_name %></strong></td>
+                        <td><small class="badge bg-secondary"><%= a.instrument || '-' %></small></td>
+                        <td><%= a.level %></td>
+                        <td>S<%= a.session_number %></td>
+                        <td><%= a.title %></td>
+                        <td><%= a.notes_sequence ? a.notes_sequence.split(',').length : '-' %></td>
+                        <td><small><%= new Date(a.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) %></small></td>
+                        <td><button class="btn btn-sm btn-warning edit-assignment" data-id="<%= a.id %>" data-title="<%= a.title %>" data-notes="<%= a.notes_sequence||'' %>" data-instructions="<%= a.instructions||'' %>" data-youtube="<%= a.youtube_url||'' %>" data-bpm="<%= a.bpm||'' %>" data-instrument="<%= a.instrument||'' %>"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-danger delete-assignment" data-id="<%= a.id %>"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Assignment Modal -->
+<div class="modal fade" id="addAssignmentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-music me-2"></i>New Assignment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label">Student *</label>
+                        <select class="form-select" id="assign-student">
+                            <option value="">Select Student</option>
+                            <% students.forEach(s => { %>
+                            <option value="<%= s.id %>" data-level="<%= s.current_level %>" data-instrument="<%= (s.instrument||'').toLowerCase() %>"><%= s.name %> (<%= s.instrument || '?' %>)</option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Level</label>
+                        <select class="form-select" id="assign-level"><% for(let m=1;m<=48;m++){%><option value="Month <%=m%>">Month <%=m%></option><%}%></select>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Session</label>
+                        <select class="form-select" id="assign-session"><option value="1">S1</option><option value="2">S2</option><option value="3">S3</option><option value="4">S4</option></select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Note Names</label>
+                        <select class="form-select" id="notation-mode" onchange="rebuildInstrument()">
+                            <option value="abc">ABC (A,B,C...)</option>
+                            <option value="solfege">Solfège (Do,Re,Mi...)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Instrument Visual</label>
+                        <select class="form-select" id="instrument-select" onchange="currentInstrument=this.value;sequence=[];buildInstrumentUI();">
+                            <option value="">Select instrument</option>
+                            <option value="guitar">Guitar</option>
+                            <option value="oud">Oud</option>
+                            <option value="violin">Violin</option>
+                            <option value="piano">Piano</option>
+                            <option value="drums">Drums</option>
+                            <option value="vocals">Vocals</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Load from Template</label>
+                        <select class="form-select" id="load-template" onchange="loadTemplate(this.value)">
+                            <option value="">— Or create from scratch —</option>
+                            <% templates.forEach(t => { %><option value="<%= t.id %>"><%= t.title %> (<%= t.instrument || 'any' %>)</option><% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Title *</label>
+                        <input type="text" class="form-control" id="assign-title" placeholder="Melody name">
+                    </div>
+                </div>
+                <div id="instrumentBuilder" style="background:#1a1a1a;border-radius:8px;padding:16px;margin-bottom:12px;">
+                    <p class="text-center text-muted mb-0">Select a student to show the instrument</p>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <small class="text-muted">Sequence: <strong id="sequenceDisplay">—</strong></small>
+                    <div><button class="btn btn-sm btn-outline-warning" onclick="undoLast()"><i class="fas fa-undo"></i> Undo</button> <button class="btn btn-sm btn-outline-danger" onclick="clearSeqBuilder()"><i class="fas fa-trash"></i> Clear</button></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3"><label class="form-label">Instructions</label><textarea class="form-control" id="assign-instructions" rows="2"></textarea></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-8 mb-3"><label class="form-label">YouTube</label><input type="url" class="form-control" id="assign-youtube"></div>
+                    <div class="col-md-4 mb-3"><label class="form-label">BPM</label><input type="number" class="form-control" id="assign-bpm" placeholder="80" min="40" max="200"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-info" onclick="saveAsTemplate()"><i class="fas fa-book me-1"></i>Save as Template</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-assignment-btn"><i class="fas fa-save me-1"></i>Assign to Student</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Templates Modal -->
+<div class="modal fade" id="templatesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-book me-2"></i>Assignment Templates</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light"><tr><th>Title</th><th>Instrument</th><th>Steps</th><th>BPM</th><th></th></tr></thead>
+                    <tbody>
+                        <% if (templates.length === 0) { %><tr><td colspan="5" class="text-center py-3 text-muted">No templates yet. Create one from the assignment builder.</td></tr><% } %>
+                        <% templates.forEach(t => { %>
+                        <tr>
+                            <td><strong><%= t.title %></strong></td>
+                            <td><%= t.instrument || '-' %></td>
+                            <td><%= t.notes_sequence ? t.notes_sequence.split(',').length : '-' %></td>
+                            <td><%= t.bpm || '-' %></td>
+                            <td>
+                                <button class="btn btn-sm btn-warning edit-template" data-id="<%= t.id %>" data-title="<%= t.title %>" data-notes="<%= t.notes_sequence||'' %>" data-instructions="<%= t.instructions||'' %>" data-youtube="<%= t.youtube_url||'' %>" data-bpm="<%= t.bpm||'' %>" data-instrument="<%= t.instrument||'' %>"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTemplate(<%= t.id %>)"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const ABC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const SOL = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
+const openStrNotes = [4,11,7,2,9,4];
+const strNames = ['e','B','G','D','A','E'];
+let sequence = [];
+let currentInstrument = '';
+let notationMode = 'abc';
+
+function getNoteName(idx) { return notationMode === 'solfege' ? SOL[idx] : ABC[idx]; }
+function getNoteIdx(s, f) { return (openStrNotes[s] + f) % 12; }
+
+function rebuildInstrument() {
+    notationMode = document.getElementById('notation-mode').value;
+    currentInstrument = document.getElementById('instrument-select').value;
+    buildInstrumentUI();
+}
+
+document.getElementById('assign-student').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    if (opt.getAttribute('data-level')) document.getElementById('assign-level').value = opt.getAttribute('data-level');
+    const inst = (opt.getAttribute('data-instrument') || '').toLowerCase();
+    // Auto-select instrument — handle English, Arabic, variations
+    const instSelect = document.getElementById('instrument-select');
+    if (inst.includes('guitar') || inst.includes('جيتار') || inst.includes('guit')) instSelect.value = 'guitar';
+    else if (inst.includes('oud') || inst.includes('عود')) instSelect.value = 'oud';
+    else if (inst.includes('piano') || inst.includes('بيانو') || inst.includes('keyboard')) instSelect.value = 'piano';
+    else if (inst.includes('violin') || inst.includes('كمان') || inst.includes('viol')) instSelect.value = 'violin';
+    else if (inst.includes('drum') || inst.includes('درام') || inst.includes('daraboka') || inst.includes('دربوكة')) instSelect.value = 'drums';
+    else if (inst.includes('vocal') || inst.includes('غناء') || inst.includes('voice') || inst.includes('sing')) instSelect.value = 'vocals';
+    else instSelect.value = 'other';
+    currentInstrument = instSelect.value;
+    sequence = [];
+    buildInstrumentUI();
+});
+
+function buildInstrumentUI() {
+    const container = document.getElementById('instrumentBuilder');
+    if (!currentInstrument) { container.innerHTML = '<p class="text-center text-muted mb-0">Select instrument above</p>'; return; }
+    if (currentInstrument === 'guitar' || currentInstrument === 'oud') {
+        buildFretboard(container);
+    } else if (currentInstrument === 'violin') {
+        buildViolin(container);
+    } else if (currentInstrument === 'piano') {
+        buildPiano(container);
+    } else {
+        buildNotePalette(container);
+    }
+    updateSeqDisplay();
+}
+
+// ========== GUITAR/OUD FRETBOARD ==========
+function buildFretboard(container) {
+    const frets = currentInstrument.includes('oud') ? 10 : 12;
+    let html = '<table style="border-collapse:collapse;width:100%;min-width:550px;">';
+    html += '<tr><td style="width:24px;"></td>';
+    for (let f = 0; f <= frets; f++) html += `<td style="text-align:center;font-size:0.6rem;color:#666;">${f}</td>`;
+    html += '</tr>';
+    for (let s = 0; s < 6; s++) {
+        html += `<tr><td style="font-weight:700;font-size:0.7rem;color:#999;">${strNames[s]}</td>`;
+        for (let f = 0; f <= frets; f++) {
+            const noteIdx = getNoteIdx(s, f);
+            const name = getNoteName(noteIdx);
+            const inSeq = sequence.filter(x => x.string===s && x.fret===f).length;
+            const bg = inSeq ? '#28a745' : (f===0?'#333':'#2a2a2a');
+            const col = inSeq ? '#fff' : '#888';
+            html += `<td style="border:1px solid #333;padding:0;text-align:center;"><button onclick="addFretNote(${s},${f})" style="width:100%;padding:7px 2px;border:none;background:${bg};color:${col};cursor:pointer;font-size:0.55rem;font-weight:600;">${inSeq?'●'+inSeq:name}</button></td>`;
+        }
+        html += '</tr>';
+    }
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+function addFretNote(s, f) {
+    sequence.push({ type:'fret', string:s, fret:f, noteIdx: getNoteIdx(s,f) });
+    buildInstrumentUI();
+}
+
+// ========== PIANO KEYBOARD ==========
+function buildPiano(container) {
+    let html = '<div style="overflow-x:auto;"><div style="display:flex;gap:1px;min-width:900px;">';
+    // 7 octaves (C1 to B7) - full piano range
+    for (let oct = 1; oct <= 7; oct++) {
+        for (let i = 0; i < 12; i++) {
+            const name = getNoteName(i);
+            const isBlack = [1,3,6,8,10].includes(i);
+            const bg = isBlack ? '#000' : '#fff';
+            const col = isBlack ? '#fff' : '#000';
+            const border = isBlack ? '1px solid #333' : '1px solid #ccc';
+            const w = isBlack ? '20px' : '28px';
+            const h = isBlack ? '50px' : '70px';
+            const inSeq = sequence.filter(x => x.type==='piano' && x.octave===oct && x.noteIdx===i).length;
+            const finalBg = inSeq ? '#28a745' : bg;
+            const finalCol = inSeq ? '#fff' : col;
+            html += `<button onclick="addPianoNote(${oct},${i})" style="width:${w};min-width:${w};height:${h};background:${finalBg};color:${finalCol};border:${border};border-radius:0 0 3px 3px;font-size:0.45rem;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:3px;">${inSeq?'●'+inSeq:(i===0?name+oct:name)}</button>`;
+        }
+    }
+    html += '</div></div>';
+    html += '<div style="text-align:center;margin-top:6px;font-size:0.7rem;color:#666;">← Scroll for all octaves (C1 to B7) →</div>';
+    container.innerHTML = html;
+}
+
+function addPianoNote(oct, noteIdx) {
+    sequence.push({ type:'piano', octave:oct, noteIdx:noteIdx });
+    buildInstrumentUI();
+}
+
+// ========== VIOLIN FINGERBOARD ==========
+const violinStrNames = ['E5','A4','D4','G3'];
+const violinOpenNotes = [4, 9, 2, 7]; // E, A, D, G as indexes
+function buildViolin(container) {
+    const positions = 8; // 0-7
+    let html = '<table style="border-collapse:collapse;width:100%;max-width:500px;margin:0 auto;">';
+    html += '<tr><td style="width:30px;"></td>';
+    for (let p = 0; p <= positions; p++) html += `<td style="text-align:center;font-size:0.65rem;color:#666;">${p}</td>`;
+    html += '</tr>';
+    for (let s = 0; s < 4; s++) {
+        html += `<tr><td style="font-weight:700;font-size:0.7rem;color:#999;">${violinStrNames[s]}</td>`;
+        for (let p = 0; p <= positions; p++) {
+            const noteIdx = (violinOpenNotes[s] + p) % 12;
+            const name = getNoteName(noteIdx);
+            const inSeq = sequence.filter(x => x.string===s && x.fret===p).length;
+            const bg = inSeq ? '#28a745' : (p===0?'#333':'#2a2a2a');
+            const col = inSeq ? '#fff' : '#888';
+            html += `<td style="border:1px solid #333;padding:0;text-align:center;"><button onclick="addFretNote(${s},${p})" style="width:100%;padding:10px 4px;border:none;background:${bg};color:${col};cursor:pointer;font-size:0.65rem;font-weight:600;">${inSeq?'●'+inSeq:name}</button></td>`;
+        }
+        html += '</tr>';
+    }
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+// ========== GENERIC NOTE PALETTE ==========
+function buildNotePalette(container) {
+    let html = '<div style="text-align:center;"><p style="color:#999;font-size:0.8rem;margin-bottom:8px;">Click notes to add to sequence:</p>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">';
+    for (let i = 0; i < 12; i++) {
+        const name = getNoteName(i);
+        const isSharp = [1,3,6,8,10].includes(i);
+        html += `<button onclick="addPaletteNote(${i})" style="padding:10px 14px;border:1px solid ${isSharp?'#555':'#ddd'};background:${isSharp?'#333':'#fff'};color:${isSharp?'#fff':'#000'};border-radius:6px;font-weight:700;font-size:0.85rem;cursor:pointer;">${name}</button>`;
+    }
+    html += '</div></div>';
+    container.innerHTML = html;
+}
+
+function addPaletteNote(noteIdx) {
+    sequence.push({ type:'note', noteIdx:noteIdx });
+    buildInstrumentUI();
+}
+
+// ========== COMMON ==========
+function undoLast() { sequence.pop(); buildInstrumentUI(); }
+function clearSeqBuilder() { sequence = []; buildInstrumentUI(); }
+
+function updateSeqDisplay() {
+    const el = document.getElementById('sequenceDisplay');
+    if (sequence.length === 0) { el.textContent = '—'; return; }
+    el.textContent = sequence.map((s,i) => `${i+1}:${getNoteName(s.noteIdx)}`).join(' → ');
+}
+
+function encodeSequence() {
+    // Format: "type:data,type:data,..."
+    // fret -> f:string:fret  | piano -> p:octave:noteIdx | note -> n:noteIdx
+    return sequence.map(s => {
+        if (s.type === 'fret') return `f:${s.string}:${s.fret}`;
+        if (s.type === 'piano') return `p:${s.octave}:${s.noteIdx}`;
+        return `n:${s.noteIdx}`;
+    }).join(',');
+}
+
+// Save / Update
+document.getElementById('save-assignment-btn').addEventListener('click', function() {
+    const title = document.getElementById('assign-title').value;
+    if (!title) return alert('Add a title');
+    
+    const data = {
+        title,
+        notes_sequence: encodeSequence() || null,
+        instructions: document.getElementById('assign-instructions').value,
+        youtube_url: document.getElementById('assign-youtube').value,
+        bpm: document.getElementById('assign-bpm').value
+    };
+
+    // If editing
+    if (editingId && editingType === 'assignment') {
+        fetch(`/assignments/${editingId}/update`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) })
+            .then(r=>r.json()).then(d => { if(d.success){alert('Updated!');location.reload();}else alert(d.error); });
+        return;
+    }
+    if (editingId && editingType === 'template') {
+        data.instrument = currentInstrument;
+        fetch(`/assignments/template/${editingId}/update`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) })
+            .then(r=>r.json()).then(d => { if(d.success){alert('Template updated!');location.reload();}else alert(d.error); });
+        return;
+    }
+
+    // New assignment
+    const student_id = document.getElementById('assign-student').value;
+    if (!student_id) return alert('Select a student');
+    data.student_id = student_id;
+    data.level = document.getElementById('assign-level').value;
+    data.session_number = document.getElementById('assign-session').value;
+    data.instrument = currentInstrument;
+    fetch('/assignments/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) })
+        .then(r=>r.json()).then(d => { if(d.success){alert('Assigned!');location.reload();}else alert(d.error); });
+});
+
+// Delete
+document.querySelectorAll('.delete-assignment').forEach(btn => {
+    btn.addEventListener('click', function() {
+        if (!confirm('Delete?')) return;
+        fetch(`/assignments/${this.dataset.id}/delete`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();});
+    });
+});
+
+// Load template into builder
+function loadTemplate(id) {
+    if (!id) return;
+    fetch(`/assignments/template/${id}`).then(r=>r.json()).then(d => {
+        if (!d.success) return;
+        const t = d.template;
+        document.getElementById('assign-title').value = t.title || '';
+        document.getElementById('assign-instructions').value = t.instructions || '';
+        document.getElementById('assign-youtube').value = t.youtube_url || '';
+        document.getElementById('assign-bpm').value = t.bpm || '';
+        if (t.instrument) {
+            document.getElementById('instrument-select').value = t.instrument;
+            currentInstrument = t.instrument;
+        }
+        // Parse the sequence
+        sequence = [];
+        if (t.notes_sequence) {
+            t.notes_sequence.split(',').filter(n=>n).forEach(item => {
+                const p = item.split(':');
+                if (p[0]==='f') sequence.push({type:'fret',string:+p[1],fret:+p[2],noteIdx:(openStrNotes[+p[1]]+ +p[2])%12});
+                else if (p[0]==='p') sequence.push({type:'piano',octave:+p[1],noteIdx:+p[2]});
+                else if (p[0]==='n') sequence.push({type:'note',noteIdx:+p[1]});
+                else if (p.length===2 && !isNaN(p[0])) sequence.push({type:'fret',string:+p[0],fret:+p[1],noteIdx:(openStrNotes[+p[0]]+ +p[1])%12});
+            });
+        }
+        buildInstrumentUI();
+    });
+}
+
+// Save current builder state as a reusable template
+function saveAsTemplate() {
+    const title = document.getElementById('assign-title').value;
+    if (!title) return alert('Add a title first');
+    fetch('/assignments/template', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+            title,
+            instrument: currentInstrument,
+            notes_sequence: encodeSequence(),
+            instructions: document.getElementById('assign-instructions').value,
+            youtube_url: document.getElementById('assign-youtube').value,
+            bpm: document.getElementById('assign-bpm').value
+        })
+    }).then(r=>r.json()).then(d => {
+        if (d.success) { alert('Template saved! You can now reuse it.'); location.reload(); }
+        else alert(d.error);
+    });
+}
+
+function deleteTemplate(id) {
+    if (!confirm('Delete this template?')) return;
+    fetch(`/assignments/template/${id}/delete`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();});
+}
+
+let editingId = null;
+let editingType = null; // 'assignment' or 'template'
+
+function loadSequenceFromString(str) {
+    sequence = [];
+    if (!str) return;
+    str.split(',').filter(n=>n).forEach(item => {
+        const p = item.split(':');
+        if (p[0]==='f') sequence.push({type:'fret',string:+p[1],fret:+p[2],noteIdx:(openStrNotes[+p[1]]+ +p[2])%12});
+        else if (p[0]==='p') sequence.push({type:'piano',octave:+p[1],noteIdx:+p[2]});
+        else if (p[0]==='n') sequence.push({type:'note',noteIdx:+p[1]});
+        else if (p.length===2 && !isNaN(p[0])) sequence.push({type:'fret',string:+p[0],fret:+p[1],noteIdx:(openStrNotes[+p[0]]+ +p[1])%12});
+    });
+}
+
+// Edit assignment
+document.querySelectorAll('.edit-assignment').forEach(btn => {
+    btn.addEventListener('click', function() {
+        editingId = this.dataset.id;
+        editingType = 'assignment';
+        document.getElementById('assign-title').value = this.dataset.title;
+        document.getElementById('assign-instructions').value = this.dataset.instructions;
+        document.getElementById('assign-youtube').value = this.dataset.youtube;
+        document.getElementById('assign-bpm').value = this.dataset.bpm;
+        if (this.dataset.instrument) {
+            document.getElementById('instrument-select').value = this.dataset.instrument;
+            currentInstrument = this.dataset.instrument;
+        }
+        loadSequenceFromString(this.dataset.notes);
+        buildInstrumentUI();
+        // Change save button text
+        document.getElementById('save-assignment-btn').innerHTML = '<i class="fas fa-save me-1"></i>Update Assignment';
+        new bootstrap.Modal(document.getElementById('addAssignmentModal')).show();
+    });
+});
+
+// Edit template
+document.querySelectorAll('.edit-template').forEach(btn => {
+    btn.addEventListener('click', function() {
+        editingId = this.dataset.id;
+        editingType = 'template';
+        document.getElementById('assign-title').value = this.dataset.title;
+        document.getElementById('assign-instructions').value = this.dataset.instructions;
+        document.getElementById('assign-youtube').value = this.dataset.youtube;
+        document.getElementById('assign-bpm').value = this.dataset.bpm;
+        if (this.dataset.instrument) {
+            document.getElementById('instrument-select').value = this.dataset.instrument;
+            currentInstrument = this.dataset.instrument;
+        }
+        loadSequenceFromString(this.dataset.notes);
+        buildInstrumentUI();
+        document.getElementById('save-assignment-btn').innerHTML = '<i class="fas fa-save me-1"></i>Update Template';
+        // Close templates modal, open assignment modal
+        bootstrap.Modal.getInstance(document.getElementById('templatesModal')).hide();
+        setTimeout(() => new bootstrap.Modal(document.getElementById('addAssignmentModal')).show(), 300);
+    });
+});
+</script>

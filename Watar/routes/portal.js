@@ -86,12 +86,18 @@ module.exports = (app, db) => {
                             ORDER BY created_at DESC`, [studentId], (err, feedback) => {
                         if (err) feedback = [];
 
-                        res.render('portal-dashboard', {
-                            student,
-                            attendance: attendance || [],
-                            schedule: schedule || [],
-                            evaluations: evaluations || [],
-                            feedback: feedback || []
+                        // Get assignments
+                        db.all(`SELECT * FROM assignments WHERE student_id = ? ORDER BY CAST(REPLACE(level, 'Month ', '') AS INTEGER) DESC, session_number DESC`, [studentId], (err, assignments) => {
+                            if (err) assignments = [];
+
+                            res.render('portal-dashboard', {
+                                student,
+                                attendance: attendance || [],
+                                schedule: schedule || [],
+                                evaluations: evaluations || [],
+                                feedback: feedback || [],
+                                assignments: assignments || []
+                            });
                         });
                     });
                 });

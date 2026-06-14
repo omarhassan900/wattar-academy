@@ -150,6 +150,37 @@
         </div>
     </div>
 
+    <!-- Assignments -->
+    <div class="section-card">
+        <div class="section-header"><i class="fas fa-guitar"></i> My Assignments</div>
+        <div class="section-body">
+            <% if (assignments.length > 0) { %>
+                <% assignments.forEach(a => { %>
+                <div style="padding:16px 0;border-bottom:1px solid #eee;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <strong style="font-size:1rem;"><%= a.title %></strong>
+                            <div style="font-size:0.75rem;color:#888;margin-top:2px;"><%= a.level %> — Session <%= a.session_number %></div>
+                        </div>
+                        <% if (a.bpm) { %><span style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;"><%= a.bpm %> BPM</span><% } %>
+                    </div>
+                    <% if (a.notes_sequence) { %>
+                    <div class="fretboard-view" data-notes="<%= a.notes_sequence %>" data-bpm="<%= a.bpm || 60 %>" style="margin-top:10px;overflow-x:auto;background:#f9f9f9;border-radius:8px;padding:12px;"></div>
+                    <% } %>
+                    <% if (a.instructions) { %>
+                    <div style="margin-top:10px;color:#555;font-size:0.85rem;"><i class="fas fa-info-circle me-1"></i><%= a.instructions %></div>
+                    <% } %>
+                    <% if (a.youtube_url) { %>
+                    <a href="<%= a.youtube_url %>" target="_blank" style="display:inline-block;margin-top:8px;color:#dc3545;font-size:0.85rem;font-weight:600;text-decoration:none;"><i class="fab fa-youtube me-1"></i>Watch Reference</a>
+                    <% } %>
+                </div>
+                <% }); %>
+            <% } else { %>
+            <div class="empty-state">No assignments yet</div>
+            <% } %>
+        </div>
+    </div>
+
     <!-- Feedback -->
     <div class="section-card">
         <div class="section-header"><i class="fas fa-comment-dots"></i> My Feedback</div>
@@ -173,5 +204,116 @@
     </div>
 </div>
 
+<script>
+const ABC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const SOL = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
+const openStrNotes = [4,11,7,2,9,4];
+const strNames = ['e','B','G','D','A','E'];
+const openMidi = [64,59,55,50,45,40];
+let playIntervals = [];
+let audioCtx = null;
+
+function getNoteName(idx) { return ABC[idx]; }
+function getFreq(midi) { return 440 * Math.pow(2, (midi-69)/12); }
+function getBpm(cid) { const el = document.getElementById('bpm-'+cid); return el ? parseInt(el.value) : 60; }
+function playTone(freq, dur) {
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='triangle'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.4,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+dur*0.9);
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);
+}
+
+function parseSteps(notesStr) {
+    return notesStr.split(',').filter(n=>n).map(item => {
+        const p = item.split(':');
+        if (p[0]==='f') return { type:'fret', string:+p[1], fret:+p[2], noteIdx:(openStrNotes[+p[1]]+ +p[2])%12, midi:openMidi[+p[1]]+ +p[2] };
+        if (p[0]==='p') return { type:'piano', octave:+p[1], noteIdx:+p[2], midi:(+p[1]+1)*12+ +p[2] };
+        if (p[0]==='n') return { type:'note', noteIdx:+p[1], midi:60+ +p[1] };
+        // Legacy format: "string:fret"
+        if (p.length===2 && !isNaN(p[0]) && !isNaN(p[1])) return { type:'fret', string:+p[0], fret:+p[1], noteIdx:(openStrNotes[+p[0]]+ +p[1])%12, midi:openMidi[+p[0]]+ +p[1] };
+        return null;
+    }).filter(x=>x);
+}
+
+function renderFretboardView(container, notesStr, bpm) {
+    const steps = parseSteps(notesStr);
+    if (steps.length===0) { container.innerHTML='<p style="color:#999;text-align:center;font-size:0.8rem;">No data</p>'; return; }
+    const cid = 'fb_'+Math.random().toString(36).substr(2,6);
+    container.id = cid;
+    const hasFrets = steps.some(s=>s.type==='fret');
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;"><button onclick="playSeq('${cid}',getBpm('${cid}'))" class="play-${cid}" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:0.8rem;cursor:pointer;"><i class="fas fa-play me-1"></i>Play</button><button onclick="stopSeq('${cid}')" class="stop-${cid}" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:0.8rem;cursor:pointer;display:none;"><i class="fas fa-stop me-1"></i>Stop</button><div style="display:flex;align-items:center;gap:6px;"><label style="font-size:0.75rem;color:#666;">BPM:</label><input type="range" min="30" max="200" value="${bpm}" id="bpm-${cid}" style="width:80px;" oninput="document.getElementById('bpmVal-${cid}').textContent=this.value"><span id="bpmVal-${cid}" style="font-size:0.8rem;font-weight:700;min-width:24px;">${bpm}</span></div><span class="disp-${cid}" style="font-size:0.85rem;font-weight:600;color:#666;">—</span></div>`;
+
+    if (hasFrets) {
+        // Render fretboard
+        const frets=12;
+        html += '<table style="border-collapse:collapse;width:100%;min-width:500px;">';
+        html += '<tr><td style="width:20px;"></td>';
+        for(let f=0;f<=frets;f++) html+=`<td style="text-align:center;color:#bbb;padding:2px;font-size:0.6rem;">${f}</td>`;
+        html += '</tr>';
+        for(let s=0;s<6;s++){
+            html+=`<tr><td style="font-weight:700;color:#999;font-size:0.6rem;">${strNames[s]}</td>`;
+            for(let f=0;f<=frets;f++){
+                const here=[];steps.forEach((st,i)=>{if(st.type==='fret'&&st.string===s&&st.fret===f)here.push(i);});
+                const has=here.length>0;const bg=has?'#28a745':'#f5f5f5';const col=has?'#fff':'#ddd';
+                const cnt=has?`<b>${here.map(i=>i+1).join(',')}</b>`:'.';
+                html+=`<td id="${cid}_${s}_${f}" style="border:1px solid #eee;text-align:center;padding:4px 2px;background:${bg};color:${col};font-size:0.6rem;border-radius:${has?'4px':'0'};transition:all 0.15s;">${cnt}</td>`;
+            }
+            html+='</tr>';
+        }
+        html += '</table>';
+    }
+
+    // Step badges
+    html += '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">';
+    steps.forEach((st,i)=>{
+        const n=getNoteName(st.noteIdx);
+        html+=`<span id="${cid}_s${i}" style="background:#28a745;color:#fff;padding:3px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;transition:all 0.15s;">${i+1}.${n}</span>`;
+        if(i<steps.length-1)html+='<span style="color:#ccc;">→</span>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+    container.dataset.steps = JSON.stringify(steps);
+}
+
+function playSeq(cid, bpm) {
+    stopSeq(cid);
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const c=document.getElementById(cid);const steps=JSON.parse(c.dataset.steps);
+    const ms=60000/bpm;let cur=0;
+    document.querySelector(`.play-${cid}`).style.display='none';
+    document.querySelector(`.stop-${cid}`).style.display='';
+    function tick(){
+        // Reset
+        steps.forEach((st,i)=>{
+            if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#28a745';cell.style.transform='';}}
+            const b=document.getElementById(`${cid}_s${i}`);if(b){b.style.background='#28a745';b.style.color='#fff';b.style.transform='';}
+        });
+        if(cur>=steps.length)cur=0;
+        const st=steps[cur];
+        if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#ffd700';cell.style.transform='scale(1.3)';}}
+        const b=document.getElementById(`${cid}_s${cur}`);if(b){b.style.background='#ffd700';b.style.color='#000';b.style.transform='scale(1.2)';}
+        document.querySelector(`.disp-${cid}`).textContent=`${cur+1}/${steps.length} — ${getNoteName(st.noteIdx)}`;
+        playTone(getFreq(st.midi), ms/1000*0.8);
+        cur++;
+    }
+    tick();
+    const id=setInterval(tick,ms);playIntervals.push({id,cid});
+}
+
+function stopSeq(cid){
+    playIntervals=playIntervals.filter(x=>{if(x.cid===cid){clearInterval(x.id);return false;}return true;});
+    const p=document.querySelector(`.play-${cid}`),s=document.querySelector(`.stop-${cid}`);
+    if(p)p.style.display='';if(s)s.style.display='none';
+    const d=document.querySelector(`.disp-${cid}`);if(d)d.textContent='—';
+    const c=document.getElementById(cid);if(c&&c.dataset.steps){const steps=JSON.parse(c.dataset.steps);steps.forEach((st,i)=>{if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#28a745';cell.style.transform='';}}const b=document.getElementById(`${cid}_s${i}`);if(b){b.style.background='#28a745';b.style.color='#fff';b.style.transform='';}});}
+}
+
+document.querySelectorAll('.fretboard-view').forEach(el=>{
+    const notes=el.getAttribute('data-notes'),bpm=parseInt(el.getAttribute('data-bpm'))||60;
+    if(notes)renderFretboardView(el,notes,bpm);
+});
+</script>
 </body>
 </html>

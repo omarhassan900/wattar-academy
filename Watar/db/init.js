@@ -137,6 +137,50 @@ db.run(`CREATE TABLE IF NOT EXISTS student_accounts (
     else console.log('✓ student_accounts table ready');
 });
 
+// Assignments table
+db.run(`CREATE TABLE IF NOT EXISTS assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    level TEXT NOT NULL,
+    session_number INTEGER NOT NULL,
+    template_id INTEGER,
+    title TEXT NOT NULL,
+    notes_sequence TEXT,
+    instructions TEXT,
+    youtube_url TEXT,
+    bpm INTEGER,
+    instrument TEXT,
+    assigned_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id),
+    FOREIGN KEY (template_id) REFERENCES assignment_templates(id),
+    FOREIGN KEY (assigned_by) REFERENCES users(id)
+)`, (err) => {
+    if (err && !err.message.includes('already exists')) console.error('Error creating assignments table:', err);
+    else {
+        console.log('✓ assignments table ready');
+        db.run(`ALTER TABLE assignments ADD COLUMN template_id INTEGER`, () => {});
+        db.run(`ALTER TABLE assignments ADD COLUMN instrument TEXT`, () => {});
+    }
+});
+
+// Assignment templates (reusable melodies/exercises)
+db.run(`CREATE TABLE IF NOT EXISTS assignment_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    instrument TEXT,
+    notes_sequence TEXT,
+    instructions TEXT,
+    youtube_url TEXT,
+    bpm INTEGER,
+    created_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+)`, (err) => {
+    if (err && !err.message.includes('already exists')) console.error('Error creating assignment_templates table:', err);
+    else console.log('✓ assignment_templates table ready');
+});
+
 // Tickets table for event ticket sales
 db.run(`CREATE TABLE IF NOT EXISTS tickets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

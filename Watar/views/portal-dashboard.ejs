@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Portal — Wattar Academy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; color: #000; font-family: 'Inter', sans-serif; min-height: 100vh; }
+        .portal-nav { background: #000; color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .portal-nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: #fff; }
+        .portal-nav .logo img { height: 32px; border-radius: 6px; filter: invert(1); }
+        .portal-nav a { color: #ccc; text-decoration: none; font-size: 0.85rem; }
+        .portal-nav a:hover { color: #fff; }
+        .container-portal { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
+        .welcome-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .welcome-card h2 { font-weight: 700; margin: 0 0 8px; font-size: 1.4rem; }
+        .welcome-card .meta { color: #666; font-size: 0.9rem; }
+        .section-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+        .section-header { padding: 16px 20px; border-bottom: 1px solid #eee; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+        .section-body { padding: 16px 20px; }
+        .session-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .session-item { text-align: center; padding: 12px 8px; border-radius: 8px; background: #f9f9f9; border: 1px solid #eee; }
+        .session-item .num { font-weight: 700; font-size: 0.85rem; color: #666; margin-bottom: 4px; }
+        .session-item .status { font-size: 0.75rem; font-weight: 600; }
+        .status-present { color: #28a745; }
+        .status-absent { color: #dc3545; }
+        .status-late { color: #f39c12; }
+        .status-excused { color: #17a2b8; }
+        .status-none { color: #ccc; }
+        .schedule-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .schedule-item:last-child { border-bottom: none; }
+        .schedule-day { font-weight: 700; }
+        .schedule-time { color: #666; font-size: 0.9rem; }
+        .schedule-trainer { color: #999; font-size: 0.8rem; }
+        .eval-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+        .eval-item:last-child { border-bottom: none; }
+        .eval-level { font-weight: 700; font-size: 0.9rem; }
+        .eval-ratings { display: flex; gap: 16px; margin-top: 6px; }
+        .eval-rating { text-align: center; }
+        .eval-rating .score { font-size: 1.2rem; font-weight: 700; }
+        .eval-rating .label { font-size: 0.65rem; color: #999; }
+        .eval-notes { color: #666; font-size: 0.85rem; margin-top: 6px; font-style: italic; }
+        .empty-state { text-align: center; padding: 20px; color: #ccc; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<nav class="portal-nav">
+    <div class="logo">
+        <img src="/images/logo.jpg" alt="Wattar">
+        <span>Student Portal</span>
+    </div>
+    <a href="/portal/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+</nav>
+
+<div class="container-portal">
+    <!-- Welcome -->
+    <div class="welcome-card">
+        <h2>Welcome, <%= student.name %></h2>
+        <div class="meta">
+            <span><i class="fas fa-music me-1"></i><%= student.instrument || 'Not set' %></span>
+            <span class="ms-3"><i class="fas fa-layer-group me-1"></i><%= student.current_level || 'Not set' %></span>
+        </div>
+    </div>
+
+    <!-- Attendance -->
+    <div class="section-card">
+        <div class="section-header"><i class="fas fa-calendar-check"></i> Attendance History</div>
+        <div class="section-body">
+            <% if (attendance.length > 0) { %>
+                <%
+                    // Group by level
+                    const levels = {};
+                    attendance.forEach(a => {
+                        if (!levels[a.level]) levels[a.level] = [];
+                        levels[a.level].push(a);
+                    });
+                    const levelKeys = Object.keys(levels).sort((a,b) => parseInt(a.replace('Month ','')) - parseInt(b.replace('Month ','')));
+                %>
+                <% levelKeys.reverse().forEach(level => { %>
+                <div style="margin-bottom:16px;">
+                    <div style="font-weight:700;font-size:0.85rem;margin-bottom:8px;color:#333;">
+                        <%= level %> <% if (level === student.current_level) { %><span style="color:#28a745;font-size:0.7rem;">(current)</span><% } %>
+                    </div>
+                    <div class="session-grid">
+                        <% levels[level].forEach(a => { %>
+                        <div class="session-item">
+                            <div class="num">S<%= a.session_number %></div>
+                            <div class="status status-<%= a.status || 'none' %>">
+                                <% if (a.status === 'present') { %>✓
+                                <% } else if (a.status === 'absent') { %>✗
+                                <% } else if (a.status === 'late') { %>⏰
+                                <% } else if (a.status === 'excused') { %>✓
+                                <% } else { %>—
+                                <% } %>
+                            </div>
+                            <% if (a.date) { %><div style="font-size:0.6rem;color:#999;margin-top:2px;"><%= new Date(a.date).toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) %></div><% } %>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% }); %>
+            <% } else { %>
+            <div class="empty-state">No attendance records yet</div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="section-card">
+        <div class="section-header"><i class="fas fa-calendar-week"></i> My Schedule</div>
+        <div class="section-body">
+            <% if (schedule.length > 0) { %>
+                <% schedule.forEach(s => { %>
+                <div class="schedule-item">
+                    <div>
+                        <div class="schedule-day"><%= s.day_of_week %></div>
+                        <div class="schedule-trainer"><i class="fas fa-user-tie me-1"></i><%= s.trainer_name || 'TBD' %></div>
+                    </div>
+                    <div class="schedule-time"><%= s.time_slot %></div>
+                </div>
+                <% }); %>
+            <% } else { %>
+            <div class="empty-state">No schedule assigned yet</div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Evaluations -->
+    <div class="section-card">
+        <div class="section-header"><i class="fas fa-star"></i> Evaluations</div>
+        <div class="section-body">
+            <% if (evaluations.length > 0) { %>
+                <% evaluations.forEach(e => { %>
+                <div class="eval-item">
+                    <div class="eval-level"><%= e.level %> <span style="color:#666;font-weight:400;font-size:0.8rem;">by <%= e.trainer_name || 'Trainer' %></span></div>
+                    <div class="eval-ratings">
+                        <div class="eval-rating"><div class="score"><%= e.attitude_rating || '-' %></div><div class="label">Attitude</div></div>
+                        <div class="eval-rating"><div class="score"><%= e.commitment_rating || '-' %></div><div class="label">Commitment</div></div>
+                        <div class="eval-rating"><div class="score"><%= e.development_rating || '-' %></div><div class="label">Development</div></div>
+                    </div>
+                    <% if (e.notes) { %><div class="eval-notes">"<%= e.notes %>"</div><% } %>
+                </div>
+                <% }); %>
+            <% } else { %>
+            <div class="empty-state">No evaluations yet</div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div class="section-card">
+        <div class="section-header"><i class="fas fa-comment-dots"></i> My Feedback</div>
+        <div class="section-body">
+            <% if (feedback.length > 0) { %>
+                <% feedback.forEach(f => { %>
+                <div class="eval-item">
+                    <div class="eval-level"><%= f.level %></div>
+                    <div class="eval-ratings">
+                        <div class="eval-rating"><div class="score"><%= f.trainer_rating || '-' %></div><div class="label">Trainer</div></div>
+                        <div class="eval-rating"><div class="score"><%= f.development_rating || '-' %></div><div class="label">Development</div></div>
+                        <div class="eval-rating"><div class="score"><%= f.experience_rating || '-' %></div><div class="label">Experience</div></div>
+                    </div>
+                    <% if (f.notes) { %><div class="eval-notes">"<%= f.notes %>"</div><% } %>
+                </div>
+                <% }); %>
+            <% } else { %>
+            <div class="empty-state">No feedback submitted yet</div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

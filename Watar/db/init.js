@@ -123,6 +123,20 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_cash_category ON cash_transactions(catego
 db.run(`ALTER TABLE cash_transactions ADD COLUMN student_id INTEGER`, () => {});
 db.run(`ALTER TABLE cash_transactions ADD COLUMN student_level TEXT`, () => {});
 
+// Student portal accounts
+db.run(`CREATE TABLE IF NOT EXISTS student_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL UNIQUE,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    last_login DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id)
+)`, (err) => {
+    if (err && !err.message.includes('already exists')) console.error('Error creating student_accounts table:', err);
+    else console.log('✓ student_accounts table ready');
+});
+
 // Tickets table for event ticket sales
 db.run(`CREATE TABLE IF NOT EXISTS tickets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

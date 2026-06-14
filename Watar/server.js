@@ -52,6 +52,7 @@ require('./routes/users')(app, db);
 require('./routes/admin')(app, db);
 require('./routes/meta-webhook')(app, db);
 require('./routes/tickets')(app, db);
+require('./routes/portal')(app, db);
 
 // Start server
 app.listen(PORT, () => {

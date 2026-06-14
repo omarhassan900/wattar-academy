@@ -136,6 +136,12 @@
                     </a>
                     <% } %>
 
+                    <% if (typeof user !== 'undefined' && ['trainer', 'manager'].includes(user.role)) { %>
+                    <a class="nav-link <%= currentUrl == '/assignments' ? 'active' : '' %>" href="/assignments">
+                        <i class="fas fa-guitar me-2"></i>Assignments
+                    </a>
+                    <% } %>
+
                     <% if (typeof user !== 'undefined' && user.role !== 'sales' && user.role !== 'trainer') { %>
                     <a class="nav-link <%= currentUrl == '/students' ? 'active' : '' %>" href="/students">
                         <i class="fas fa-users me-2"></i>Students
@@ -258,6 +264,10 @@
 
                         <% if (typeof user !== 'undefined' && ['trainer', 'manager', 'reception', 'operations_manager'].includes(user.role)) { %>
                         <a class="nav-link text-white <%= currentUrl == '/evaluations' ? 'active' : '' %>" href="/evaluations">Students Evaluation</a>
+                        <% } %>
+
+                        <% if (typeof user !== 'undefined' && ['trainer', 'manager'].includes(user.role)) { %>
+                        <a class="nav-link text-white <%= currentUrl == '/assignments' ? 'active' : '' %>" href="/assignments">Assignments</a>
                         <% } %>
 
                         <% if (typeof user !== 'undefined' && user.role !== 'sales' && user.role !== 'trainer') { %>

@@ -47,6 +47,11 @@ module.exports = (app, db) => {
         res.redirect('/portal/login');
     });
 
+    // Settings page
+    app.get('/portal/settings', requireStudent, (req, res) => {
+        res.render('portal-settings', { student: req.session.student });
+    });
+
     // Change password
     app.post('/portal/change-password', requireStudent, (req, res) => {
         const { current_password, new_password } = req.body;

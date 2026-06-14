@@ -52,7 +52,10 @@
         <img src="/images/logo.jpg" alt="Wattar">
         <span>Student Portal</span>
     </div>
-    <a href="/portal/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+    <div>
+        <a href="/portal/settings" style="color:#ccc;text-decoration:none;font-size:0.85rem;margin-right:12px;"><i class="fas fa-cog me-1"></i>Settings</a>
+        <a href="/portal/logout" style="color:#ccc;text-decoration:none;font-size:0.85rem;"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+    </div>
 </nav>
 
 <div class="container-portal">
@@ -155,24 +158,29 @@
         <div class="section-header"><i class="fas fa-guitar"></i> My Assignments</div>
         <div class="section-body">
             <% if (assignments.length > 0) { %>
-                <% assignments.forEach(a => { %>
-                <div style="padding:16px 0;border-bottom:1px solid #eee;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                <% assignments.forEach((a, idx) => { %>
+                <div style="border-bottom:1px solid #eee;">
+                    <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.toggle-icon').classList.toggle('fa-chevron-down');this.querySelector('.toggle-icon').classList.toggle('fa-chevron-right');" style="padding:14px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
                         <div>
                             <strong style="font-size:1rem;"><%= a.title %></strong>
                             <div style="font-size:0.75rem;color:#888;margin-top:2px;"><%= a.level %> — Session <%= a.session_number %></div>
                         </div>
-                        <% if (a.bpm) { %><span style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;"><%= a.bpm %> BPM</span><% } %>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <% if (a.bpm) { %><span style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;"><%= a.bpm %> BPM</span><% } %>
+                            <i class="fas fa-chevron-right toggle-icon" style="color:#ccc;"></i>
+                        </div>
                     </div>
-                    <% if (a.notes_sequence) { %>
-                    <div class="fretboard-view" data-notes="<%= a.notes_sequence %>" data-bpm="<%= a.bpm || 60 %>" style="margin-top:10px;overflow-x:auto;background:#f9f9f9;border-radius:8px;padding:12px;"></div>
-                    <% } %>
-                    <% if (a.instructions) { %>
-                    <div style="margin-top:10px;color:#555;font-size:0.85rem;"><i class="fas fa-info-circle me-1"></i><%= a.instructions %></div>
-                    <% } %>
-                    <% if (a.youtube_url) { %>
-                    <a href="<%= a.youtube_url %>" target="_blank" style="display:inline-block;margin-top:8px;color:#dc3545;font-size:0.85rem;font-weight:600;text-decoration:none;"><i class="fab fa-youtube me-1"></i>Watch Reference</a>
-                    <% } %>
+                    <div style="display:none;padding-bottom:16px;">
+                        <% if (a.notes_sequence) { %>
+                        <div class="fretboard-view" data-notes="<%= a.notes_sequence %>" data-bpm="<%= a.bpm || 60 %>" style="overflow-x:auto;background:#f9f9f9;border-radius:8px;padding:12px;"></div>
+                        <% } %>
+                        <% if (a.instructions) { %>
+                        <div style="margin-top:10px;color:#555;font-size:0.85rem;"><i class="fas fa-info-circle me-1"></i><%= a.instructions %></div>
+                        <% } %>
+                        <% if (a.youtube_url) { %>
+                        <a href="<%= a.youtube_url %>" target="_blank" style="display:inline-block;margin-top:8px;color:#dc3545;font-size:0.85rem;font-weight:600;text-decoration:none;"><i class="fab fa-youtube me-1"></i>Watch Reference</a>
+                        <% } %>
+                    </div>
                 </div>
                 <% }); %>
             <% } else { %>
@@ -203,40 +211,9 @@
         </div>
     </div>
     <!-- Change Password -->
-    <div class="section-card">
-        <div class="section-header"><i class="fas fa-lock"></i> Change Password</div>
-        <div class="section-body">
-            <div style="max-width:300px;">
-                <div style="margin-bottom:12px;">
-                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Current Password</label>
-                    <input type="password" id="current-pw" style="width:100%;padding:8px 12px;border:1px solid #e5e5e5;border-radius:6px;">
-                </div>
-                <div style="margin-bottom:12px;">
-                    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">New Password</label>
-                    <input type="password" id="new-pw" style="width:100%;padding:8px 12px;border:1px solid #e5e5e5;border-radius:6px;">
-                </div>
-                <button onclick="changePassword()" style="background:#000;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;">Update Password</button>
-                <span id="pw-msg" style="margin-left:10px;font-size:0.85rem;"></span>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
-function changePassword() {
-    const current = document.getElementById('current-pw').value;
-    const newPw = document.getElementById('new-pw').value;
-    if (!current || !newPw) return alert('Fill in both fields');
-    fetch('/portal/change-password', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ current_password: current, new_password: newPw })
-    }).then(r=>r.json()).then(d => {
-        const msg = document.getElementById('pw-msg');
-        if (d.success) { msg.textContent = '✓ Updated!'; msg.style.color='#28a745'; document.getElementById('current-pw').value=''; document.getElementById('new-pw').value=''; }
-        else { msg.textContent = d.error; msg.style.color='#dc3545'; }
-    });
-}
-
 const ABC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const SOL = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
 const openStrNotes = [4,11,7,2,9,4];

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — Wattar Academy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; color: #000; font-family: 'Inter', sans-serif; min-height: 100vh; }
+        .portal-nav { background: #000; color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .portal-nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: #fff; }
+        .portal-nav .logo img { height: 32px; border-radius: 6px; filter: invert(1); }
+        .portal-nav a { color: #ccc; text-decoration: none; font-size: 0.85rem; }
+        .portal-nav a:hover { color: #fff; }
+        .container-portal { max-width: 500px; margin: 0 auto; padding: 24px 16px; }
+        .section-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; }
+        .form-control { border-radius: 8px; padding: 10px 14px; }
+        .btn-save { background: #000; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; }
+        .btn-save:hover { background: #222; color: #fff; }
+    </style>
+</head>
+<body>
+<nav class="portal-nav">
+    <div class="logo"><img src="/images/logo.jpg" alt="Wattar"><span>Settings</span></div>
+    <a href="/portal"><i class="fas fa-arrow-left me-1"></i>Back to Portal</a>
+</nav>
+<div class="container-portal">
+    <div class="section-card">
+        <h4 style="margin-bottom:20px;"><i class="fas fa-lock me-2"></i>Change Password</h4>
+        <div class="mb-3">
+            <label class="form-label" style="font-weight:600;">Current Password</label>
+            <input type="password" class="form-control" id="current-pw">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" style="font-weight:600;">New Password</label>
+            <input type="password" class="form-control" id="new-pw">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" style="font-weight:600;">Confirm New Password</label>
+            <input type="password" class="form-control" id="confirm-pw">
+        </div>
+        <button class="btn-save" onclick="changePassword()">Update Password</button>
+        <span id="pw-msg" style="margin-left:12px;font-size:0.9rem;"></span>
+    </div>
+</div>
+<script>
+function changePassword() {
+    const current = document.getElementById('current-pw').value;
+    const newPw = document.getElementById('new-pw').value;
+    const confirm = document.getElementById('confirm-pw').value;
+    if (!current || !newPw) return alert('Fill in all fields');
+    if (newPw !== confirm) return alert('New passwords do not match');
+    if (newPw.length < 6) return alert('Password must be at least 6 characters');
+    fetch('/portal/change-password', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ current_password: current, new_password: newPw })
+    }).then(r=>r.json()).then(d => {
+        const msg = document.getElementById('pw-msg');
+        if (d.success) { msg.textContent='✓ Password updated!'; msg.style.color='#28a745'; document.getElementById('current-pw').value=''; document.getElementById('new-pw').value=''; document.getElementById('confirm-pw').value=''; }
+        else { msg.textContent=d.error; msg.style.color='#dc3545'; }
+    });
+}
+</script>
+</body>
+</html>

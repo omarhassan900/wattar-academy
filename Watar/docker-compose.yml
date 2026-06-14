@@ -12,6 +12,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./wattar.db:/app/wattar.db
+      - ./uploads:/app/public/uploads
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/login', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s

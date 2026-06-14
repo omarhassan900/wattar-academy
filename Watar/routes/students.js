@@ -107,6 +107,15 @@ module.exports = (app, db) => {
                 }
                 return res.status(500).send('Database error');
             }
+            
+            // Auto-create portal account if phone exists
+            if (phone && phone.trim()) {
+                const bcrypt = require('bcrypt');
+                const pw = bcrypt.hashSync('wattar123', 10);
+                db.run('INSERT OR IGNORE INTO student_accounts (student_id, username, password_hash) VALUES (?, ?, ?)',
+                    [this.lastID, phone.trim(), pw]);
+            }
+            
             res.redirect('/students');
         });
     });

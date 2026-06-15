@@ -632,6 +632,7 @@ function renderFretboardView(container, notesStr, bpm, instrument) {
     const cid = 'fb_'+Math.random().toString(36).substr(2,6);
     container.id = cid;
     const hasFrets = steps.some(s=>s.type==='fret');
+    const hasTabla = steps.some(s=>s.type==='tabla');
     const inst = instrument || 'guitar';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;"><button onclick="playSeq('${cid}',getBpm('${cid}'))" class="play-${cid}" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:0.8rem;cursor:pointer;"><i class="fas fa-play me-1"></i>Play</button><button onclick="stopSeq('${cid}')" class="stop-${cid}" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:0.8rem;cursor:pointer;display:none;"><i class="fas fa-stop me-1"></i>Stop</button><div style="display:flex;align-items:center;gap:6px;"><label style="font-size:0.75rem;color:#666;">BPM:</label><input type="range" min="30" max="200" value="${bpm}" id="bpm-${cid}" style="width:80px;" oninput="document.getElementById('bpmVal-${cid}').textContent=this.value"><span id="bpmVal-${cid}" style="font-size:0.8rem;font-weight:700;min-width:24px;">${bpm}</span></div><span class="disp-${cid}" style="font-size:0.85rem;font-weight:600;color:#666;">—</span></div>`;
 
@@ -690,13 +691,29 @@ function renderFretboardView(container, notesStr, bpm, instrument) {
             }
         }
         html += `</div></div>`;
+    } else if (hasTabla) {
+        const tablaNames=['Dum','Tek','Ka','Pa'];const tablaColors=['#c62828','#1565c0','#2e7d32','#f57f17'];
+        html+='<div style="text-align:center;padding:12px;background:#1a1a2e;border-radius:12px;">';
+        html+='<div style="position:relative;width:140px;height:140px;margin:0 auto 10px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2c3e50,#0d1117);border:5px solid #4a4a4a;box-shadow:0 6px 20px rgba(0,0,0,0.5);">';
+        html+='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e57373;font-weight:800;font-size:0.9rem;">DUM</div>';
+        html+='<div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);color:#64b5f6;font-weight:700;font-size:0.65rem;">TEK</div>';
+        html+='<div style="position:absolute;top:50%;right:8px;transform:translateY(-50%);color:#81c784;font-weight:700;font-size:0.65rem;">KA</div>';
+        html+='<div style="position:absolute;top:50%;left:8px;transform:translateY(-50%);color:#ffb74d;font-weight:700;font-size:0.65rem;">PA</div>';
+        html+='</div>';
+        html+='<div style="display:flex;gap:6px;justify-content:center;">';
+        tablaNames.forEach((name,i)=>{const count=steps.filter(s=>s.type==='tabla'&&s.noteIdx===i).length;html+=`<span style="background:${tablaColors[i]};color:#fff;padding:3px 8px;border-radius:6px;font-size:0.65rem;font-weight:700;">${name}:${count}</span>`;});
+        html+='</div></div>';
     }
 
     // Step badges
+    const tablaLabels=['D','T','K','P'];const tablaBadgeColors=['#c62828','#1565c0','#2e7d32','#f57f17'];
     html += '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">';
     steps.forEach((st,i)=>{
         if(st.type==='rest'){
             html+=`<span id="${cid}_s${i}" style="background:#999;color:#fff;padding:3px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;transition:all 0.15s;">—</span>`;
+        } else if(st.type==='tabla'){
+            const idx=st.noteIdx||0;
+            html+=`<span id="${cid}_s${i}" style="background:${tablaBadgeColors[idx]||'#28a745'};color:#fff;padding:3px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;transition:all 0.15s;">${tablaLabels[idx]||'?'}</span>`;
         } else {
             const n=getNoteName(st.noteIdx);
             html+=`<span id="${cid}_s${i}" style="background:#28a745;color:#fff;padding:3px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;transition:all 0.15s;">${n}</span>`;
@@ -729,7 +746,10 @@ function playSeq(cid, bpm) {
         const b=document.getElementById(`${cid}_s${cur}`);if(b){b.style.background='#ffd700';b.style.color='#000';b.style.transform='scale(1.2)';}
         document.querySelector(`.disp-${cid}`).textContent=`${cur+1}/${steps.length} — ${st.type==='rest'?'—':getNoteName(st.noteIdx)}`;
         const noteDur = (st.beats||1)*beatMs/1000;
-        if(st.type!=='rest') playTone(getFreq(st.midi), noteDur*0.8, instrument);
+        if(st.type!=='rest'){
+            if(st.type==='tabla') playTone(st.midi, noteDur*0.8, 'tabla');
+            else playTone(getFreq(st.midi), noteDur*0.8, instrument);
+        }
         const delay = (st.beats||1)*beatMs;
         cur++;
         timerId=setTimeout(tick, delay);

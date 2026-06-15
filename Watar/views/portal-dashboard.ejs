@@ -695,11 +695,11 @@ function renderFretboardView(container, notesStr, bpm, instrument) {
     } else if (hasTabla) {
         const tablaNames=['Dum','Tek','Ka','Pa'];const tablaColors=['#c62828','#1565c0','#2e7d32','#f57f17'];
         html+='<div style="text-align:center;padding:12px;background:#1a1a2e;border-radius:12px;">';
-        html+='<div style="position:relative;width:140px;height:140px;margin:0 auto 10px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2c3e50,#0d1117);border:5px solid #4a4a4a;box-shadow:0 6px 20px rgba(0,0,0,0.5);">';
-        html+='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e57373;font-weight:800;font-size:0.9rem;">DUM</div>';
-        html+='<div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);color:#64b5f6;font-weight:700;font-size:0.65rem;">TEK</div>';
-        html+='<div style="position:absolute;top:50%;right:8px;transform:translateY(-50%);color:#81c784;font-weight:700;font-size:0.65rem;">KA</div>';
-        html+='<div style="position:absolute;top:50%;left:8px;transform:translateY(-50%);color:#ffb74d;font-weight:700;font-size:0.65rem;">PA</div>';
+        html+=`<div style="position:relative;width:140px;height:140px;margin:0 auto 10px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2c3e50,#0d1117);border:5px solid #4a4a4a;box-shadow:0 6px 20px rgba(0,0,0,0.5);">`;
+        html+=`<div id="${cid}_t0" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#e57373;font-weight:800;font-size:0.9rem;transition:all 0.1s;">DUM</div>`;
+        html+=`<div id="${cid}_t1" style="position:absolute;top:4px;left:50%;transform:translateX(-50%);padding:4px 10px;border-radius:10px;color:#64b5f6;font-weight:700;font-size:0.65rem;transition:all 0.1s;">TEK</div>`;
+        html+=`<div id="${cid}_t2" style="position:absolute;top:50%;right:4px;transform:translateY(-50%);padding:4px 6px;border-radius:10px;color:#81c784;font-weight:700;font-size:0.65rem;transition:all 0.1s;">KA</div>`;
+        html+=`<div id="${cid}_t3" style="position:absolute;top:50%;left:4px;transform:translateY(-50%);padding:4px 6px;border-radius:10px;color:#ffb74d;font-weight:700;font-size:0.65rem;transition:all 0.1s;">PA</div>`;
         html+='</div>';
         html+='<div style="display:flex;gap:6px;justify-content:center;">';
         tablaNames.forEach((name,i)=>{const count=steps.filter(s=>s.type==='tabla'&&s.noteIdx===i).length;html+=`<span style="background:${tablaColors[i]};color:#fff;padding:3px 8px;border-radius:6px;font-size:0.65rem;font-weight:700;">${name}:${count}</span>`;});
@@ -737,13 +737,16 @@ function playSeq(cid, bpm) {
     document.querySelector(`.stop-${cid}`).style.display='';
     function tick(){
         // Reset all highlights
+        const tablaGlowColors=['#c62828','#1565c0','#2e7d32','#f57f17'];
         steps.forEach((st,i)=>{
             if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#28a745';cell.style.transform='';}}
-            const b=document.getElementById(`${cid}_s${i}`);if(b){b.style.background='#28a745';b.style.color='#fff';b.style.transform='';}
+            if(st.type==='tabla'){const zone=document.getElementById(`${cid}_t${st.noteIdx}`);if(zone){zone.style.background='';zone.style.boxShadow='';zone.style.transform=zone.style.transform.replace(' scale(1.3)','');}}
+            const b=document.getElementById(`${cid}_s${i}`);if(b){b.style.background=st.type==='tabla'?(tablaGlowColors[st.noteIdx]||'#28a745'):'#28a745';b.style.color='#fff';b.style.transform='';}
         });
         if(cur>=steps.length){stopSeq(cid);return;}
         const st=steps[cur];
         if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#ffd700';cell.style.transform='scale(1.3)';}}
+        if(st.type==='tabla'){const zone=document.getElementById(`${cid}_t${st.noteIdx}`);if(zone){zone.style.background=tablaGlowColors[st.noteIdx];zone.style.boxShadow=`0 0 20px ${tablaGlowColors[st.noteIdx]}`;zone.style.transform+=' scale(1.3)';}}
         const b=document.getElementById(`${cid}_s${cur}`);if(b){b.style.background='#ffd700';b.style.color='#000';b.style.transform='scale(1.2)';}
         document.querySelector(`.disp-${cid}`).textContent=`${cur+1}/${steps.length} — ${st.type==='rest'?'—':getNoteName(st.noteIdx)}`;
         const noteDur = (st.beats||1)*beatMs/1000;
@@ -764,7 +767,7 @@ function stopSeq(cid){
     const p=document.querySelector(`.play-${cid}`),s=document.querySelector(`.stop-${cid}`);
     if(p)p.style.display='';if(s)s.style.display='none';
     const d=document.querySelector(`.disp-${cid}`);if(d)d.textContent='—';
-    const c=document.getElementById(cid);if(c&&c.dataset.steps){const steps=JSON.parse(c.dataset.steps);steps.forEach((st,i)=>{if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#28a745';cell.style.transform='';}}const b=document.getElementById(`${cid}_s${i}`);if(b){b.style.background='#28a745';b.style.color='#fff';b.style.transform='';}});}
+    const c=document.getElementById(cid);if(c&&c.dataset.steps){const steps=JSON.parse(c.dataset.steps);steps.forEach((st,i)=>{if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#28a745';cell.style.transform='';}}if(st.type==='tabla'){const zone=document.getElementById(`${cid}_t${st.noteIdx}`);if(zone){zone.style.background='';zone.style.boxShadow='';}}const b=document.getElementById(`${cid}_s${i}`);if(b){b.style.background='#28a745';b.style.color='#fff';b.style.transform='';}});}
 }
 
 document.querySelectorAll('.fretboard-view').forEach(el=>{

@@ -82,6 +82,7 @@
                             <option value="violin">Violin</option>
                             <option value="piano">Piano</option>
                             <option value="drums">Drums</option>
+                            <option value="tabla">Tabla / Darbuka</option>
                             <option value="vocals">Vocals</option>
                             <option value="other">Other</option>
                         </select>
@@ -196,7 +197,8 @@ document.getElementById('assign-student').addEventListener('change', function() 
     else if (inst.includes('oud') || inst.includes('عود')) instSelect.value = 'oud';
     else if (inst.includes('piano') || inst.includes('بيانو') || inst.includes('keyboard')) instSelect.value = 'piano';
     else if (inst.includes('violin') || inst.includes('كمان') || inst.includes('viol')) instSelect.value = 'violin';
-    else if (inst.includes('drum') || inst.includes('درام') || inst.includes('daraboka') || inst.includes('دربوكة')) instSelect.value = 'drums';
+    else if (inst.includes('drum') || inst.includes('درام')) instSelect.value = 'drums';
+    else if (inst.includes('tabla') || inst.includes('طبلة') || inst.includes('daraboka') || inst.includes('دربوكة') || inst.includes('darb') || inst.includes('doumbek')) instSelect.value = 'tabla';
     else if (inst.includes('vocal') || inst.includes('غناء') || inst.includes('voice') || inst.includes('sing')) instSelect.value = 'vocals';
     else instSelect.value = 'other';
     currentInstrument = instSelect.value;
@@ -213,6 +215,8 @@ function buildInstrumentUI() {
         buildViolin(container);
     } else if (currentInstrument === 'piano') {
         buildPiano(container);
+    } else if (currentInstrument === 'tabla') {
+        buildTabla(container);
     } else {
         buildNotePalette(container);
     }
@@ -429,6 +433,56 @@ function addPaletteNote(noteIdx) {
     buildInstrumentUI();
 }
 
+// ========== TABLA / DARBUKA ==========
+const TABLA_TONES = [
+    { id: 'dum', name: 'Dum', nameAr: 'دم', color: '#c62828', desc: 'Bass center hit', noteIdx: 0 },
+    { id: 'tek', name: 'Tek', nameAr: 'تك', color: '#1565c0', desc: 'Sharp edge hit', noteIdx: 1 },
+    { id: 'ka', name: 'Ka', nameAr: 'كا', color: '#2e7d32', desc: 'Light edge tap', noteIdx: 2 },
+    { id: 'pa', name: 'Pa', nameAr: 'با', color: '#f57f17', desc: 'Muted slap', noteIdx: 3 },
+    { id: 'rest', name: '—', nameAr: 'سكتة', color: '#616161', desc: 'Rest/Silence', noteIdx: -1 },
+];
+
+function buildTabla(container) {
+    const inSeqCount = {};
+    sequence.forEach(s => { if (s.tablaId) inSeqCount[s.tablaId] = (inSeqCount[s.tablaId]||0) + 1; });
+    
+    let html = '<div style="text-align:center;">';
+    html += '<p style="color:#aaa;font-size:0.75rem;margin-bottom:12px;">Click a tone to add it to the rhythm pattern</p>';
+    
+    // Drum visual
+    html += '<div style="position:relative;width:200px;height:200px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle at 50% 40%, #2c3e50 0%, #1a252f 60%, #0d1117 100%);border:6px solid #4a4a4a;box-shadow:0 8px 24px rgba(0,0,0,0.5),inset 0 -4px 12px rgba(0,0,0,0.3);">';
+    // Center (Dum)
+    html += `<div onclick="addTablaNote('dum')" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#1a3a4a,#0d2530);border:3px solid #2c4a5a;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:transform 0.1s,box-shadow 0.1s;" onmousedown="this.style.transform='translate(-50%,-50%) scale(0.95)'" onmouseup="this.style.transform='translate(-50%,-50%)'"><span style="color:#e57373;font-weight:800;font-size:1.1rem;">DUM</span><span style="color:#888;font-size:0.6rem;">دم</span></div>`;
+    // Edge (Tek) - top
+    html += `<div onclick="addTablaNote('tek')" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);width:60px;height:36px;border-radius:20px;background:#1565c0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:transform 0.1s;" onmousedown="this.style.transform='translateX(-50%) scale(0.9)'" onmouseup="this.style.transform='translateX(-50%)'"><span style="color:#fff;font-weight:700;font-size:0.8rem;">TEK</span></div>`;
+    // Edge (Ka) - right
+    html += `<div onclick="addTablaNote('ka')" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);width:36px;height:60px;border-radius:20px;background:#2e7d32;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.1s;" onmousedown="this.style.transform='translateY(-50%) scale(0.9)'" onmouseup="this.style.transform='translateY(-50%)'"><span style="color:#fff;font-weight:700;font-size:0.8rem;">KA</span></div>`;
+    // Edge (Pa) - left
+    html += `<div onclick="addTablaNote('pa')" style="position:absolute;top:50%;left:8px;transform:translateY(-50%);width:36px;height:60px;border-radius:20px;background:#f57f17;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.1s;" onmousedown="this.style.transform='translateY(-50%) scale(0.9)'" onmouseup="this.style.transform='translateY(-50%)'"><span style="color:#fff;font-weight:700;font-size:0.8rem;">PA</span></div>`;
+    html += '</div>';
+    
+    // Tone buttons below
+    html += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">';
+    TABLA_TONES.forEach(t => {
+        const count = inSeqCount[t.id] || 0;
+        const badge = count ? `<span style="background:#fff;color:${t.color};border-radius:50%;width:16px;height:16px;font-size:0.6rem;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;">${count}</span>` : '';
+        html += `<button onclick="addTablaNote('${t.id}')" style="padding:8px 14px;border:2px solid ${t.color};background:${t.color}22;color:${t.color};border-radius:8px;font-weight:700;font-size:0.8rem;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='${t.color}';this.style.color='#fff'" onmouseout="this.style.background='${t.color}22';this.style.color='${t.color}'">${t.name} ${t.nameAr}${badge}</button>`;
+    });
+    html += '</div></div>';
+    container.innerHTML = html;
+}
+
+function addTablaNote(toneId) {
+    const dur = getSelectedDuration();
+    if (toneId === 'rest') {
+        sequence.push({ type:'rest', duration: dur });
+    } else {
+        const tone = TABLA_TONES.find(t => t.id === toneId);
+        sequence.push({ type:'tabla', tablaId: toneId, noteIdx: tone.noteIdx, duration: dur });
+    }
+    buildInstrumentUI();
+}
+
 // ========== COMMON ==========
 function undoLast() { sequence.pop(); buildInstrumentUI(); }
 function clearSeqBuilder() { sequence = []; buildInstrumentUI(); }
@@ -440,11 +494,11 @@ function updateSeqDisplay() {
 }
 
 function encodeSequence() {
-    // Format with duration: fd:string:fret:dur | pd:octave:noteIdx:dur | nd:noteIdx:dur
-    // Also supports rest: r:dur
+    // Format with duration: fd:string:fret:dur | pd:octave:noteIdx:dur | nd:noteIdx:dur | td:tablaId:dur | r:dur
     return sequence.map(s => {
         const d = s.duration || 'q';
         if (s.type === 'rest') return `r:${d}`;
+        if (s.type === 'tabla') return `td:${s.tablaId}:${d}`;
         if (s.type === 'fret') return `fd:${s.string}:${s.fret}:${d}`;
         if (s.type === 'piano') return `pd:${s.octave}:${s.noteIdx}:${d}`;
         return `nd:${s.noteIdx}:${d}`;
@@ -561,6 +615,7 @@ function loadSequenceFromString(str) {
         if (p[0]==='fd') sequence.push({type:'fret',string:+p[1],fret:+p[2],noteIdx:(openStrNotes[+p[1]]+ +p[2])%12,duration:p[3]||'q'});
         else if (p[0]==='pd') sequence.push({type:'piano',octave:+p[1],noteIdx:+p[2],duration:p[3]||'q'});
         else if (p[0]==='nd') sequence.push({type:'note',noteIdx:+p[1],duration:p[2]||'q'});
+        else if (p[0]==='td') sequence.push({type:'tabla',tablaId:p[1],noteIdx:['dum','tek','ka','pa'].indexOf(p[1]),duration:p[2]||'q'});
         else if (p[0]==='r') sequence.push({type:'rest',duration:p[1]||'q'});
         else if (p[0]==='f') sequence.push({type:'fret',string:+p[1],fret:+p[2],noteIdx:(openStrNotes[+p[1]]+ +p[2])%12,duration:'q'});
         else if (p[0]==='p') sequence.push({type:'piano',octave:+p[1],noteIdx:+p[2],duration:'q'});

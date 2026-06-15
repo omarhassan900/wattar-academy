@@ -410,6 +410,8 @@ function playTone(freq, dur, instrument) {
         playPiano(freq, dur, t);
     } else if (inst === 'violin') {
         playViolin(freq, dur, t);
+    } else if (inst === 'tabla') {
+        playTabla(freq, dur, t);
     } else {
         playGuitar(freq, dur, t);
     }
@@ -554,45 +556,52 @@ function playPiano(freq, dur, t) {
 }
 
 function playViolin(freq, dur, t) {
-    // Violin: bowed string - slow attack, sustain, rich odd harmonics
     const g = audioCtx.createGain();
     g.connect(audioCtx.destination);
-    
     const o1 = audioCtx.createOscillator();
-    o1.type = 'sawtooth';
-    o1.frequency.value = freq;
-    
+    o1.type = 'sawtooth'; o1.frequency.value = freq;
     const o2 = audioCtx.createOscillator();
-    o2.type = 'sine';
-    o2.frequency.value = freq * 3; // Odd harmonic
-    const g2 = audioCtx.createGain();
-    g2.gain.value = 0.15;
-    
-    // Bow pressure filter
+    o2.type = 'sine'; o2.frequency.value = freq * 3;
+    const g2 = audioCtx.createGain(); g2.gain.value = 0.15;
     const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 3000;
-    filter.Q.value = 1;
-    
-    // Vibrato
+    filter.type = 'lowpass'; filter.frequency.value = 3000; filter.Q.value = 1;
     const vibrato = audioCtx.createOscillator();
     const vibratoGain = audioCtx.createGain();
-    vibrato.frequency.value = 5.5;
-    vibratoGain.gain.value = 4;
-    vibrato.connect(vibratoGain);
-    vibratoGain.connect(o1.frequency);
-    
-    o1.connect(filter); o2.connect(g2); g2.connect(filter);
-    filter.connect(g);
-    
-    // Bowed: slow attack (bow grab), full sustain, gentle release
+    vibrato.frequency.value = 5.5; vibratoGain.gain.value = 4;
+    vibrato.connect(vibratoGain); vibratoGain.connect(o1.frequency);
+    o1.connect(filter); o2.connect(g2); g2.connect(filter); filter.connect(g);
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.35, t + 0.08); // Slow bow attack
-    g.gain.setValueAtTime(0.35, t + dur * 0.7);     // Sustain
-    g.gain.exponentialRampToValueAtTime(0.01, t + dur * 0.95); // Release
-    
+    g.gain.linearRampToValueAtTime(0.35, t + 0.08);
+    g.gain.setValueAtTime(0.35, t + dur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.01, t + dur * 0.95);
     vibrato.start(t); o1.start(t); o2.start(t);
     vibrato.stop(t + dur); o1.stop(t + dur); o2.stop(t + dur);
+}
+
+function playTabla(freq, dur, t) {
+    const g = audioCtx.createGain(); g.connect(audioCtx.destination);
+    const toneType = Math.round(freq) - 36;
+    if (toneType === 0) { // DUM
+        const o = audioCtx.createOscillator(); o.type='sine';
+        o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(60,t+0.1);
+        o.connect(g); g.gain.setValueAtTime(0.7,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.3);
+        o.start(t); o.stop(t+0.35);
+    } else if (toneType === 1) { // TEK
+        const o = audioCtx.createOscillator(); o.type='triangle'; o.frequency.value=800;
+        const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=600;
+        o.connect(f); f.connect(g); g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.08);
+        o.start(t); o.stop(t+0.1);
+    } else if (toneType === 2) { // KA
+        const o = audioCtx.createOscillator(); o.type='triangle'; o.frequency.value=600;
+        const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=400;
+        o.connect(f); f.connect(g); g.gain.setValueAtTime(0.3,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.06);
+        o.start(t); o.stop(t+0.08);
+    } else { // PA
+        const o = audioCtx.createOscillator(); o.type='sine';
+        o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(80,t+0.04);
+        o.connect(g); g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.05);
+        o.start(t); o.stop(t+0.07);
+    }
 }
 
 // Duration map: w=4beats, h=2, dq=1.5(dotted quarter), q=1, e=0.5, s=0.25
@@ -605,6 +614,7 @@ function parseSteps(notesStr) {
         if (p[0]==='fd') return { type:'fret', string:+p[1], fret:+p[2], noteIdx:(openStrNotes[+p[1]]+ +p[2])%12, midi:openMidi[+p[1]]+ +p[2], beats:durBeats[p[3]]||1 };
         if (p[0]==='pd') return { type:'piano', octave:+p[1], noteIdx:+p[2], midi:(+p[1]+1)*12+ +p[2], beats:durBeats[p[3]]||1 };
         if (p[0]==='nd') return { type:'note', noteIdx:+p[1], midi:60+ +p[1], beats:durBeats[p[2]]||1 };
+        if (p[0]==='td') return { type:'tabla', tablaId:p[1], noteIdx:['dum','tek','ka','pa'].indexOf(p[1]), midi:36+['dum','tek','ka','pa'].indexOf(p[1]), beats:durBeats[p[2]]||1 };
         if (p[0]==='r') return { type:'rest', noteIdx:0, midi:0, beats:durBeats[p[1]]||1 };
         // Original format (no duration, default to 1 beat)
         if (p[0]==='f') return { type:'fret', string:+p[1], fret:+p[2], noteIdx:(openStrNotes[+p[1]]+ +p[2])%12, midi:openMidi[+p[1]]+ +p[2], beats:1 };

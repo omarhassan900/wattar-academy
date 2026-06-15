@@ -2,10 +2,15 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
+
+// Ensure upload directory exists
+const ticketUploadDir = 'public/uploads/tickets';
+if (!fs.existsSync(ticketUploadDir)) fs.mkdirSync(ticketUploadDir, { recursive: true });
 
 // Configure multer for payment screenshot uploads
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/uploads/tickets'),
+    destination: (req, file, cb) => cb(null, ticketUploadDir),
     filename: (req, file, cb) => {
         const uniqueName = Date.now() + '-' + crypto.randomBytes(4).toString('hex') + path.extname(file.originalname);
         cb(null, uniqueName);

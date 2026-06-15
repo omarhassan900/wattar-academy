@@ -54,6 +54,7 @@ require('./routes/meta-webhook')(app, db);
 require('./routes/tickets')(app, db);
 require('./routes/portal')(app, db);
 require('./routes/assignments')(app, db);
+require('./routes/my-students')(app, db);
 
 // Start server
 app.listen(PORT, () => {

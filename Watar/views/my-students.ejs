@@ -1,0 +1,131 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-users text-primary me-2"></i>My Students</h1>
+            <span class="badge bg-primary fs-6"><%= students.length %> students</span>
+        </div>
+    </div>
+</div>
+
+<% if (students.length === 0) { %>
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+        <p class="text-muted">No students assigned to you yet.</p>
+    </div>
+</div>
+<% } else { %>
+
+<div class="row g-3">
+    <% students.forEach(s => { %>
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 student-card" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="viewStudent(<%= s.id %>)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <% if (s.profile_pic) { %>
+                        <img src="<%= s.profile_pic %>" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;" alt="">
+                    <% } else { %>
+                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1a237e,#3949ab);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;"><%= s.name.charAt(0) %></div>
+                    <% } %>
+                    <div class="ms-3">
+                        <h6 class="mb-0 fw-bold"><%= s.name %></h6>
+                        <small class="text-muted"><%= s.instrument || 'No instrument' %></small>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-info"><%= s.current_level || 'N/A' %></span>
+                    <small class="text-muted"><%= s.sessions_attended %> sessions</small>
+                </div>
+                <div class="mt-2 d-flex gap-2 flex-wrap">
+                    <small class="text-muted"><i class="fas fa-guitar me-1"></i><%= s.assignments_count %> assignments</small>
+                    <% if (s.last_attendance) { %>
+                    <small class="text-muted"><i class="fas fa-clock me-1"></i>Last: <%= new Date(s.last_attendance).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) %></small>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% }); %>
+</div>
+<% } %>
+
+<!-- Student Detail Modal -->
+<div class="modal fade" id="studentDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-user me-2"></i><span id="modal-student-name"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modal-student-body">
+                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewStudent(id) {
+    document.getElementById('modal-student-name').textContent = 'Loading...';
+    document.getElementById('modal-student-body').innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>';
+    new bootstrap.Modal(document.getElementById('studentDetailModal')).show();
+
+    fetch('/my-students/' + id).then(r => r.json()).then(d => {
+        if (!d.success) return;
+        const s = d.student;
+        document.getElementById('modal-student-name').textContent = s.name;
+
+        let html = '<div class="row">';
+        // Info
+        html += '<div class="col-md-6 mb-3">';
+        html += '<h6 class="fw-bold text-primary mb-2"><i class="fas fa-info-circle me-1"></i> Info</h6>';
+        html += '<table class="table table-sm"><tbody>';
+        html += '<tr><td class="text-muted">Instrument</td><td><strong>' + (s.instrument || '-') + '</strong></td></tr>';
+        html += '<tr><td class="text-muted">Level</td><td><strong>' + (s.current_level || '-') + '</strong></td></tr>';
+        html += '<tr><td class="text-muted">Phone</td><td>' + (s.phone || '-') + '</td></tr>';
+        if (s.date_of_birth) html += '<tr><td class="text-muted">Birthday</td><td>' + s.date_of_birth + '</td></tr>';
+        html += '</tbody></table></div>';
+
+        // Attendance
+        html += '<div class="col-md-6 mb-3">';
+        html += '<h6 class="fw-bold text-primary mb-2"><i class="fas fa-calendar-check me-1"></i> Attendance</h6>';
+        if (d.attendance.length > 0) {
+            d.attendance.forEach(a => {
+                const color = a.status === 'present' ? 'success' : a.status === 'absent' ? 'danger' : a.status === 'late' ? 'warning' : 'info';
+                html += '<span class="badge bg-' + color + ' me-1 mb-1">' + a.status + ': ' + a.count + '</span>';
+            });
+        } else { html += '<span class="text-muted">No records</span>'; }
+        html += '</div>';
+
+        // Assignments
+        html += '<div class="col-12 mb-3">';
+        html += '<h6 class="fw-bold text-primary mb-2"><i class="fas fa-guitar me-1"></i> Recent Assignments</h6>';
+        if (d.assignments.length > 0) {
+            html += '<div class="list-group list-group-flush">';
+            d.assignments.forEach(a => {
+                html += '<div class="list-group-item px-0 py-2"><strong>' + a.title + '</strong> <small class="text-muted">(' + a.level + ' S' + a.session_number + ')</small></div>';
+            });
+            html += '</div>';
+        } else { html += '<span class="text-muted">No assignments yet</span>'; }
+        html += '</div>';
+
+        // Evaluations
+        if (d.evaluations.length > 0) {
+            html += '<div class="col-12">';
+            html += '<h6 class="fw-bold text-primary mb-2"><i class="fas fa-star me-1"></i> Evaluations</h6>';
+            d.evaluations.forEach(e => {
+                html += '<div class="mb-2 p-2 bg-light rounded"><strong>' + e.level + '</strong> — ';
+                html += 'Attitude: <strong>' + (e.attitude_rating||'-') + '</strong> | ';
+                html += 'Commitment: <strong>' + (e.commitment_rating||'-') + '</strong> | ';
+                html += 'Development: <strong>' + (e.development_rating||'-') + '</strong>';
+                if (e.notes) html += '<br><small class="text-muted fst-italic">"' + e.notes + '"</small>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        document.getElementById('modal-student-body').innerHTML = html;
+    });
+}
+</script>

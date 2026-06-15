@@ -13,7 +13,7 @@ const profileStorage = multer.diskStorage({
 });
 const profileUpload = multer({
     storage: profileStorage,
-    limits: { fileSize: 3 * 1024 * 1024 },
+    limits: { fileSize: 1 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
         const ext = path.extname(file.originalname).toLowerCase();
@@ -118,18 +118,25 @@ module.exports = (app, db) => {
 
     // Settings page
     app.get('/portal/settings', requireStudent, (req, res) => {
-        db.get(`SELECT profile_pic, bio, display_name, rank, xp FROM student_accounts WHERE student_id = ?`, [req.session.student.id], (err, profile) => {
+        db.get(`SELECT sa.profile_pic, sa.bio, sa.display_name, sa.rank, sa.xp, s.date_of_birth 
+                FROM student_accounts sa 
+                JOIN students s ON sa.student_id = s.id 
+                WHERE sa.student_id = ?`, [req.session.student.id], (err, profile) => {
             res.render('portal-settings', { student: req.session.student, profile: profile || {} });
         });
     });
 
-    // Update profile (display name, bio)
+    // Update profile (display name, bio, date of birth)
     app.post('/portal/update-profile', requireStudent, (req, res) => {
-        const { display_name, bio } = req.body;
+        const { display_name, bio, date_of_birth } = req.body;
         const studentId = req.session.student.id;
         db.run(`UPDATE student_accounts SET display_name = ?, bio = ? WHERE student_id = ?`,
             [display_name || null, bio || null, studentId], (err) => {
                 if (err) return res.json({ success: false, error: 'Database error' });
+                // Also update date_of_birth in students table
+                if (date_of_birth !== undefined) {
+                    db.run(`UPDATE students SET date_of_birth = ? WHERE id = ?`, [date_of_birth || null, studentId]);
+                }
                 if (display_name) req.session.student.display_name = display_name;
                 res.json({ success: true });
             });

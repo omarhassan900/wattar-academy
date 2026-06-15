@@ -317,7 +317,7 @@
 
     <!-- Assignments -->
     <div class="section-card">
-        <div class="section-header"><i class="fas fa-guitar"></i> My Assignments</div>
+        <div class="section-header" style="justify-content:space-between;"><span><i class="fas fa-guitar"></i> My Assignments</span><button id="notation-toggle-btn" onclick="toggleNotation()" style="background:var(--primary);color:#fff;border:none;padding:4px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;cursor:pointer;">ABC</button></div>
         <div class="section-body">
             <% if (assignments.length > 0) { %>
                 <% assignments.forEach((a, idx) => { %>
@@ -390,7 +390,8 @@ const openMidi = [64,59,55,50,45,40];
 let playIntervals = [];
 let audioCtx = null;
 
-function getNoteName(idx) { return ABC[idx]; }
+let notationMode = 'abc';
+function getNoteName(idx) { return notationMode === 'solfege' ? SOL[idx] : ABC[idx]; }
 function getFreq(midi) { return 440 * Math.pow(2, (midi-69)/12); }
 function getBpm(cid) { const el = document.getElementById('bpm-'+cid); return el ? parseInt(el.value) : 60; }
 
@@ -771,6 +772,17 @@ document.querySelectorAll('.fretboard-view').forEach(el=>{
     const instrument=el.getAttribute('data-instrument')||'guitar';
     if(notes)renderFretboardView(el,notes,bpm,instrument);
 });
+
+function toggleNotation() {
+    notationMode = notationMode === 'abc' ? 'solfege' : 'abc';
+    const btn = document.getElementById('notation-toggle-btn');
+    if(btn) btn.textContent = notationMode === 'abc' ? 'ABC' : 'Do Re Mi';
+    document.querySelectorAll('.fretboard-view').forEach(el=>{
+        const notes=el.getAttribute('data-notes'),bpm=parseInt(el.getAttribute('data-bpm'))||60;
+        const instrument=el.getAttribute('data-instrument')||'guitar';
+        if(notes)renderFretboardView(el,notes,bpm,instrument);
+    });
+}
 </script>
 </body>
 </html>

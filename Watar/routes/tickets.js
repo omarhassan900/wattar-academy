@@ -6,7 +6,7 @@ const fs = require('fs');
 
 // Ensure upload directory exists
 const ticketUploadDir = 'public/uploads/tickets';
-if (!fs.existsSync(ticketUploadDir)) fs.mkdirSync(ticketUploadDir, { recursive: true });
+try { if (!fs.existsSync(ticketUploadDir)) fs.mkdirSync(ticketUploadDir, { recursive: true }); } catch(e) { console.log('Note: Could not create tickets upload dir:', e.message); }
 
 // Configure multer for payment screenshot uploads
 const storage = multer.diskStorage({

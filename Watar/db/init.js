@@ -130,11 +130,23 @@ db.run(`CREATE TABLE IF NOT EXISTS student_accounts (
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     last_login DATETIME,
+    profile_pic TEXT,
+    bio TEXT,
+    display_name TEXT,
+    rank TEXT DEFAULT 'Beginner',
+    xp INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES students(id)
 )`, (err) => {
     if (err && !err.message.includes('already exists')) console.error('Error creating student_accounts table:', err);
-    else console.log('✓ student_accounts table ready');
+    else {
+        console.log('✓ student_accounts table ready');
+        db.run(`ALTER TABLE student_accounts ADD COLUMN profile_pic TEXT`, () => {});
+        db.run(`ALTER TABLE student_accounts ADD COLUMN bio TEXT`, () => {});
+        db.run(`ALTER TABLE student_accounts ADD COLUMN display_name TEXT`, () => {});
+        db.run(`ALTER TABLE student_accounts ADD COLUMN rank TEXT DEFAULT 'Beginner'`, () => {});
+        db.run(`ALTER TABLE student_accounts ADD COLUMN xp INTEGER DEFAULT 0`, () => {});
+    }
 });
 
 // Assignments table

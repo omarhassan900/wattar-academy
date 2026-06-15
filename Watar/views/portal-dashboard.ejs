@@ -6,43 +6,145 @@
     <title>My Portal — Wattar Academy</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background: #f5f5f5; color: #000; font-family: 'Inter', sans-serif; min-height: 100vh; }
-        .portal-nav { background: #000; color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-        .portal-nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: #fff; }
-        .portal-nav .logo img { height: 32px; border-radius: 6px; filter: invert(1); }
-        .portal-nav a { color: #ccc; text-decoration: none; font-size: 0.85rem; }
+        :root {
+            --primary: #1a237e;
+            --primary-light: #3949ab;
+            --accent: #ff6f00;
+            --accent-light: #ffa726;
+            --success: #2e7d32;
+            --bg: #f0f2f8;
+            --card-bg: #ffffff;
+        }
+        body { background: var(--bg); color: #1a1a2e; font-family: 'Cairo', 'Inter', sans-serif; min-height: 100vh; }
+        
+        /* Navigation */
+        .portal-nav { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #fff; padding: 12px 24px; 
+            display: flex; align-items: center; justify-content: space-between; 
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(26,35,126,0.3);
+        }
+        .portal-nav .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.1rem; color: #fff; }
+        .portal-nav .logo img { height: 42px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3); }
+        .portal-nav a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
         .portal-nav a:hover { color: #fff; }
-        .container-portal { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
-        .welcome-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-        .welcome-card h2 { font-weight: 700; margin: 0 0 8px; font-size: 1.4rem; }
-        .welcome-card .meta { color: #666; font-size: 0.9rem; }
-        .section-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
-        .section-header { padding: 16px 20px; border-bottom: 1px solid #eee; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+        
+        .container-portal { max-width: 750px; margin: 0 auto; padding: 24px 16px; }
+        
+        /* Welcome Card */
+        .welcome-card { 
+            background: linear-gradient(135deg, var(--primary) 0%, #283593 50%, var(--primary-light) 100%);
+            border: none; border-radius: 16px; padding: 28px; margin-bottom: 24px;
+            color: #fff; position: relative; overflow: hidden;
+            box-shadow: 0 8px 32px rgba(26,35,126,0.25);
+        }
+        .welcome-card::before {
+            content: ''; position: absolute; top: -50%; right: -20%;
+            width: 300px; height: 300px; border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+        .welcome-card::after {
+            content: '🎵'; position: absolute; top: 20px; right: 24px;
+            font-size: 2.5rem; opacity: 0.3;
+        }
+        .welcome-card .logo-big { 
+            width: 64px; height: 64px; border-radius: 14px; 
+            border: 3px solid rgba(255,255,255,0.3); margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .welcome-card h2 { font-weight: 800; margin: 0 0 8px; font-size: 1.5rem; }
+        .welcome-card .meta { color: rgba(255,255,255,0.85); font-size: 0.9rem; }
+        .welcome-card .meta i { color: var(--accent-light); }
+        
+        /* Section Cards */
+        .section-card { 
+            background: var(--card-bg); border: none; border-radius: 16px; 
+            margin-bottom: 20px; overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+        }
+        .section-header { 
+            padding: 16px 20px; border-bottom: 2px solid #f0f2f8; 
+            font-weight: 700; font-size: 1rem; 
+            display: flex; align-items: center; gap: 10px;
+            color: var(--primary);
+        }
+        .section-header i { 
+            color: var(--accent); font-size: 1.1rem;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            padding: 8px; border-radius: 8px;
+        }
         .section-body { padding: 16px 20px; }
+        
+        /* Attendance Grid */
         .session-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .session-item { text-align: center; padding: 12px 8px; border-radius: 8px; background: #f9f9f9; border: 1px solid #eee; }
-        .session-item .num { font-weight: 700; font-size: 0.85rem; color: #666; margin-bottom: 4px; }
-        .session-item .status { font-size: 0.75rem; font-weight: 600; }
-        .status-present { color: #28a745; }
-        .status-absent { color: #dc3545; }
-        .status-late { color: #f39c12; }
-        .status-excused { color: #17a2b8; }
+        .session-item { 
+            text-align: center; padding: 14px 8px; border-radius: 12px; 
+            background: #f8f9ff; border: 1px solid #e8eaf6;
+            transition: transform 0.15s, background 0.2s;
+        }
+        .session-item:hover { transform: scale(1.05); background: #e8eaf6; }
+        .session-item .num { font-weight: 700; font-size: 0.85rem; color: var(--primary); margin-bottom: 4px; }
+        .session-item .status { font-size: 0.85rem; font-weight: 600; }
+        .status-present { color: var(--success); }
+        .status-absent { color: #c62828; }
+        .status-late { color: #f57f17; }
+        .status-excused { color: #00838f; }
         .status-none { color: #ccc; }
-        .schedule-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        
+        /* Schedule */
+        .schedule-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 14px 0; border-bottom: 1px solid #f0f2f8; 
+        }
         .schedule-item:last-child { border-bottom: none; }
-        .schedule-day { font-weight: 700; }
-        .schedule-time { color: #666; font-size: 0.9rem; }
-        .schedule-trainer { color: #999; font-size: 0.8rem; }
-        .eval-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+        .schedule-day { font-weight: 700; color: var(--primary); }
+        .schedule-time { 
+            color: #fff; font-size: 0.85rem; font-weight: 600;
+            background: var(--accent); padding: 4px 12px; border-radius: 20px;
+        }
+        .schedule-trainer { color: #666; font-size: 0.8rem; margin-top: 2px; }
+        
+        /* Evaluations */
+        .eval-item { padding: 14px 0; border-bottom: 1px solid #f0f2f8; }
         .eval-item:last-child { border-bottom: none; }
-        .eval-level { font-weight: 700; font-size: 0.9rem; }
-        .eval-ratings { display: flex; gap: 16px; margin-top: 6px; }
+        .eval-level { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
+        .eval-ratings { display: flex; gap: 16px; margin-top: 8px; }
         .eval-rating { text-align: center; }
-        .eval-rating .score { font-size: 1.2rem; font-weight: 700; }
-        .eval-rating .label { font-size: 0.65rem; color: #999; }
-        .eval-notes { color: #666; font-size: 0.85rem; margin-top: 6px; font-style: italic; }
-        .empty-state { text-align: center; padding: 20px; color: #ccc; font-size: 0.9rem; }
+        .eval-rating .score { 
+            font-size: 1.3rem; font-weight: 800; 
+            color: var(--accent);
+        }
+        .eval-rating .label { font-size: 0.65rem; color: #999; text-transform: uppercase; }
+        .eval-notes { color: #555; font-size: 0.85rem; margin-top: 8px; font-style: italic; background: #f8f9ff; padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--accent); }
+        
+        /* Assignments */
+        .assignment-toggle {
+            padding: 14px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            transition: background 0.2s; border-radius: 8px; margin: 0 -8px; padding-left: 8px; padding-right: 8px;
+        }
+        .assignment-toggle:hover { background: #f8f9ff; }
+        .assignment-toggle strong { color: var(--primary); }
+        .bpm-badge {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+        }
+        
+        .empty-state { text-align: center; padding: 24px; color: #aaa; font-size: 0.9rem; }
+        
+        /* Footer */
+        .portal-footer {
+            text-align: center; padding: 24px; color: #999; font-size: 0.75rem;
+        }
+        .portal-footer img { height: 28px; border-radius: 6px; opacity: 0.5; margin-bottom: 6px; }
+        @keyframes popIn { from { transform: translate(-50%,-50%) scale(0.9); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -50,21 +152,81 @@
 <nav class="portal-nav">
     <div class="logo">
         <img src="/images/logo.jpg" alt="Wattar">
-        <span>Student Portal</span>
+        <span>Wattar Academy</span>
     </div>
     <div>
-        <a href="/portal/settings" style="color:#ccc;text-decoration:none;font-size:0.85rem;margin-right:12px;"><i class="fas fa-cog me-1"></i>Settings</a>
-        <a href="/portal/logout" style="color:#ccc;text-decoration:none;font-size:0.85rem;"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+        <a href="/portal/settings" style="margin-right:14px;"><i class="fas fa-cog me-1"></i>Settings</a>
+        <a href="/portal/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
     </div>
 </nav>
 
 <div class="container-portal">
     <!-- Welcome -->
     <div class="welcome-card">
-        <h2>Welcome, <%= student.name %></h2>
-        <div class="meta">
-            <span><i class="fas fa-music me-1"></i><%= student.instrument || 'Not set' %></span>
-            <span class="ms-3"><i class="fas fa-layer-group me-1"></i><%= student.current_level || 'Not set' %></span>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <% if (profile.profile_pic) { %>
+                <img src="<%= profile.profile_pic %>" style="width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,0.4);object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <% } else { %>
+                <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">
+                    <%= student.name.charAt(0) %>
+                </div>
+            <% } %>
+            <div>
+                <h2><%= profile.display_name || student.name %></h2>
+                <div class="meta">
+                    <span><i class="fas fa-music me-1"></i><%= student.instrument || 'Not set' %></span>
+                    <span class="ms-3"><i class="fas fa-layer-group me-1"></i><%= student.current_level || 'Not set' %></span>
+                </div>
+            </div>
+        </div>
+        <% if (profile.bio) { %>
+            <div style="margin-top:12px;font-size:0.85rem;color:rgba(255,255,255,0.8);font-style:italic;">"<%= profile.bio %>"</div>
+        <% } %>
+    </div>
+
+    <!-- Rank & XP -->
+    <div class="section-card" style="background:linear-gradient(135deg,#f8f9ff,#e8eaf6);border:2px solid #c5cae9;">
+        <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="font-size:2.5rem;"><%= rank.icon %></div>
+                <div>
+                    <div style="font-size:1.2rem;font-weight:800;color:<%= rank.color %>;"><%= rank.name %></div>
+                    <div style="font-size:1.5rem;font-weight:800;color:var(--primary);"><%= xp %> XP</div>
+                </div>
+            </div>
+            <button onclick="document.getElementById('xp-popup').style.display='flex'" style="background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(255,111,0,0.3);"><i class="fas fa-bolt me-1"></i>How?</button>
+        </div>
+        <div style="padding:0 20px 16px;">
+            <% const nextRank = ranks.find(r => r.minXP > xp); %>
+            <% const currentRankXP = rank.minXP; const nextRankXP = nextRank ? nextRank.minXP : xp; const progress = nextRank ? Math.min(100, ((xp - currentRankXP) / (nextRankXP - currentRankXP)) * 100) : 100; %>
+            <div style="background:#e0e0e0;border-radius:10px;height:8px;overflow:hidden;">
+                <div style="background:linear-gradient(90deg,<%= rank.color %>,var(--accent));height:100%;width:<%= progress %>%;border-radius:10px;transition:width 0.5s;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:0.65rem;color:#999;">
+                <span><%= rank.name %></span>
+                <% if (nextRank) { %><span><%= nextRank.minXP - xp %> XP to <%= nextRank.name %></span><% } else { %><span>Max rank! 🏆</span><% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- XP Popup -->
+    <div id="xp-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:#fff;border-radius:16px;padding:24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popIn 0.2s ease;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <h5 style="margin:0;color:var(--primary);font-weight:700;font-size:1rem;"><i class="fas fa-bolt me-2" style="color:var(--accent);"></i>How to Earn XP</h5>
+                <button onclick="document.getElementById('xp-popup').style.display='none'" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#999;line-height:1;">×</button>
+            </div>
+            <ul style="list-style:none;padding:0;margin:0;font-size:0.8rem;color:#555;line-height:2.2;">
+                <li>✅ <strong>+10 XP</strong> — Attend a session</li>
+                <li>⏰ <strong>+5 XP</strong> — Attend late</li>
+                <li>🎵 <strong>+20 XP</strong> — Complete an assignment</li>
+                <li>⭐ <strong>+Score × 10 XP</strong> — Good evaluations</li>
+                <li>🚀 <strong>+50 XP</strong> — Each level you advance</li>
+            </ul>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #eee;font-size:0.7rem;color:#999;">
+                <strong>Ranks:</strong><br>
+                <% ranks.forEach((r,i) => { %><span style="color:<%= r.minXP <= xp ? r.color : '#ccc' %>;"><%= r.icon %> <%= r.name %> (<%= r.minXP %>)</span><%= i < ranks.length-1 ? ' → ' : '' %><% }); %>
+            </div>
         </div>
     </div>
 
@@ -159,20 +321,20 @@
         <div class="section-body">
             <% if (assignments.length > 0) { %>
                 <% assignments.forEach((a, idx) => { %>
-                <div style="border-bottom:1px solid #eee;">
-                    <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.toggle-icon').classList.toggle('fa-chevron-down');this.querySelector('.toggle-icon').classList.toggle('fa-chevron-right');" style="padding:14px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+                <div style="border-bottom:1px solid #f0f2f8;">
+                    <div class="assignment-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.toggle-icon').classList.toggle('fa-chevron-down');this.querySelector('.toggle-icon').classList.toggle('fa-chevron-right');">
                         <div>
                             <strong style="font-size:1rem;"><%= a.title %></strong>
-                            <div style="font-size:0.75rem;color:#888;margin-top:2px;"><%= a.level %> — Session <%= a.session_number %></div>
+                            <div style="font-size:0.75rem;color:#666;margin-top:2px;"><%= a.level %> — Session <%= a.session_number %></div>
                         </div>
                         <div style="display:flex;align-items:center;gap:10px;">
-                            <% if (a.bpm) { %><span style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;"><%= a.bpm %> BPM</span><% } %>
-                            <i class="fas fa-chevron-right toggle-icon" style="color:#ccc;"></i>
+                            <% if (a.bpm) { %><span class="bpm-badge"><%= a.bpm %> BPM</span><% } %>
+                            <i class="fas fa-chevron-right toggle-icon" style="color:var(--accent);transition:transform 0.2s;"></i>
                         </div>
                     </div>
                     <div style="display:none;padding-bottom:16px;">
                         <% if (a.notes_sequence) { %>
-                        <div class="fretboard-view" data-notes="<%= a.notes_sequence %>" data-bpm="<%= a.bpm || 60 %>" style="overflow-x:auto;background:#f9f9f9;border-radius:8px;padding:12px;"></div>
+                        <div class="fretboard-view" data-notes="<%= a.notes_sequence %>" data-bpm="<%= a.bpm || 60 %>" data-instrument="<%= a.instrument || 'guitar' %>" style="overflow-x:auto;background:#f9f9f9;border-radius:8px;padding:12px;"></div>
                         <% } %>
                         <% if (a.instructions) { %>
                         <div style="margin-top:10px;color:#555;font-size:0.85rem;"><i class="fas fa-info-circle me-1"></i><%= a.instructions %></div>
@@ -213,6 +375,12 @@
     <!-- Change Password -->
 </div>
 
+<!-- Footer -->
+<div class="portal-footer">
+    <img src="/images/logo.jpg" alt="Wattar Academy"><br>
+    <span>Wattar Academy © 2024</span>
+</div>
+
 <script>
 const ABC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const SOL = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
@@ -225,94 +393,343 @@ let audioCtx = null;
 function getNoteName(idx) { return ABC[idx]; }
 function getFreq(midi) { return 440 * Math.pow(2, (midi-69)/12); }
 function getBpm(cid) { const el = document.getElementById('bpm-'+cid); return el ? parseInt(el.value) : 60; }
-function playTone(freq, dur) {
+
+// Instrument-aware tone synthesis
+let currentInstrumentSound = 'guitar';
+
+function playTone(freq, dur, instrument) {
     if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-    o.type='triangle'; o.frequency.value=freq;
-    g.gain.setValueAtTime(0.4,audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+dur*0.9);
-    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);
+    const inst = instrument || currentInstrumentSound || 'guitar';
+    const t = audioCtx.currentTime;
+    
+    if (inst === 'guitar') {
+        playGuitar(freq, dur, t);
+    } else if (inst === 'oud') {
+        playOud(freq, dur, t);
+    } else if (inst === 'piano') {
+        playPiano(freq, dur, t);
+    } else if (inst === 'violin') {
+        playViolin(freq, dur, t);
+    } else {
+        playGuitar(freq, dur, t);
+    }
 }
+
+function playGuitar(freq, dur, t) {
+    // Guitar: plucked string - sharp attack, quick decay, warm harmonics
+    const g = audioCtx.createGain();
+    g.connect(audioCtx.destination);
+    
+    // Fundamental
+    const o1 = audioCtx.createOscillator();
+    o1.type = 'triangle';
+    o1.frequency.value = freq;
+    
+    // 2nd harmonic (octave)
+    const o2 = audioCtx.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = freq * 2;
+    const g2 = audioCtx.createGain();
+    g2.gain.value = 0.3;
+    
+    // 3rd harmonic
+    const o3 = audioCtx.createOscillator();
+    o3.type = 'sine';
+    o3.frequency.value = freq * 3;
+    const g3 = audioCtx.createGain();
+    g3.gain.value = 0.1;
+    
+    // Body resonance filter
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 2500;
+    filter.Q.value = 1.5;
+    
+    o1.connect(filter);
+    o2.connect(g2); g2.connect(filter);
+    o3.connect(g3); g3.connect(filter);
+    filter.connect(g);
+    
+    // Pluck envelope: sharp attack, fast initial decay, slow sustain decay
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.5, t + 0.005);  // Sharp attack
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.05); // Quick drop
+    g.gain.exponentialRampToValueAtTime(0.01, t + dur * 0.95); // Slow fade
+    
+    o1.start(t); o2.start(t); o3.start(t);
+    o1.stop(t + dur); o2.stop(t + dur); o3.stop(t + dur);
+}
+
+function playOud(freq, dur, t) {
+    // Oud: similar to guitar but warmer, more resonant, lower harmonics
+    const g = audioCtx.createGain();
+    g.connect(audioCtx.destination);
+    
+    // Fundamental - stronger
+    const o1 = audioCtx.createOscillator();
+    o1.type = 'triangle';
+    o1.frequency.value = freq;
+    
+    // 2nd harmonic
+    const o2 = audioCtx.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = freq * 2;
+    const g2 = audioCtx.createGain();
+    g2.gain.value = 0.4;
+    
+    // 3rd harmonic (weaker for warmth)
+    const o3 = audioCtx.createOscillator();
+    o3.type = 'sine';
+    o3.frequency.value = freq * 3;
+    const g3 = audioCtx.createGain();
+    g3.gain.value = 0.05;
+    
+    // Warmer filter - lower cutoff for oud's rounder tone
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1800;
+    filter.Q.value = 2;
+    
+    // Slight vibrato for oud character
+    const vibrato = audioCtx.createOscillator();
+    const vibratoGain = audioCtx.createGain();
+    vibrato.frequency.value = 5;
+    vibratoGain.gain.value = 2;
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(o1.frequency);
+    
+    o1.connect(filter);
+    o2.connect(g2); g2.connect(filter);
+    o3.connect(g3); g3.connect(filter);
+    filter.connect(g);
+    
+    // Oud pluck: slightly softer attack, longer sustain
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.45, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.01, t + dur * 0.9);
+    
+    vibrato.start(t); o1.start(t); o2.start(t); o3.start(t);
+    vibrato.stop(t + dur); o1.stop(t + dur); o2.stop(t + dur); o3.stop(t + dur);
+}
+
+function playPiano(freq, dur, t) {
+    // Piano: hammer strike, rich harmonics, sustain pedal feel
+    const g = audioCtx.createGain();
+    g.connect(audioCtx.destination);
+    
+    const o1 = audioCtx.createOscillator();
+    o1.type = 'sine';
+    o1.frequency.value = freq;
+    
+    const o2 = audioCtx.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = freq * 2;
+    const g2 = audioCtx.createGain();
+    g2.gain.value = 0.35;
+    
+    const o3 = audioCtx.createOscillator();
+    o3.type = 'sine';
+    o3.frequency.value = freq * 3;
+    const g3 = audioCtx.createGain();
+    g3.gain.value = 0.15;
+    
+    const o4 = audioCtx.createOscillator();
+    o4.type = 'sine';
+    o4.frequency.value = freq * 4;
+    const g4 = audioCtx.createGain();
+    g4.gain.value = 0.08;
+    
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    o3.connect(g3); g3.connect(g); o4.connect(g4); g4.connect(g);
+    
+    // Piano hammer: very fast attack, medium decay, longer sustain
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.5, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.01, t + dur * 0.98);
+    
+    o1.start(t); o2.start(t); o3.start(t); o4.start(t);
+    o1.stop(t + dur); o2.stop(t + dur); o3.stop(t + dur); o4.stop(t + dur);
+}
+
+function playViolin(freq, dur, t) {
+    // Violin: bowed string - slow attack, sustain, rich odd harmonics
+    const g = audioCtx.createGain();
+    g.connect(audioCtx.destination);
+    
+    const o1 = audioCtx.createOscillator();
+    o1.type = 'sawtooth';
+    o1.frequency.value = freq;
+    
+    const o2 = audioCtx.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = freq * 3; // Odd harmonic
+    const g2 = audioCtx.createGain();
+    g2.gain.value = 0.15;
+    
+    // Bow pressure filter
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 3000;
+    filter.Q.value = 1;
+    
+    // Vibrato
+    const vibrato = audioCtx.createOscillator();
+    const vibratoGain = audioCtx.createGain();
+    vibrato.frequency.value = 5.5;
+    vibratoGain.gain.value = 4;
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(o1.frequency);
+    
+    o1.connect(filter); o2.connect(g2); g2.connect(filter);
+    filter.connect(g);
+    
+    // Bowed: slow attack (bow grab), full sustain, gentle release
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.35, t + 0.08); // Slow bow attack
+    g.gain.setValueAtTime(0.35, t + dur * 0.7);     // Sustain
+    g.gain.exponentialRampToValueAtTime(0.01, t + dur * 0.95); // Release
+    
+    vibrato.start(t); o1.start(t); o2.start(t);
+    vibrato.stop(t + dur); o1.stop(t + dur); o2.stop(t + dur);
+}
+
+// Duration map: w=4beats, h=2, dq=1.5(dotted quarter), q=1, e=0.5, s=0.25
+const durBeats = {w:4, h:2, dq:1.5, q:1, de:0.75, e:0.5, s:0.25};
 
 function parseSteps(notesStr) {
     return notesStr.split(',').filter(n=>n).map(item => {
         const p = item.split(':');
-        if (p[0]==='f') return { type:'fret', string:+p[1], fret:+p[2], noteIdx:(openStrNotes[+p[1]]+ +p[2])%12, midi:openMidi[+p[1]]+ +p[2] };
-        if (p[0]==='p') return { type:'piano', octave:+p[1], noteIdx:+p[2], midi:(+p[1]+1)*12+ +p[2] };
-        if (p[0]==='n') return { type:'note', noteIdx:+p[1], midi:60+ +p[1] };
+        // Format with duration: fd:string:fret:dur, pd:oct:noteIdx:dur, nd:noteIdx:dur
+        if (p[0]==='fd') return { type:'fret', string:+p[1], fret:+p[2], noteIdx:(openStrNotes[+p[1]]+ +p[2])%12, midi:openMidi[+p[1]]+ +p[2], beats:durBeats[p[3]]||1 };
+        if (p[0]==='pd') return { type:'piano', octave:+p[1], noteIdx:+p[2], midi:(+p[1]+1)*12+ +p[2], beats:durBeats[p[3]]||1 };
+        if (p[0]==='nd') return { type:'note', noteIdx:+p[1], midi:60+ +p[1], beats:durBeats[p[2]]||1 };
+        if (p[0]==='r') return { type:'rest', noteIdx:0, midi:0, beats:durBeats[p[1]]||1 };
+        // Original format (no duration, default to 1 beat)
+        if (p[0]==='f') return { type:'fret', string:+p[1], fret:+p[2], noteIdx:(openStrNotes[+p[1]]+ +p[2])%12, midi:openMidi[+p[1]]+ +p[2], beats:1 };
+        if (p[0]==='p') return { type:'piano', octave:+p[1], noteIdx:+p[2], midi:(+p[1]+1)*12+ +p[2], beats:1 };
+        if (p[0]==='n') return { type:'note', noteIdx:+p[1], midi:60+ +p[1], beats:1 };
         // Legacy format: "string:fret"
-        if (p.length===2 && !isNaN(p[0]) && !isNaN(p[1])) return { type:'fret', string:+p[0], fret:+p[1], noteIdx:(openStrNotes[+p[0]]+ +p[1])%12, midi:openMidi[+p[0]]+ +p[1] };
+        if (p.length===2 && !isNaN(p[0]) && !isNaN(p[1])) return { type:'fret', string:+p[0], fret:+p[1], noteIdx:(openStrNotes[+p[0]]+ +p[1])%12, midi:openMidi[+p[0]]+ +p[1], beats:1 };
         return null;
     }).filter(x=>x);
 }
 
-function renderFretboardView(container, notesStr, bpm) {
+function renderFretboardView(container, notesStr, bpm, instrument) {
     const steps = parseSteps(notesStr);
     if (steps.length===0) { container.innerHTML='<p style="color:#999;text-align:center;font-size:0.8rem;">No data</p>'; return; }
     const cid = 'fb_'+Math.random().toString(36).substr(2,6);
     container.id = cid;
     const hasFrets = steps.some(s=>s.type==='fret');
+    const inst = instrument || 'guitar';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;"><button onclick="playSeq('${cid}',getBpm('${cid}'))" class="play-${cid}" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:0.8rem;cursor:pointer;"><i class="fas fa-play me-1"></i>Play</button><button onclick="stopSeq('${cid}')" class="stop-${cid}" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:0.8rem;cursor:pointer;display:none;"><i class="fas fa-stop me-1"></i>Stop</button><div style="display:flex;align-items:center;gap:6px;"><label style="font-size:0.75rem;color:#666;">BPM:</label><input type="range" min="30" max="200" value="${bpm}" id="bpm-${cid}" style="width:80px;" oninput="document.getElementById('bpmVal-${cid}').textContent=this.value"><span id="bpmVal-${cid}" style="font-size:0.8rem;font-weight:700;min-width:24px;">${bpm}</span></div><span class="disp-${cid}" style="font-size:0.85rem;font-weight:600;color:#666;">—</span></div>`;
 
     if (hasFrets) {
-        // Render fretboard
         const frets=12;
-        html += '<table style="border-collapse:collapse;width:100%;min-width:500px;">';
-        html += '<tr><td style="width:20px;"></td>';
-        for(let f=0;f<=frets;f++) html+=`<td style="text-align:center;color:#bbb;padding:2px;font-size:0.6rem;">${f}</td>`;
-        html += '</tr>';
-        for(let s=0;s<6;s++){
-            html+=`<tr><td style="font-weight:700;color:#999;font-size:0.6rem;">${strNames[s]}</td>`;
-            for(let f=0;f<=frets;f++){
-                const here=[];steps.forEach((st,i)=>{if(st.type==='fret'&&st.string===s&&st.fret===f)here.push(i);});
-                const has=here.length>0;const bg=has?'#28a745':'#f5f5f5';const col=has?'#fff':'#ddd';
-                const cnt=has?`<b>${here.map(i=>i+1).join(',')}</b>`:'.';
-                html+=`<td id="${cid}_${s}_${f}" style="border:1px solid #eee;text-align:center;padding:4px 2px;background:${bg};color:${col};font-size:0.6rem;border-radius:${has?'4px':'0'};transition:all 0.15s;">${cnt}</td>`;
-            }
-            html+='</tr>';
+        const strings=6;
+        const cellW=48;
+        const cellH=34;
+        const totalW=(frets+1)*cellW+40;
+        
+        html += `<div style="overflow-x:auto;"><div style="position:relative;min-width:${totalW}px;height:${strings*cellH+50}px;background:linear-gradient(180deg, #8B5E3C 0%, #A0522D 30%, #8B4513 70%, #6B3410 100%);border-radius:8px;padding:20px 10px 30px 40px;border:2px solid #5C3317;">`;
+        
+        // Fret numbers at bottom
+        html += `<div style="position:absolute;bottom:5px;left:40px;display:flex;">`;
+        for(let f=0;f<=frets;f++) html+=`<div style="width:${cellW}px;text-align:center;font-size:0.55rem;color:#ddd;font-weight:600;">${f}</div>`;
+        html += `</div>`;
+        
+        // Fret wires
+        for(let f=0;f<=frets;f++){
+            const x=f*cellW;
+            const lineW=f===0?'4px':'2px';
+            const lineColor=f===0?'#ddd':'#ccc';
+            html+=`<div style="position:absolute;left:${40+x}px;top:18px;width:${lineW};height:${strings*cellH}px;background:${lineColor};"></div>`;
         }
-        html += '</table>';
+        
+        // Dot markers
+        [3,5,7,9,12].forEach(m=>{
+            if(m<=frets){
+                const x=(m-0.5)*cellW+40;
+                html+=`<div style="position:absolute;left:${x-4}px;top:${strings*cellH/2+10}px;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>`;
+            }
+        });
+        
+        // Strings + notes
+        for(let s=0;s<strings;s++){
+            const y=s*cellH+20;
+            const thickness=1+s*0.3;
+            html+=`<div style="position:absolute;left:40px;top:${y+cellH/2-thickness/2}px;width:${(frets+1)*cellW}px;height:${thickness}px;background:linear-gradient(90deg,#ddd,#bbb);"></div>`;
+            html+=`<div style="position:absolute;left:8px;top:${y+cellH/2-8}px;font-size:0.65rem;font-weight:700;color:#ffd700;">${strNames[s]}</div>`;
+            
+            for(let f=0;f<=frets;f++){
+                const noteIdx=(openStrNotes[s]+f)%12;
+                const name=getNoteName(noteIdx);
+                const here=[];steps.forEach((st,i)=>{if(st.type==='fret'&&st.string===s&&st.fret===f)here.push(i);});
+                const has=here.length>0;
+                const isSharp=[1,3,6,8,10].includes(noteIdx);
+                const x=f*cellW+40+cellW/2-13;
+                const ny=y+cellH/2-13;
+                
+                let bg,col,border;
+                if(has){bg='#28a745';col='#fff';border='2px solid #1e7e34';}
+                else if(isSharp){bg='#222';col='#fff';border='2px solid #000';}
+                else{bg='#ff8c42';col='#fff';border='2px solid #e07030';}
+                
+                html+=`<div id="${cid}_${s}_${f}" style="position:absolute;left:${x}px;top:${ny}px;width:26px;height:26px;border-radius:50%;background:${bg};color:${col};border:${border};display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:700;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,0.3);transition:all 0.15s;">${name}</div>`;
+            }
+        }
+        html += `</div></div>`;
     }
 
     // Step badges
     html += '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">';
     steps.forEach((st,i)=>{
-        const n=getNoteName(st.noteIdx);
-        html+=`<span id="${cid}_s${i}" style="background:#28a745;color:#fff;padding:3px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;transition:all 0.15s;">${i+1}.${n}</span>`;
+        if(st.type==='rest'){
+            html+=`<span id="${cid}_s${i}" style="background:#999;color:#fff;padding:3px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;transition:all 0.15s;">—</span>`;
+        } else {
+            const n=getNoteName(st.noteIdx);
+            html+=`<span id="${cid}_s${i}" style="background:#28a745;color:#fff;padding:3px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;transition:all 0.15s;">${n}</span>`;
+        }
         if(i<steps.length-1)html+='<span style="color:#ccc;">→</span>';
     });
     html += '</div>';
     container.innerHTML = html;
     container.dataset.steps = JSON.stringify(steps);
+    container.dataset.instrument = inst;
 }
 
 function playSeq(cid, bpm) {
     stopSeq(cid);
     if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
     const c=document.getElementById(cid);const steps=JSON.parse(c.dataset.steps);
-    const ms=60000/bpm;let cur=0;
+    const instrument=c.dataset.instrument||'guitar';
+    const beatMs=60000/bpm;let cur=0;let timerId=null;
     document.querySelector(`.play-${cid}`).style.display='none';
     document.querySelector(`.stop-${cid}`).style.display='';
     function tick(){
-        // Reset
+        // Reset all highlights
         steps.forEach((st,i)=>{
             if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#28a745';cell.style.transform='';}}
             const b=document.getElementById(`${cid}_s${i}`);if(b){b.style.background='#28a745';b.style.color='#fff';b.style.transform='';}
         });
-        if(cur>=steps.length)cur=0;
+        if(cur>=steps.length){stopSeq(cid);return;}
         const st=steps[cur];
         if(st.type==='fret'){const cell=document.getElementById(`${cid}_${st.string}_${st.fret}`);if(cell){cell.style.background='#ffd700';cell.style.transform='scale(1.3)';}}
         const b=document.getElementById(`${cid}_s${cur}`);if(b){b.style.background='#ffd700';b.style.color='#000';b.style.transform='scale(1.2)';}
-        document.querySelector(`.disp-${cid}`).textContent=`${cur+1}/${steps.length} — ${getNoteName(st.noteIdx)}`;
-        playTone(getFreq(st.midi), ms/1000*0.8);
+        document.querySelector(`.disp-${cid}`).textContent=`${cur+1}/${steps.length} — ${st.type==='rest'?'—':getNoteName(st.noteIdx)}`;
+        const noteDur = (st.beats||1)*beatMs/1000;
+        if(st.type!=='rest') playTone(getFreq(st.midi), noteDur*0.8, instrument);
+        const delay = (st.beats||1)*beatMs;
         cur++;
+        timerId=setTimeout(tick, delay);
     }
     tick();
-    const id=setInterval(tick,ms);playIntervals.push({id,cid});
+    playIntervals.push({id:timerId,cid,getTimer:()=>timerId});
 }
 
 function stopSeq(cid){
-    playIntervals=playIntervals.filter(x=>{if(x.cid===cid){clearInterval(x.id);return false;}return true;});
+    playIntervals=playIntervals.filter(x=>{if(x.cid===cid){clearTimeout(x.id);if(x.getTimer)clearTimeout(x.getTimer());return false;}return true;});
     const p=document.querySelector(`.play-${cid}`),s=document.querySelector(`.stop-${cid}`);
     if(p)p.style.display='';if(s)s.style.display='none';
     const d=document.querySelector(`.disp-${cid}`);if(d)d.textContent='—';
@@ -321,7 +738,8 @@ function stopSeq(cid){
 
 document.querySelectorAll('.fretboard-view').forEach(el=>{
     const notes=el.getAttribute('data-notes'),bpm=parseInt(el.getAttribute('data-bpm'))||60;
-    if(notes)renderFretboardView(el,notes,bpm);
+    const instrument=el.getAttribute('data-instrument')||'guitar';
+    if(notes)renderFretboardView(el,notes,bpm,instrument);
 });
 </script>
 </body>

@@ -103,6 +103,18 @@
                 <div id="instrumentBuilder" style="background:#1a1a1a;border-radius:8px;padding:16px;margin-bottom:12px;">
                     <p class="text-center text-muted mb-0">Select a student to show the instrument</p>
                 </div>
+                <!-- Timing Controls -->
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                    <span style="font-size:0.8rem;font-weight:600;color:#666;">Duration:</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="noteDuration" id="dur-w" value="w"><label class="btn btn-outline-dark" for="dur-w" title="Whole (4 beats)">𝅝</label>
+                        <input type="radio" class="btn-check" name="noteDuration" id="dur-h" value="h"><label class="btn btn-outline-dark" for="dur-h" title="Half (2 beats)">𝅗𝅥</label>
+                        <input type="radio" class="btn-check" name="noteDuration" id="dur-q" value="q" checked><label class="btn btn-outline-dark" for="dur-q" title="Quarter (1 beat)">♩</label>
+                        <input type="radio" class="btn-check" name="noteDuration" id="dur-e" value="e"><label class="btn btn-outline-dark" for="dur-e" title="Eighth (½ beat)">♪</label>
+                        <input type="radio" class="btn-check" name="noteDuration" id="dur-s" value="s"><label class="btn btn-outline-dark" for="dur-s" title="Sixteenth (¼ beat)">𝅘𝅥𝅯</label>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="addRest()" title="Add rest/pause"><i class="fas fa-minus me-1"></i>Rest</button>
+                </div>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <small class="text-muted">Sequence: <strong id="sequenceDisplay">—</strong></small>
                     <div><button class="btn btn-sm btn-outline-warning" onclick="undoLast()"><i class="fas fa-undo"></i> Undo</button> <button class="btn btn-sm btn-outline-danger" onclick="clearSeqBuilder()"><i class="fas fa-trash"></i> Clear</button></div>
@@ -209,53 +221,140 @@ function buildInstrumentUI() {
 
 // ========== GUITAR/OUD FRETBOARD ==========
 function buildFretboard(container) {
-    const frets = currentInstrument.includes('oud') ? 10 : 12;
-    let html = '<table style="border-collapse:collapse;width:100%;min-width:550px;">';
-    html += '<tr><td style="width:24px;"></td>';
-    for (let f = 0; f <= frets; f++) html += `<td style="text-align:center;font-size:0.6rem;color:#666;">${f}</td>`;
-    html += '</tr>';
-    for (let s = 0; s < 6; s++) {
-        html += `<tr><td style="font-weight:700;font-size:0.7rem;color:#999;">${strNames[s]}</td>`;
+    const frets = currentInstrument === 'oud' ? 10 : 12;
+    const strings = 6;
+    const cellW = 52;
+    const cellH = 36;
+    const totalW = (frets + 1) * cellW + 40;
+    
+    let html = `<div style="overflow-x:auto;">
+    <div style="position:relative;min-width:${totalW}px;height:${strings * cellH + 50}px;background:linear-gradient(180deg, #8B5E3C 0%, #A0522D 30%, #8B4513 70%, #6B3410 100%);border-radius:8px;padding:20px 10px 30px 40px;border:2px solid #5C3317;">`;
+    
+    // Fret numbers at bottom
+    html += `<div style="position:absolute;bottom:5px;left:40px;display:flex;">`;
+    for (let f = 0; f <= frets; f++) {
+        html += `<div style="width:${cellW}px;text-align:center;font-size:0.6rem;color:#ddd;font-weight:600;">${f}</div>`;
+    }
+    html += `</div>`;
+    
+    // Fret wires (vertical lines)
+    for (let f = 0; f <= frets; f++) {
+        const x = f * cellW;
+        const lineW = f === 0 ? '4px' : '2px';
+        const lineColor = f === 0 ? '#ddd' : '#ccc';
+        html += `<div style="position:absolute;left:${40 + x}px;top:18px;width:${lineW};height:${strings * cellH}px;background:${lineColor};"></div>`;
+    }
+    
+    // Fret dot markers
+    const markers = [3, 5, 7, 9, 12];
+    markers.forEach(m => {
+        if (m <= frets) {
+            const x = (m - 0.5) * cellW + 40;
+            html += `<div style="position:absolute;left:${x - 4}px;top:${strings * cellH / 2 + 10}px;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>`;
+        }
+    });
+    
+    // Strings (horizontal lines) + notes
+    for (let s = 0; s < strings; s++) {
+        const y = s * cellH + 20;
+        const thickness = 1 + s * 0.3;
+        // String line
+        html += `<div style="position:absolute;left:40px;top:${y + cellH/2 - thickness/2}px;width:${(frets+1)*cellW}px;height:${thickness}px;background:linear-gradient(90deg,#ddd,#bbb);"></div>`;
+        // String name
+        html += `<div style="position:absolute;left:8px;top:${y + cellH/2 - 8}px;font-size:0.7rem;font-weight:700;color:#ffd700;">${strNames[s]}</div>`;
+        
+        // Note circles
         for (let f = 0; f <= frets; f++) {
             const noteIdx = getNoteIdx(s, f);
             const name = getNoteName(noteIdx);
+            const isSharp = [1,3,6,8,10].includes(noteIdx);
             const inSeq = sequence.filter(x => x.string===s && x.fret===f).length;
-            const bg = inSeq ? '#28a745' : (f===0?'#333':'#2a2a2a');
-            const col = inSeq ? '#fff' : '#888';
-            html += `<td style="border:1px solid #333;padding:0;text-align:center;"><button onclick="addFretNote(${s},${f})" style="width:100%;padding:7px 2px;border:none;background:${bg};color:${col};cursor:pointer;font-size:0.55rem;font-weight:600;">${inSeq?'●'+inSeq:name}</button></td>`;
+            const x = f * cellW + 40 + cellW/2 - 14;
+            const ny = y + cellH/2 - 14;
+            
+            let bg, col, border;
+            if (inSeq) {
+                bg = '#28a745'; col = '#fff'; border = '2px solid #1e7e34';
+            } else if (isSharp) {
+                bg = '#222'; col = '#fff'; border = '2px solid #000';
+            } else {
+                bg = '#ff8c42'; col = '#fff'; border = '2px solid #e07030';
+            }
+            
+            html += `<div onclick="addFretNote(${s},${f})" style="position:absolute;left:${x}px;top:${ny}px;width:28px;height:28px;border-radius:50%;background:${bg};color:${col};border:${border};display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;cursor:pointer;z-index:2;transition:transform 0.1s;box-shadow:0 2px 4px rgba(0,0,0,0.3);" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform=''">${name}</div>`;
         }
-        html += '</tr>';
     }
-    html += '</table>';
+    
+    html += `</div></div>`;
     container.innerHTML = html;
 }
 
+function getSelectedDuration() {
+    const checked = document.querySelector('input[name="noteDuration"]:checked');
+    return checked ? checked.value : 'q';
+}
+
+const durationSymbols = { w:'𝅝', h:'𝅗𝅥', q:'♩', e:'♪', s:'𝅘𝅥𝅯' };
+const durationBeats = { w:4, h:2, q:1, e:0.5, s:0.25 };
+
 function addFretNote(s, f) {
-    sequence.push({ type:'fret', string:s, fret:f, noteIdx: getNoteIdx(s,f) });
+    const dur = getSelectedDuration();
+    sequence.push({ type:'fret', string:s, fret:f, noteIdx: getNoteIdx(s,f), duration: dur });
     buildInstrumentUI();
+}
+
+function addPianoNote(oct, noteIdx) {
+    const dur = getSelectedDuration();
+    sequence.push({ type:'piano', octave:oct, noteIdx:noteIdx, duration: dur });
+    buildInstrumentUI();
+}
+
+function addPaletteNote(noteIdx) {
+    const dur = getSelectedDuration();
+    sequence.push({ type:'note', noteIdx:noteIdx, duration: dur });
+    buildInstrumentUI();
+}
+
+function addRest() {
+    const dur = getSelectedDuration();
+    sequence.push({ type:'rest', duration: dur });
+    updateSeqDisplay();
 }
 
 // ========== PIANO KEYBOARD ==========
 function buildPiano(container) {
-    let html = '<div style="overflow-x:auto;"><div style="display:flex;gap:1px;min-width:900px;">';
-    // 7 octaves (C1 to B7) - full piano range
+    let html = '<div style="overflow-x:auto;background:#1a1a1a;border-radius:8px;padding:16px;"><div style="display:flex;position:relative;min-width:900px;height:140px;">';
+    let xPos = 0;
+    const whiteW = 36;
+    const blackW = 24;
+    const whiteH = 120;
+    const blackH = 75;
+    const whites = [];
+    const blacks = [];
+    
     for (let oct = 1; oct <= 7; oct++) {
         for (let i = 0; i < 12; i++) {
-            const name = getNoteName(i);
             const isBlack = [1,3,6,8,10].includes(i);
-            const bg = isBlack ? '#000' : '#fff';
-            const col = isBlack ? '#fff' : '#000';
-            const border = isBlack ? '1px solid #333' : '1px solid #ccc';
-            const w = isBlack ? '20px' : '28px';
-            const h = isBlack ? '50px' : '70px';
+            const name = getNoteName(i);
             const inSeq = sequence.filter(x => x.type==='piano' && x.octave===oct && x.noteIdx===i).length;
-            const finalBg = inSeq ? '#28a745' : bg;
-            const finalCol = inSeq ? '#fff' : col;
-            html += `<button onclick="addPianoNote(${oct},${i})" style="width:${w};min-width:${w};height:${h};background:${finalBg};color:${finalCol};border:${border};border-radius:0 0 3px 3px;font-size:0.45rem;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:3px;">${inSeq?'●'+inSeq:(i===0?name+oct:name)}</button>`;
+            
+            if (!isBlack) {
+                const bg = inSeq ? '#28a745' : '#fff';
+                const col = inSeq ? '#fff' : '#333';
+                const label = i === 0 ? name + oct : name;
+                whites.push(`<div onclick="addPianoNote(${oct},${i})" style="position:absolute;left:${xPos}px;top:0;width:${whiteW-2}px;height:${whiteH}px;background:${bg};border:1px solid #999;border-radius:0 0 4px 4px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:0.55rem;font-weight:600;color:${col};cursor:pointer;z-index:1;transition:background 0.1s;" onmouseover="if(!${inSeq})this.style.background='#eee'" onmouseout="if(!${inSeq})this.style.background='${inSeq?'#28a745':'#fff'}'">${label}</div>`);
+                xPos += whiteW;
+            } else {
+                const bg = inSeq ? '#28a745' : '#222';
+                const col = '#fff';
+                const bx = xPos - blackW/2 - 1;
+                blacks.push(`<div onclick="addPianoNote(${oct},${i})" style="position:absolute;left:${bx}px;top:0;width:${blackW}px;height:${blackH}px;background:${bg};border:1px solid #000;border-radius:0 0 3px 3px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:0.5rem;font-weight:600;color:${col};cursor:pointer;z-index:3;transition:background 0.1s;box-shadow:0 3px 6px rgba(0,0,0,0.4);" onmouseover="if(!${inSeq})this.style.background='#444'" onmouseout="if(!${inSeq})this.style.background='${inSeq?'#28a745':'#222'}'">${name}</div>`);
+            }
         }
     }
-    html += '</div></div>';
-    html += '<div style="text-align:center;margin-top:6px;font-size:0.7rem;color:#666;">← Scroll for all octaves (C1 to B7) →</div>';
+    
+    html += whites.join('') + blacks.join('');
+    html += '</div><div style="text-align:center;margin-top:8px;font-size:0.7rem;color:#666;">← Scroll for all octaves →</div></div>';
     container.innerHTML = html;
 }
 
@@ -268,24 +367,47 @@ function addPianoNote(oct, noteIdx) {
 const violinStrNames = ['E5','A4','D4','G3'];
 const violinOpenNotes = [4, 9, 2, 7]; // E, A, D, G as indexes
 function buildViolin(container) {
-    const positions = 8; // 0-7
-    let html = '<table style="border-collapse:collapse;width:100%;max-width:500px;margin:0 auto;">';
-    html += '<tr><td style="width:30px;"></td>';
-    for (let p = 0; p <= positions; p++) html += `<td style="text-align:center;font-size:0.65rem;color:#666;">${p}</td>`;
-    html += '</tr>';
-    for (let s = 0; s < 4; s++) {
-        html += `<tr><td style="font-weight:700;font-size:0.7rem;color:#999;">${violinStrNames[s]}</td>`;
+    const positions = 8;
+    const strings = 4;
+    const cellW = 56;
+    const cellH = 44;
+    const totalW = (positions + 1) * cellW + 50;
+    
+    let html = `<div style="overflow-x:auto;">
+    <div style="position:relative;min-width:${totalW}px;height:${strings * cellH + 50}px;background:linear-gradient(180deg, #2C1810 0%, #3D2314 50%, #2C1810 100%);border-radius:8px;padding:20px 10px 30px 50px;border:2px solid #1a0f0a;">`;
+    
+    // Position numbers
+    html += `<div style="position:absolute;bottom:5px;left:50px;display:flex;">`;
+    for (let p = 0; p <= positions; p++) {
+        html += `<div style="width:${cellW}px;text-align:center;font-size:0.6rem;color:#888;">${p}</div>`;
+    }
+    html += `</div>`;
+    
+    // Strings + notes
+    for (let s = 0; s < strings; s++) {
+        const y = s * cellH + 20;
+        const thickness = 1.5 + s * 0.5;
+        html += `<div style="position:absolute;left:50px;top:${y + cellH/2 - thickness/2}px;width:${(positions+1)*cellW}px;height:${thickness}px;background:linear-gradient(90deg,#ccc,#999);"></div>`;
+        html += `<div style="position:absolute;left:10px;top:${y + cellH/2 - 8}px;font-size:0.75rem;font-weight:700;color:#ffd700;">${violinStrNames[s]}</div>`;
+        
         for (let p = 0; p <= positions; p++) {
             const noteIdx = (violinOpenNotes[s] + p) % 12;
             const name = getNoteName(noteIdx);
+            const isSharp = [1,3,6,8,10].includes(noteIdx);
             const inSeq = sequence.filter(x => x.string===s && x.fret===p).length;
-            const bg = inSeq ? '#28a745' : (p===0?'#333':'#2a2a2a');
-            const col = inSeq ? '#fff' : '#888';
-            html += `<td style="border:1px solid #333;padding:0;text-align:center;"><button onclick="addFretNote(${s},${p})" style="width:100%;padding:10px 4px;border:none;background:${bg};color:${col};cursor:pointer;font-size:0.65rem;font-weight:600;">${inSeq?'●'+inSeq:name}</button></td>`;
+            const x = p * cellW + 50 + cellW/2 - 16;
+            const ny = y + cellH/2 - 16;
+            
+            let bg, col;
+            if (inSeq) { bg = '#28a745'; col = '#fff'; }
+            else if (isSharp) { bg = '#222'; col = '#fff'; }
+            else { bg = '#4a90d9'; col = '#fff'; }
+            
+            html += `<div onclick="addFretNote(${s},${p})" style="position:absolute;left:${x}px;top:${ny}px;width:32px;height:32px;border-radius:50%;background:${bg};color:${col};display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;cursor:pointer;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,0.4);transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''">${name}</div>`;
         }
-        html += '</tr>';
     }
-    html += '</table>';
+    
+    html += `</div></div>`;
     container.innerHTML = html;
 }
 
@@ -318,12 +440,14 @@ function updateSeqDisplay() {
 }
 
 function encodeSequence() {
-    // Format: "type:data,type:data,..."
-    // fret -> f:string:fret  | piano -> p:octave:noteIdx | note -> n:noteIdx
+    // Format with duration: fd:string:fret:dur | pd:octave:noteIdx:dur | nd:noteIdx:dur
+    // Also supports rest: r:dur
     return sequence.map(s => {
-        if (s.type === 'fret') return `f:${s.string}:${s.fret}`;
-        if (s.type === 'piano') return `p:${s.octave}:${s.noteIdx}`;
-        return `n:${s.noteIdx}`;
+        const d = s.duration || 'q';
+        if (s.type === 'rest') return `r:${d}`;
+        if (s.type === 'fret') return `fd:${s.string}:${s.fret}:${d}`;
+        if (s.type === 'piano') return `pd:${s.octave}:${s.noteIdx}:${d}`;
+        return `nd:${s.noteIdx}:${d}`;
     }).join(',');
 }
 
@@ -434,10 +558,14 @@ function loadSequenceFromString(str) {
     if (!str) return;
     str.split(',').filter(n=>n).forEach(item => {
         const p = item.split(':');
-        if (p[0]==='f') sequence.push({type:'fret',string:+p[1],fret:+p[2],noteIdx:(openStrNotes[+p[1]]+ +p[2])%12});
-        else if (p[0]==='p') sequence.push({type:'piano',octave:+p[1],noteIdx:+p[2]});
-        else if (p[0]==='n') sequence.push({type:'note',noteIdx:+p[1]});
-        else if (p.length===2 && !isNaN(p[0])) sequence.push({type:'fret',string:+p[0],fret:+p[1],noteIdx:(openStrNotes[+p[0]]+ +p[1])%12});
+        if (p[0]==='fd') sequence.push({type:'fret',string:+p[1],fret:+p[2],noteIdx:(openStrNotes[+p[1]]+ +p[2])%12,duration:p[3]||'q'});
+        else if (p[0]==='pd') sequence.push({type:'piano',octave:+p[1],noteIdx:+p[2],duration:p[3]||'q'});
+        else if (p[0]==='nd') sequence.push({type:'note',noteIdx:+p[1],duration:p[2]||'q'});
+        else if (p[0]==='r') sequence.push({type:'rest',duration:p[1]||'q'});
+        else if (p[0]==='f') sequence.push({type:'fret',string:+p[1],fret:+p[2],noteIdx:(openStrNotes[+p[1]]+ +p[2])%12,duration:'q'});
+        else if (p[0]==='p') sequence.push({type:'piano',octave:+p[1],noteIdx:+p[2],duration:'q'});
+        else if (p[0]==='n') sequence.push({type:'note',noteIdx:+p[1],duration:'q'});
+        else if (p.length===2 && !isNaN(p[0])) sequence.push({type:'fret',string:+p[0],fret:+p[1],noteIdx:(openStrNotes[+p[0]]+ +p[1])%12,duration:'q'});
     });
 }
 

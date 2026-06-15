@@ -52,4 +52,28 @@ module.exports = (app, db) => {
             });
         });
     });
+    // Add bonus XP to a student
+    app.post('/my-students/:id/add-xp', requireAuth, requireRole(['trainer']), (req, res) => {
+        const userId = req.session.user.id;
+        const studentId = req.params.id;
+        const { amount, reason } = req.body;
+        const xpAmount = parseInt(amount);
+
+        if (!xpAmount || xpAmount < 1 || xpAmount > 100) return res.json({ success: false, error: 'XP must be between 1-100' });
+
+        // Verify this student belongs to the trainer
+        db.get(`SELECT s.id FROM students s WHERE s.id = ? AND s.trainer_id = (SELECT id FROM trainers WHERE user_id = ?)`,
+            [studentId, userId], (err, student) => {
+            if (err || !student) return res.json({ success: false, error: 'Student not found' });
+
+            // Add XP
+            db.run(`UPDATE student_accounts SET xp = xp + ? WHERE student_id = ?`, [xpAmount, studentId], function(err) {
+                if (err) return res.json({ success: false, error: 'Database error' });
+                // Get updated XP
+                db.get(`SELECT xp FROM student_accounts WHERE student_id = ?`, [studentId], (err, row) => {
+                    res.json({ success: true, newXP: row ? row.xp : 0 });
+                });
+            });
+        });
+    });
 };

@@ -1,6 +1,15 @@
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 module.exports = (app, db) => {
+
+    // Auto-award XP based on attendance status
+    function awardAttendanceXP(studentId, status) {
+        const xpMap = { present: 10, late: 5 };
+        const xp = xpMap[status];
+        if (!xp) return;
+        db.run(`UPDATE student_accounts SET xp = xp + ? WHERE student_id = ?`, [xp, studentId]);
+    }
+
     // Attendance Routes
     app.get('/attendance', requireAuth, (req, res) => {
         const user = req.session.user;
@@ -459,6 +468,9 @@ module.exports = (app, db) => {
                                             'DELETE FROM session_confirmations WHERE student_id = ? AND session_id = 0',
                                             [record.student_id]
                                         );
+                                        awardAttendanceXP(record.student_id, dbStatus);
+                                    } else if (dbStatus === 'late') {
+                                        awardAttendanceXP(record.student_id, dbStatus);
                                     }
                                     attendanceProcessed++;
                                     checkComplete();
@@ -790,6 +802,7 @@ module.exports = (app, db) => {
                 for (const sessionId in studentAttendance) {
                     const status = studentAttendance[sessionId];
                     stmt.run(studentId, sessionId, status, studentNote, user.id);
+                    awardAttendanceXP(studentId, status);
                 }
             }
             
@@ -814,6 +827,9 @@ module.exports = (app, db) => {
                 console.error('Error updating student month:', err);
                 return res.json({ success: false, error: 'Database error' });
             }
+            
+            // Award +50 XP for advancing to a new level
+            db.run(`UPDATE student_accounts SET xp = xp + 50 WHERE student_id = ?`, [student_id]);
             
             // Get the new sessions for this month
             db.all(`
@@ -878,6 +894,7 @@ module.exports = (app, db) => {
                 const status = attendance[studentId];
                 const studentNotes = notes && notes[studentId] ? notes[studentId] : null;
                 stmt.run(studentId, session_id, status, studentNotes, user.id);
+                awardAttendanceXP(studentId, status);
             }
             
             stmt.finalize((err) => {

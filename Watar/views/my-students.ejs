@@ -18,29 +18,30 @@
 
 <div class="row g-3">
     <% students.forEach(s => { %>
-    <div class="col-md-6 col-lg-4">
-        <div class="card h-100 student-card" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="viewStudent(<%= s.id %>)">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <% if (s.profile_pic) { %>
-                        <img src="<%= s.profile_pic %>" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;" alt="">
-                    <% } else { %>
-                        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1a237e,#3949ab);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;"><%= s.name.charAt(0) %></div>
-                    <% } %>
-                    <div class="ms-3">
-                        <h6 class="mb-0 fw-bold"><%= s.name %></h6>
-                        <small class="text-muted"><%= s.instrument || 'No instrument' %></small>
+    <div class="col-12">
+        <div class="card" style="cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f8f9ff'" onmouseout="this.style.background=''" onclick="viewMyStudent(<%= s.id %>)">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <% if (s.profile_pic) { %>
+                            <img src="<%= s.profile_pic %>" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;" alt="">
+                        <% } else { %>
+                            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1a237e,#3949ab);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.9rem;"><%= s.name.charAt(0) %></div>
+                        <% } %>
+                        <div>
+                            <strong style="font-size:0.9rem;"><%= s.name %></strong>
+                            <div style="font-size:0.75rem;color:#666;"><%= s.instrument || 'No instrument' %></div>
+                        </div>
                     </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge bg-info"><%= s.current_level || 'N/A' %></span>
-                    <small class="text-muted"><%= s.sessions_attended %> sessions</small>
-                </div>
-                <div class="mt-2 d-flex gap-2 flex-wrap">
-                    <small class="text-muted"><i class="fas fa-guitar me-1"></i><%= s.assignments_count %> assignments</small>
-                    <% if (s.last_attendance) { %>
-                    <small class="text-muted"><i class="fas fa-clock me-1"></i>Last: <%= new Date(s.last_attendance).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) %></small>
-                    <% } %>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-info" style="font-size:0.7rem;"><%= s.current_level || 'N/A' %></span>
+                        <small class="text-muted" style="min-width:70px;"><%= s.sessions_attended %> sessions</small>
+                        <small class="text-muted" style="min-width:90px;"><%= s.assignments_count %> assignments</small>
+                        <% if (s.last_attendance) { %>
+                        <small class="text-muted" style="min-width:80px;"><%= new Date(s.last_attendance).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) %></small>
+                        <% } %>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -65,13 +66,13 @@
 </div>
 
 <script>
-function viewStudent(id) {
+function viewMyStudent(id) {
     document.getElementById('modal-student-name').textContent = 'Loading...';
     document.getElementById('modal-student-body').innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>';
     new bootstrap.Modal(document.getElementById('studentDetailModal')).show();
 
     fetch('/my-students/' + id).then(r => r.json()).then(d => {
-        if (!d.success) return;
+        if (!d.success) { document.getElementById('modal-student-body').innerHTML = '<p class="text-center text-muted">Could not load details</p>'; return; }
         const s = d.student;
         document.getElementById('modal-student-name').textContent = s.name;
 
@@ -124,8 +125,43 @@ function viewStudent(id) {
             html += '</div>';
         }
 
+        // Add XP section
+        html += '<div class="col-12 mt-3 pt-3" style="border-top:2px solid #eee;">';
+        html += '<h6 class="fw-bold text-primary mb-2"><i class="fas fa-bolt me-1"></i> Award Bonus XP</h6>';
+        html += '<div class="d-flex gap-2 align-items-center">';
+        html += '<select id="xp-amount" class="form-select form-select-sm" style="width:auto;">';
+        html += '<option value="10">✅ +10 — Attend a session</option>';
+        html += '<option value="5">⏰ +5 — Attend late</option>';
+        html += '<option value="20">🎵 +20 — Complete an assignment</option>';
+        html += '<option value="50">🚀 +50 — Level advance</option>';
+        html += '<option value="10">⭐ +10 — Good evaluation</option>';
+        html += '<option value="15">🔥 +15 — Practice streak</option>';
+        html += '<option value="25">🎤 +25 — Band rehearsal</option>';
+        html += '</select>';
+        html += '<button class="btn btn-sm btn-warning fw-bold" onclick="awardXP(' + id + ')"><i class="fas fa-bolt me-1"></i>Award</button>';
+        html += '</div>';
+        html += '<div id="xp-msg" style="margin-top:6px;font-size:0.8rem;"></div>';
+        html += '</div>';
+
         html += '</div>';
         document.getElementById('modal-student-body').innerHTML = html;
+    });
+}
+
+function awardXP(studentId) {
+    const amount = document.getElementById('xp-amount').value;
+    const reason = document.getElementById('xp-reason').value;
+    fetch('/my-students/' + studentId + '/add-xp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ amount, reason })
+    }).then(r => r.json()).then(d => {
+        const msg = document.getElementById('xp-msg');
+        if (d.success) {
+            msg.innerHTML = '<span class="text-success fw-bold">✓ Awarded! New total: ' + d.newXP + ' XP</span>';
+        } else {
+            msg.innerHTML = '<span class="text-danger">' + (d.error || 'Error') + '</span>';
+        }
     });
 }
 </script>

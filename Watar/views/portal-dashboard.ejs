@@ -315,6 +315,47 @@
         </div>
     </div>
 
+    <!-- Practice Studio -->
+    <div class="section-card">
+        <div class="section-header" style="justify-content:space-between;cursor:pointer;" onclick="document.getElementById('practice-area').style.display=document.getElementById('practice-area').style.display==='none'?'block':'none';this.querySelector('.toggle-icon').classList.toggle('fa-chevron-down');this.querySelector('.toggle-icon').classList.toggle('fa-chevron-right');">
+            <span><i class="fas fa-headphones"></i> Practice Studio 🎮</span>
+            <i class="fas fa-chevron-right toggle-icon" style="color:var(--accent);transition:transform 0.2s;"></i>
+        </div>
+        <div id="practice-area" style="display:none;padding:16px 20px;">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+                <select id="practice-inst" onchange="pInstrument=this.value;pSequence=[];buildPractice();" style="padding:5px 10px;border-radius:8px;font-size:0.8rem;border:1px solid #ccc;">
+                    <option value="guitar">🎸 Guitar</option>
+                    <option value="oud">🪕 Oud</option>
+                    <option value="piano">🎹 Piano</option>
+                    <option value="violin">🎻 Violin</option>
+                    <option value="tabla">🥁 Tabla</option>
+                </select>
+                <select id="practice-notation" onchange="pNotation=this.value;buildPractice();" style="padding:5px 10px;border-radius:8px;font-size:0.8rem;border:1px solid #ccc;">
+                    <option value="abc">ABC</option>
+                    <option value="solfege">Do Re Mi</option>
+                </select>
+                <input type="number" id="practice-bpm" value="90" min="30" max="200" style="width:55px;padding:5px;border-radius:8px;font-size:0.8rem;border:1px solid #ccc;">
+                <span style="font-size:0.7rem;color:#888;">BPM</span>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+                <span style="font-size:0.7rem;color:#888;">Duration:</span>
+                <span class="p-dur" data-dur="q" onclick="setPDur(this)" style="padding:3px 7px;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:0.8rem;background:var(--accent);color:#fff;">♩</span>
+                <span class="p-dur" data-dur="h" onclick="setPDur(this)" style="padding:3px 7px;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:0.8rem;">𝅗𝅥</span>
+                <span class="p-dur" data-dur="e" onclick="setPDur(this)" style="padding:3px 7px;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:0.8rem;">♪</span>
+                <span class="p-dur" data-dur="w" onclick="setPDur(this)" style="padding:3px 7px;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:0.8rem;">𝅝</span>
+                <button onclick="pSequence.push({type:'rest',duration:pDur});buildPractice();" style="padding:3px 8px;border:1px solid #999;border-radius:6px;background:#eee;font-size:0.7rem;cursor:pointer;">Rest</button>
+                <button onclick="pSequence.pop();buildPractice();" style="padding:3px 8px;border:1px solid #f57f17;border-radius:6px;background:#fff3e0;color:#f57f17;font-size:0.7rem;cursor:pointer;"><i class="fas fa-undo"></i></button>
+                <button onclick="pSequence=[];buildPractice();" style="padding:3px 8px;border:1px solid #c62828;border-radius:6px;background:#ffebee;color:#c62828;font-size:0.7rem;cursor:pointer;"><i class="fas fa-trash"></i></button>
+                <button id="p-play-btn" onclick="playPractice()" style="padding:3px 10px;border:none;border-radius:6px;background:#28a745;color:#fff;font-size:0.75rem;cursor:pointer;font-weight:600;"><i class="fas fa-play me-1"></i>Play</button>
+                <button id="p-stop-btn" onclick="stopPractice()" style="padding:3px 10px;border:none;border-radius:6px;background:#dc3545;color:#fff;font-size:0.75rem;cursor:pointer;font-weight:600;display:none;"><i class="fas fa-stop me-1"></i>Stop</button>
+            </div>
+            <div style="font-size:0.7rem;color:#666;margin-bottom:6px;">Sequence: <strong id="p-seq-text">—</strong></div>
+            <div id="practice-builder" style="background:#1a1a2e;border-radius:10px;padding:12px;min-height:100px;">
+                <p style="text-align:center;color:#666;font-size:0.8rem;">Pick an instrument and start clicking notes!</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Assignments -->
     <div class="section-card">
         <div class="section-header" style="justify-content:space-between;"><span><i class="fas fa-guitar"></i> My Assignments</span><button id="notation-toggle-btn" onclick="toggleNotation()" style="background:var(--primary);color:#fff;border:none;padding:4px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;cursor:pointer;">ABC</button></div>
@@ -786,6 +827,69 @@ function toggleNotation() {
         if(notes)renderFretboardView(el,notes,bpm,instrument);
     });
 }
+
+// ===== PRACTICE STUDIO =====
+let pSequence=[],pInstrument='guitar',pNotation='abc',pDur='q',pTimer=null;
+function pGetName(i){return pNotation==='solfege'?SOL[i]:ABC[i];}
+function setPDur(el){document.querySelectorAll('.p-dur').forEach(b=>{b.style.background='#fff';b.style.color='#000';});el.style.background='var(--accent,#ff6f00)';el.style.color='#fff';pDur=el.dataset.dur;}
+function pAddFret(s,f){pSequence.push({type:'fret',string:s,fret:f,noteIdx:(openStrNotes[s]+f)%12,midi:openMidi[s]+f,duration:pDur});buildPractice();}
+function pAddPiano(oct,ni){pSequence.push({type:'piano',octave:oct,noteIdx:ni,midi:(oct+1)*12+ni,duration:pDur});buildPractice();}
+function pAddTabla(id){const idx=['dum','tek','ka','pa'].indexOf(id);pSequence.push({type:'tabla',tablaId:id,noteIdx:idx,midi:36+idx,duration:pDur});buildPractice();}
+
+function buildPractice(){
+    const c=document.getElementById('practice-builder');
+    if(pInstrument==='guitar'||pInstrument==='oud')buildPFretboard(c);
+    else if(pInstrument==='piano')buildPPiano(c);
+    else if(pInstrument==='violin')buildPViolin(c);
+    else if(pInstrument==='tabla')buildPTabla(c);
+    const el=document.getElementById('p-seq-text');
+    el.textContent=pSequence.length?pSequence.map(s=>s.type==='rest'?'—':s.type==='tabla'?['D','T','K','P'][s.noteIdx]:pGetName(s.noteIdx)).join(' → '):'—';
+}
+function buildPFretboard(c){
+    const frets=pInstrument==='oud'?10:12,cellW=46,cellH=30;
+    let h=`<div style="overflow-x:auto;"><div style="position:relative;min-width:${(frets+1)*cellW+36}px;height:${6*cellH+40}px;background:linear-gradient(180deg,#8B5E3C,#6B3410);border-radius:8px;padding:16px 8px 26px 36px;">`;
+    for(let f=0;f<=frets;f++)h+=`<div style="position:absolute;left:${36+f*cellW}px;top:14px;width:${f===0?'3px':'1px'};height:${6*cellH}px;background:#bbb;"></div>`;
+    for(let s=0;s<6;s++){const y=s*cellH+16;h+=`<div style="position:absolute;left:36px;top:${y+cellH/2}px;width:${(frets+1)*cellW}px;height:${1+s*0.3}px;background:#bbb;"></div>`;h+=`<div style="position:absolute;left:4px;top:${y+cellH/2-6}px;font-size:0.55rem;font-weight:700;color:#ffd700;">${strNames[s]}</div>`;
+    for(let f=0;f<=frets;f++){const ni=(openStrNotes[s]+f)%12;const inS=pSequence.filter(x=>x.type==='fret'&&x.string===s&&x.fret===f).length;const bg=inS?'#28a745':[1,3,6,8,10].includes(ni)?'#222':'#ff8c42';h+=`<div onclick="pAddFret(${s},${f})" style="position:absolute;left:${f*cellW+36+cellW/2-11}px;top:${y+cellH/2-11}px;width:22px;height:22px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.42rem;font-weight:700;cursor:pointer;z-index:2;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform=''">${pGetName(ni)}</div>`;}}
+    h+=`</div></div>`;c.innerHTML=h;
+}
+function buildPPiano(c){
+    let h='<div style="overflow-x:auto;"><div style="position:relative;height:110px;min-width:600px;">';let x=0;const wW=28,bW=18;const ws=[],bs=[];
+    for(let oct=3;oct<=5;oct++){for(let i=0;i<12;i++){const isB=[1,3,6,8,10].includes(i);const inS=pSequence.filter(s=>s.type==='piano'&&s.octave===oct&&s.noteIdx===i).length;
+    if(!isB){ws.push(`<div onclick="pAddPiano(${oct},${i})" style="position:absolute;left:${x}px;top:0;width:${wW-2}px;height:100px;background:${inS?'#28a745':'#fff'};border:1px solid #999;border-radius:0 0 3px 3px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:0.45rem;font-weight:600;color:${inS?'#fff':'#333'};cursor:pointer;z-index:1;">${pGetName(i)}</div>`);x+=wW;}
+    else{bs.push(`<div onclick="pAddPiano(${oct},${i})" style="position:absolute;left:${x-bW/2}px;top:0;width:${bW}px;height:65px;background:${inS?'#28a745':'#222'};border:1px solid #000;border-radius:0 0 3px 3px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:0.4rem;color:#fff;cursor:pointer;z-index:3;">${pGetName(i)}</div>`);}}}
+    h+=ws.join('')+bs.join('')+'</div></div>';c.innerHTML=h;
+}
+function buildPViolin(c){
+    const vStr=['E5','A4','D4','G3'],vOpen=[4,9,2,7];
+    let h=`<div style="overflow-x:auto;"><div style="position:relative;min-width:450px;height:180px;background:linear-gradient(180deg,#2C1810,#3D2314);border-radius:8px;padding:16px 8px 24px 44px;">`;
+    for(let s=0;s<4;s++){const y=s*38+16;h+=`<div style="position:absolute;left:44px;top:${y+19}px;width:${9*48}px;height:${1.5+s*0.4}px;background:#ccc;"></div>`;h+=`<div style="position:absolute;left:6px;top:${y+12}px;font-size:0.6rem;font-weight:700;color:#ffd700;">${vStr[s]}</div>`;
+    for(let p=0;p<=8;p++){const ni=(vOpen[s]+p)%12;const inS=pSequence.filter(x=>x.type==='fret'&&x.string===s&&x.fret===p).length;const bg=inS?'#28a745':[1,3,6,8,10].includes(ni)?'#222':'#4a90d9';h+=`<div onclick="pAddFret(${s},${p})" style="position:absolute;left:${p*48+44+24-12}px;top:${y+19-12}px;width:24px;height:24px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:700;cursor:pointer;z-index:2;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''">${pGetName(ni)}</div>`;}}
+    h+=`</div></div>`;c.innerHTML=h;
+}
+function buildPTabla(c){
+    let h='<div style="text-align:center;">';
+    h+='<div style="position:relative;width:150px;height:150px;margin:0 auto 10px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2c3e50,#0d1117);border:4px solid #4a4a4a;box-shadow:0 4px 16px rgba(0,0,0,0.5);">';
+    h+=`<div onclick="pAddTabla('dum')" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;background:rgba(198,40,40,0.2);border:2px solid #c62828;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#e57373;font-weight:800;font-size:0.85rem;" onmousedown="this.style.background='#c62828';this.style.color='#fff'" onmouseup="this.style.background='rgba(198,40,40,0.2)';this.style.color='#e57373'">DUM</div>`;
+    h+=`<div onclick="pAddTabla('tek')" style="position:absolute;top:5px;left:50%;transform:translateX(-50%);padding:5px 12px;border-radius:10px;background:rgba(21,101,192,0.2);border:2px solid #1565c0;cursor:pointer;color:#64b5f6;font-weight:700;font-size:0.65rem;" onmousedown="this.style.background='#1565c0';this.style.color='#fff'" onmouseup="this.style.background='rgba(21,101,192,0.2)';this.style.color='#64b5f6'">TEK</div>`;
+    h+=`<div onclick="pAddTabla('ka')" style="position:absolute;top:50%;right:5px;transform:translateY(-50%);padding:5px 7px;border-radius:10px;background:rgba(46,125,50,0.2);border:2px solid #2e7d32;cursor:pointer;color:#81c784;font-weight:700;font-size:0.65rem;" onmousedown="this.style.background='#2e7d32';this.style.color='#fff'" onmouseup="this.style.background='rgba(46,125,50,0.2)';this.style.color='#81c784'">KA</div>`;
+    h+=`<div onclick="pAddTabla('pa')" style="position:absolute;top:50%;left:5px;transform:translateY(-50%);padding:5px 7px;border-radius:10px;background:rgba(245,127,23,0.2);border:2px solid #f57f17;cursor:pointer;color:#ffb74d;font-weight:700;font-size:0.65rem;" onmousedown="this.style.background='#f57f17';this.style.color='#fff'" onmouseup="this.style.background='rgba(245,127,23,0.2)';this.style.color='#ffb74d'">PA</div>`;
+    h+='</div></div>';c.innerHTML=h;
+}
+function playPractice(){
+    stopPractice();if(!pSequence.length)return;
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const bpm=parseInt(document.getElementById('practice-bpm').value)||90;const beatMs=60000/bpm;let cur=0;
+    document.getElementById('p-play-btn').style.display='none';document.getElementById('p-stop-btn').style.display='';
+    function tick(){if(cur>=pSequence.length){stopPractice();return;}
+    const st=pSequence[cur];const dur=(durBeats[st.duration]||1)*beatMs/1000;
+    if(st.type==='fret'){const inst=pInstrument;if(inst==='guitar')playGuitar(getFreq(st.midi),dur,audioCtx.currentTime);else if(inst==='oud')playOud(getFreq(st.midi),dur,audioCtx.currentTime);else playViolin(getFreq(st.midi),dur,audioCtx.currentTime);}
+    else if(st.type==='piano')playPiano(getFreq(st.midi),dur,audioCtx.currentTime);
+    else if(st.type==='tabla')playTabla(st.midi,dur,audioCtx.currentTime);
+    cur++;pTimer=setTimeout(tick,(durBeats[st.duration]||1)*beatMs);}
+    tick();
+}
+function stopPractice(){if(pTimer)clearTimeout(pTimer);pTimer=null;document.getElementById('p-play-btn').style.display='';document.getElementById('p-stop-btn').style.display='none';}
 </script>
 </body>
 </html>

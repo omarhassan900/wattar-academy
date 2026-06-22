@@ -116,6 +116,11 @@ module.exports = (app, db) => {
         res.redirect('/portal/login');
     });
 
+    // Practice Studio
+    app.get('/portal/practice', requireStudent, (req, res) => {
+        res.render('portal-practice', { student: req.session.student });
+    });
+
     // Settings page
     app.get('/portal/settings', requireStudent, (req, res) => {
         db.get(`SELECT sa.profile_pic, sa.bio, sa.display_name, sa.rank, sa.xp, s.date_of_birth 

@@ -128,6 +128,8 @@ module.exports = (app, db) => {
                     WHERE a.student_id = ?
                     ORDER BY CAST(REPLACE(s.level, 'Month ', '') AS INTEGER), s.session_number`, [studentId], (err, attendance) => {
                 if (err) attendance = [];
+                // Use session_date as the date field
+                (attendance || []).forEach(a => { a.date = a.session_date || a.date; });
                 res.render('portal-roadmap', { student, xp, rank, ranks: RANKS, attendance: attendance || [] });
             });
         });
@@ -215,6 +217,7 @@ module.exports = (app, db) => {
                     WHERE a.student_id = ?
                     ORDER BY CAST(REPLACE(s.level, 'Month ', '') AS INTEGER), s.session_number`, [studentId], (err, attendance) => {
                 if (err) attendance = [];
+                (attendance || []).forEach(a => { a.date = a.session_date || a.date; });
 
                 // Get schedule
                 db.all(`SELECT st.day_of_week, st.time_slot, u.full_name as trainer_name

@@ -182,7 +182,7 @@
         for (let i = 1; i <= sessionsPerLevel; i++) {
             const found = existing.find(e => e.session_number === i);
             if (found) {
-                allSessions.push({ level, session: i, status: found.status, date: found.date });
+                allSessions.push({ level, session: i, status: found.status, date: found.session_date || found.date });
             } else if (levelNum < currentNum) {
                 // Past level with no record = absent
                 allSessions.push({ level, session: i, status: 'absent', date: null });

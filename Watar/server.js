@@ -55,6 +55,7 @@ require('./routes/tickets')(app, db);
 require('./routes/portal')(app, db);
 require('./routes/assignments')(app, db);
 require('./routes/my-students')(app, db);
+require('./routes/public-register')(app, db);
 
 // Start server
 app.listen(PORT, () => {

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل طالب جديد — أكاديمية وتر</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#1a237e;--primary-light:#3949ab;--accent:#ff6f00;}
+        body{background:linear-gradient(135deg,#1a237e 0%,#283593 50%,#3949ab 100%);font-family:'Cairo',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+        .reg-card{background:#fff;border-radius:20px;max-width:540px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;}
+        .reg-header{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:2rem;text-align:center;}
+        .reg-header img{height:60px;border-radius:12px;border:2px solid rgba(255,255,255,0.3);margin-bottom:10px;}
+        .reg-header h2{font-weight:800;margin:0;font-size:1.3rem;}
+        .reg-header p{color:rgba(255,255,255,0.7);font-size:0.85rem;margin:4px 0 0;}
+        .reg-body{padding:1.5rem 2rem 2rem;}
+        .form-control,.form-select{border-radius:10px;padding:10px 14px;border:2px solid #e8eaf6;font-size:0.9rem;}
+        .form-control:focus,.form-select:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(57,73,171,0.1);}
+        .form-label{font-weight:600;font-size:0.85rem;color:#333;}
+        .btn-register{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border:none;font-weight:700;padding:12px;border-radius:10px;width:100%;font-size:1rem;transition:transform 0.2s,box-shadow 0.2s;}
+        .btn-register:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,35,126,0.4);color:#fff;}
+        .btn-register:disabled{opacity:0.6;transform:none;box-shadow:none;}
+        .terms-box{background:#f5f7ff;border:1px solid #e0e0e0;border-radius:10px;padding:14px;max-height:180px;overflow-y:auto;font-size:0.78rem;color:#555;margin-bottom:12px;line-height:1.8;text-align:right;}
+        .terms-box h6{font-weight:700;color:#1a237e;margin-bottom:8px;font-size:0.85rem;}
+        .terms-box ol{padding-right:18px;margin:0;}
+        .terms-box ol li{margin-bottom:6px;}
+        .terms-check{display:flex;align-items:flex-start;gap:8px;margin-bottom:16px;}
+        .terms-check input{margin-top:4px;min-width:16px;min-height:16px;}
+        .terms-check label{font-size:0.82rem;color:#555;cursor:pointer;}
+        .success-msg{text-align:center;padding:2.5rem 1.5rem;}
+        .success-msg i{font-size:3.5rem;color:#28a745;margin-bottom:14px;}
+        .success-msg h4{font-weight:700;color:#333;}
+        .success-msg p{color:#666;font-size:0.9rem;}
+        .alert{font-size:0.85rem;border-radius:10px;}
+    </style>
+</head>
+<body>
+<div class="reg-card">
+    <div class="reg-header">
+        <img src="/images/logo.jpg" alt="Wattar Academy">
+        <h2>تسجيل طالب جديد</h2>
+        <p>انضم لأكاديمية وتر 🎶</p>
+    </div>
+    <div class="reg-body" id="reg-form-area">
+        <form id="reg-form" onsubmit="submitReg(event)" novalidate>
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label class="form-label">الاسم بالكامل *</label>
+                    <input type="text" class="form-control" name="name" required placeholder="أدخل اسمك الثلاثي">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">رقم الهاتف *</label>
+                    <input type="tel" class="form-control" name="phone" required placeholder="01xxxxxxxxx" pattern="01[0-9]{9}">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">هاتف ولي الأمر</label>
+                    <input type="tel" class="form-control" name="parent_phone" placeholder="01xxxxxxxxx" pattern="01[0-9]{9}">
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <input type="email" class="form-control" name="email" placeholder="example@email.com">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">تاريخ الميلاد</label>
+                    <input type="date" class="form-control" name="date_of_birth">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">الآلة الموسيقية *</label>
+                    <select class="form-select" name="instrument" required>
+                        <option value="">اختر...</option>
+                        <option value="Guitar">جيتار</option>
+                        <option value="Oud">عود</option>
+                        <option value="Piano">بيانو</option>
+                        <option value="Violin">كمان</option>
+                        <option value="Drums">درامز</option>
+                        <option value="Tabla">طبلة</option>
+                        <option value="Vocals">غناء</option>
+                    </select>
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">العنوان</label>
+                    <input type="text" class="form-control" name="address" placeholder="المنطقة / المدينة">
+                </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="terms-box">
+                <h6><i class="fas fa-file-contract me-1"></i> الشروط والأحكام</h6>
+                <ol>
+                    <li>يلتزم الطالب بحضور الحصص في المواعيد المحددة، وفي حالة الغياب يجب إبلاغ الأكاديمية قبل الموعد بـ 24 ساعة على الأقل.</li>
+                    <li>لا يحق للطالب استرداد قيمة الاشتراك بعد بدء الشهر الدراسي.</li>
+                    <li>يجب سداد الاشتراك الشهري في أول أسبوع من كل شهر دراسي.</li>
+                    <li>تحتفظ الأكاديمية بحق تغيير مواعيد الحصص أو المدرب بعد إخطار الطالب مسبقاً.</li>
+                    <li>يلتزم الطالب بالحفاظ على ممتلكات الأكاديمية والآلات الموسيقية المستخدمة أثناء الحصص.</li>
+                    <li>في حالة تجميد الاشتراك، يجب تقديم طلب قبل بداية الشهر ولا يزيد التجميد عن شهر واحد.</li>
+                    <li>يحق للأكاديمية إلغاء تسجيل الطالب في حالة عدم الالتزام بالشروط والأحكام.</li>
+                    <li>تلتزم الأكاديمية بالحفاظ على خصوصية بيانات الطالب وعدم مشاركتها مع أي جهة خارجية.</li>
+                    <li>يوافق الطالب / ولي الأمر على تصوير الحصص أو الفعاليات لأغراض توثيقية وتسويقية للأكاديمية.</li>
+                    <li>يُعتبر التسجيل في هذا النموذج موافقة على جميع الشروط والأحكام المذكورة أعلاه.</li>
+                </ol>
+            </div>
+
+            <div class="terms-check">
+                <input type="checkbox" id="terms-accept" required>
+                <label for="terms-accept">أقر بأنني قرأت وأوافق على جميع الشروط والأحكام المذكورة أعلاه *</label>
+            </div>
+
+            <div id="form-error" class="alert alert-danger d-none"></div>
+
+            <button type="submit" class="btn btn-register" id="submit-btn">
+                <i class="fas fa-user-plus me-2"></i>تسجيل
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+async function submitReg(e) {
+    e.preventDefault();
+    const form = e.target;
+    const btn = document.getElementById('submit-btn');
+    const errorDiv = document.getElementById('form-error');
+    errorDiv.classList.add('d-none');
+
+    // Validate terms acceptance
+    if (!document.getElementById('terms-accept').checked) {
+        errorDiv.textContent = 'يجب الموافقة على الشروط والأحكام للمتابعة';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    // Validate phone format
+    const phone = form.phone.value.trim();
+    if (!/^01[0-9]{9}$/.test(phone)) {
+        errorDiv.textContent = 'رقم الهاتف غير صحيح. يجب أن يبدأ بـ 01 ويتكون من 11 رقم';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري التسجيل...';
+
+    const data = {
+        name: form.name.value.trim(),
+        phone: phone,
+        parent_phone: form.parent_phone.value.trim(),
+        email: form.email.value.trim(),
+        date_of_birth: form.date_of_birth.value,
+        instrument: form.instrument.value,
+        address: form.address.value.trim(),
+        terms_accepted: true
+    };
+
+    try {
+        const res = await fetch('/api/public-register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+
+        if (res.ok) {
+            document.getElementById('reg-form-area').innerHTML = `
+                <div class="success-msg">
+                    <i class="fas fa-check-circle"></i>
+                    <h4>تم التسجيل بنجاح! 🎉</h4>
+                    <p>شكراً لتسجيلك في أكاديمية وتر.<br>سيتم التواصل معك قريباً لتحديد مواعيد الحصص.</p>
+                </div>`;
+        } else {
+            errorDiv.textContent = result.error || 'حدث خطأ أثناء التسجيل. حاول مرة أخرى.';
+            errorDiv.classList.remove('d-none');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>تسجيل';
+        }
+    } catch (err) {
+        errorDiv.textContent = 'حدث خطأ في الاتصال. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.';
+        errorDiv.classList.remove('d-none');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>تسجيل';
+    }
+}
+</script>
+</body>
+</html>

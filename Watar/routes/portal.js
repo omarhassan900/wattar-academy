@@ -116,6 +116,23 @@ module.exports = (app, db) => {
         res.redirect('/portal/login');
     });
 
+    // Gamified Roadmap
+    app.get('/portal/roadmap', requireStudent, (req, res) => {
+        const studentId = req.session.student.id;
+        const student = req.session.student;
+
+        calculateXP(db, studentId, (xp, rank) => {
+            db.all(`SELECT s.level, s.session_number, s.session_date, a.status, a.date
+                    FROM attendance a
+                    JOIN sessions s ON a.session_id = s.id
+                    WHERE a.student_id = ?
+                    ORDER BY CAST(REPLACE(s.level, 'Month ', '') AS INTEGER), s.session_number`, [studentId], (err, attendance) => {
+                if (err) attendance = [];
+                res.render('portal-roadmap', { student, xp, rank, ranks: RANKS, attendance: attendance || [] });
+            });
+        });
+    });
+
     // Practice Studio
     app.get('/portal/practice', requireStudent, (req, res) => {
         res.render('portal-practice', { student: req.session.student });

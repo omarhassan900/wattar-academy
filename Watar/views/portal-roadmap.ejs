@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Journey — Wattar Academy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary:#1a237e; --primary-light:#3949ab; --accent:#ff6f00; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Cairo',sans-serif; background:#1a2332; min-height:100vh; overflow-x:hidden; }
+
+        .portal-nav {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            padding:12px 24px; display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:100; box-shadow:0 4px 20px rgba(26,35,126,0.3);
+        }
+        .portal-nav .logo { display:flex; align-items:center; gap:12px; font-weight:700; font-size:1.1rem; color:#fff; }
+        .portal-nav .logo img { height:42px; border-radius:10px; border:2px solid rgba(255,255,255,0.3); }
+        .portal-nav a { color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; }
+        .portal-nav a:hover { color:#fff; }
+
+        .top-bar {
+            background:rgba(0,0,0,0.4); padding:14px 20px; display:flex;
+            align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+        }
+        .player-info { display:flex; align-items:center; gap:12px; color:#fff; }
+        .player-info .rank-icon { font-size:2rem; }
+        .player-info .name { font-weight:700; font-size:1rem; color:#fff; }
+        .player-info .subtitle { font-size:0.75rem; color:rgba(255,255,255,0.6); }
+        .xp-bar-wrap { flex:1; max-width:280px; min-width:160px; }
+        .xp-label { font-size:0.68rem; color:rgba(255,255,255,0.7); display:flex; justify-content:space-between; margin-bottom:3px; }
+        .xp-bar { height:8px; background:rgba(255,255,255,0.1); border-radius:8px; overflow:hidden; }
+        .xp-bar-fill { height:100%; border-radius:8px; transition:width 0.6s ease; }
+
+        /* Map */
+        .map-wrap {
+            position:relative; width:100%; padding:30px 0 100px;
+            background: linear-gradient(180deg, #1a2332 0%, #1e3348 40%, #1a3a30 70%, #1a2332 100%);
+            min-height:calc(100vh - 130px);
+        }
+        .map-inner { position:relative; max-width:420px; margin:0 auto; }
+
+        /* Snake row */
+        .snake-row {
+            display:flex; align-items:center; padding:6px 16px; position:relative;
+        }
+        .snake-row.rtl { flex-direction:row-reverse; }
+
+        /* Session node */
+        .s-node {
+            width:50px; height:50px; border-radius:50%; display:flex;
+            align-items:center; justify-content:center; font-weight:700;
+            font-size:0.8rem; margin:4px 6px; position:relative;
+            cursor:pointer; transition:transform 0.2s, box-shadow 0.2s;
+            flex-shrink:0;
+        }
+        .s-node:hover { transform:scale(1.12); }
+
+        .s-node.present {
+            background:linear-gradient(135deg,#2e7d32,#66bb6a); border:3px solid #a5d6a7;
+            color:#fff; box-shadow:0 3px 12px rgba(76,175,80,0.4);
+        }
+        .s-node.absent {
+            background:linear-gradient(135deg,#b71c1c,#ef5350); border:3px solid #ef9a9a;
+            color:#fff; box-shadow:0 3px 12px rgba(244,67,54,0.4);
+        }
+        .s-node.late {
+            background:linear-gradient(135deg,#e65100,#ffa726); border:3px solid #ffcc80;
+            color:#fff; box-shadow:0 3px 12px rgba(255,152,0,0.4);
+        }
+        .s-node.excused {
+            background:linear-gradient(135deg,#00695c,#26a69a); border:3px solid #80cbc4;
+            color:#fff; box-shadow:0 3px 12px rgba(38,166,154,0.4);
+        }
+        .s-node.current {
+            background:linear-gradient(135deg,#ff6f00,#ffca28); border:3px solid #fff;
+            color:#fff; box-shadow:0 0 25px rgba(255,202,40,0.6);
+            animation:pulse 2s infinite;
+        }
+        .s-node.locked {
+            background:rgba(255,255,255,0.06); border:2px dashed rgba(255,255,255,0.2);
+            color:rgba(255,255,255,0.25);
+        }
+
+        /* Rank gate */
+        .rank-gate {
+            display:flex; align-items:center; justify-content:center; gap:12px;
+            padding:14px 20px; margin:14px 16px; border-radius:14px;
+            background:rgba(26,35,126,0.3); border:2px solid rgba(121,134,203,0.3);
+        }
+        .rank-gate.unlocked { border-color:rgba(255,202,40,0.5); background:rgba(26,35,126,0.5); }
+        .rank-gate.locked { opacity:0.4; filter:grayscale(0.5); }
+        .rank-gate .gate-icon { font-size:1.8rem; }
+        .rank-gate .gate-info { color:#fff; }
+        .rank-gate .gate-info h4 { font-weight:700; font-size:0.9rem; margin:0; }
+        .rank-gate .gate-info span { font-size:0.7rem; color:rgba(255,255,255,0.6); }
+
+        /* Connector */
+        .row-connector {
+            flex:1; height:3px; min-width:8px;
+            background:rgba(255,255,255,0.1); border-radius:2px;
+        }
+        .row-connector.done {
+            background:linear-gradient(90deg, #4caf50, #81c784);
+        }
+
+        /* Turn SVG */
+        .turn-svg { display:block; overflow:visible; }
+
+        /* Tooltip */
+        .s-node .tip {
+            position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+            background:rgba(0,0,0,0.9); color:#fff; padding:5px 10px; border-radius:8px;
+            font-size:0.68rem; white-space:nowrap; opacity:0; pointer-events:none;
+            transition:opacity 0.2s; z-index:20;
+        }
+        .s-node:hover .tip { opacity:1; }
+
+        .legend {
+            position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
+            background:rgba(0,0,0,0.85); padding:8px 20px; border-radius:20px;
+            display:flex; gap:14px; align-items:center; z-index:50;
+            backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.1);
+        }
+        .legend-item { display:flex; align-items:center; gap:5px; font-size:0.68rem; color:rgba(255,255,255,0.8); }
+        .legend-dot { width:11px; height:11px; border-radius:50%; }
+
+        /* Level label */
+        .level-label {
+            color:rgba(255,255,255,0.4); font-size:0.72rem; font-weight:600;
+            text-align:center; margin:8px 0 2px; letter-spacing:0.5px;
+        }
+
+        @keyframes pulse {
+            0%,100% { box-shadow:0 0 15px rgba(255,202,40,0.4); }
+            50% { box-shadow:0 0 35px rgba(255,202,40,0.8); }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="portal-nav">
+    <div class="logo">
+        <img src="/images/logo.jpg" alt="Wattar">
+        <span>Wattar Academy</span>
+    </div>
+    <div>
+        <a href="/portal" style="margin-right:14px;"><i class="fas fa-home me-1"></i>Dashboard</a>
+        <a href="/portal/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+    </div>
+</nav>
+
+<%
+    const allRanks = ranks;
+    const currentRankIdx = allRanks.findIndex(r => r.name === rank.name);
+    const nextRank = allRanks[currentRankIdx + 1];
+    const currentRankXP = rank.minXP;
+    const nextRankXP = nextRank ? nextRank.minXP : xp;
+    const progress = nextRank ? Math.min(100, ((xp - currentRankXP) / (nextRankXP - currentRankXP)) * 100) : 100;
+
+    // Build sessions per level
+    const levelMap = {};
+    attendance.forEach(a => {
+        if (!levelMap[a.level]) levelMap[a.level] = [];
+        levelMap[a.level].push(a);
+    });
+    const levelKeys = Object.keys(levelMap).sort((a,b) => parseInt(a.replace('Month ','')) - parseInt(b.replace('Month ','')));
+
+    const currentLevel = student.current_level || 'Month 1';
+    const sessionsPerLevel = 8;
+
+    const allLevels = [...new Set([...levelKeys, currentLevel])].sort((a,b) => parseInt(a.replace('Month ','')) - parseInt(b.replace('Month ','')));
+
+    const allSessions = [];
+    allLevels.forEach(level => {
+        const existing = (levelMap[level] || []).sort((a,b) => a.session_number - b.session_number);
+        const levelNum = parseInt(level.replace('Month ', ''));
+        const currentNum = parseInt(currentLevel.replace('Month ', ''));
+        for (let i = 1; i <= sessionsPerLevel; i++) {
+            const found = existing.find(e => e.session_number === i);
+            if (found) {
+                allSessions.push({ level, session: i, status: found.status, date: found.date });
+            } else if (levelNum < currentNum) {
+                // Past level with no record = absent
+                allSessions.push({ level, session: i, status: 'absent', date: null });
+            } else {
+                // Current level = locked (upcoming)
+                allSessions.push({ level, session: i, status: 'locked', date: null });
+            }
+        }
+    });
+
+    let markedCurrent = false;
+    allSessions.forEach(s => {
+        if (s.status === 'locked' && !markedCurrent) {
+            s.status = 'current';
+            markedCurrent = true;
+        }
+    });
+
+    const nodesPerRow = 4;
+    const rows = [];
+    for (let i = 0; i < allSessions.length; i += nodesPerRow) {
+        rows.push(allSessions.slice(i, i + nodesPerRow));
+    }
+
+    const rankGatePositions = {};
+    allRanks.forEach((r, idx) => {
+        if (idx === 0) {
+            rankGatePositions[0] = r;
+        } else {
+            const rowIdx = Math.min(rows.length - 1, Math.round((idx / allRanks.length) * rows.length));
+            rankGatePositions[rowIdx] = r;
+        }
+    });
+%>
+
+<!-- Top XP Bar -->
+<div class="top-bar">
+    <div class="player-info">
+        <div class="rank-icon"><%= rank.icon %></div>
+        <div>
+            <div class="name"><%= student.name %></div>
+            <div class="subtitle"><%= rank.name %> · <%= currentLevel %></div>
+        </div>
+    </div>
+    <div class="xp-bar-wrap">
+        <div class="xp-label">
+            <span><%= xp %> XP</span>
+            <% if (nextRank) { %><span><%= nextRank.name %> (<%= nextRankXP %>)</span><% } else { %><span>Max 🏆</span><% } %>
+        </div>
+        <div class="xp-bar">
+            <div class="xp-bar-fill" style="width:<%= progress %>%; background:linear-gradient(90deg,<%= rank.color %>,#ffca28);"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Snake Map -->
+<div class="map-wrap">
+    <div class="map-inner">
+
+        <% rows.forEach((row, rowIdx) => {
+            const isRtl = rowIdx % 2 === 1;
+            const displayRow = isRtl ? [...row].reverse() : row;
+
+            if (rankGatePositions[rowIdx]) {
+                const r = rankGatePositions[rowIdx];
+                const unlocked = xp >= r.minXP;
+        %>
+        <div class="rank-gate <%= unlocked ? 'unlocked' : 'locked' %>">
+            <div class="gate-icon"><%= r.icon %></div>
+            <div class="gate-info">
+                <h4><%= r.name %></h4>
+                <span><%= unlocked ? '✓ Unlocked' : r.minXP + ' XP to unlock' %></span>
+            </div>
+        </div>
+        <% } %>
+
+        <% const rowLevel = row[0] ? row[0].level : ''; %>
+        <% const prevRowLevel = rowIdx > 0 && rows[rowIdx-1][0] ? rows[rowIdx-1][0].level : ''; %>
+        <% if (rowLevel !== prevRowLevel) { %>
+        <div class="level-label">── <%= rowLevel %> ──</div>
+        <% } %>
+
+        <% if (rowIdx > 0) { %>
+        <svg class="turn-svg" width="50" height="30" style="display:block;margin:<% if(rowIdx % 2 === 1) { %>0 20px 0 auto<% } else { %>0 auto 0 20px<% } %>;">
+            <path d="M 25 0 Q 25 15 <% if(rowIdx % 2 === 1) { %>2<% } else { %>48<% } %> 15 L <% if(rowIdx % 2 === 1) { %>2<% } else { %>48<% } %> 30"
+                  fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <% } %>
+
+        <div class="snake-row <%= isRtl ? 'rtl' : '' %>">
+            <% displayRow.forEach((s, i) => {
+                const isDone = s.status === 'present' || s.status === 'late' || s.status === 'excused';
+            %>
+                <% if (i > 0) { %>
+                <div class="row-connector <%= isDone ? 'done' : '' %>"></div>
+                <% } %>
+                <div class="s-node <%= s.status %>" onclick="showSession(this)" data-level="<%= s.level %>" data-session="<%= s.session %>" data-status="<%= s.status %>" data-date="<%= s.date || '' %>">
+                    <% if (s.status === 'present') { %>✓
+                    <% } else if (s.status === 'absent') { %>✗
+                    <% } else if (s.status === 'late') { %>⏰
+                    <% } else if (s.status === 'excused') { %>✓
+                    <% } else if (s.status === 'current') { %>▶
+                    <% } else { %><%= s.session %>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+
+        <% }); %>
+
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#66bb6a;"></div>Present</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffa726;"></div>Late</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ef5350;"></div>Absent</div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#ff6f00,#ffca28);border:2px solid #fff;"></div>Next</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.06);border:1px dashed rgba(255,255,255,0.3);"></div>Locked</div>
+</div>
+
+</body>
+</html>

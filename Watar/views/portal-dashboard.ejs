@@ -155,6 +155,7 @@
         <span>Wattar Academy</span>
     </div>
     <div>
+        <a href="/portal/roadmap" style="margin-right:14px;"><i class="fas fa-road me-1"></i>My Journey</a>
         <a href="/portal/settings" style="margin-right:14px;"><i class="fas fa-cog me-1"></i>Settings</a>
         <a href="/portal/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
     </div>
@@ -230,46 +231,131 @@
         </div>
     </div>
 
-    <!-- Attendance -->
+    <!-- Attendance Roadmap -->
     <div class="section-card">
-        <div class="section-header"><i class="fas fa-calendar-check"></i> Attendance History</div>
-        <div class="section-body">
-            <% if (attendance.length > 0) { %>
-                <%
-                    // Group by level
-                    const levels = {};
-                    attendance.forEach(a => {
-                        if (!levels[a.level]) levels[a.level] = [];
-                        levels[a.level].push(a);
-                    });
-                    const levelKeys = Object.keys(levels).sort((a,b) => parseInt(a.replace('Month ','')) - parseInt(b.replace('Month ','')));
-                %>
-                <% levelKeys.reverse().forEach(level => { %>
-                <div style="margin-bottom:16px;">
-                    <div style="font-weight:700;font-size:0.85rem;margin-bottom:8px;color:#333;">
-                        <%= level %> <% if (level === student.current_level) { %><span style="color:#28a745;font-size:0.7rem;">(current)</span><% } %>
-                    </div>
-                    <div class="session-grid">
-                        <% levels[level].forEach(a => { %>
-                        <div class="session-item">
-                            <div class="num">S<%= a.session_number %></div>
-                            <div class="status status-<%= a.status || 'none' %>">
-                                <% if (a.status === 'present') { %>✓
-                                <% } else if (a.status === 'absent') { %>✗
-                                <% } else if (a.status === 'late') { %>⏰
-                                <% } else if (a.status === 'excused') { %>✓
-                                <% } else { %>—
-                                <% } %>
-                            </div>
-                            <% if (a.date) { %><div style="font-size:0.6rem;color:#999;margin-top:2px;"><%= new Date(a.date).toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) %></div><% } %>
-                        </div>
-                        <% }); %>
-                    </div>
-                </div>
-                <% }); %>
-            <% } else { %>
-            <div class="empty-state">No attendance records yet</div>
+        <div class="section-header"><i class="fas fa-road"></i> My Journey</div>
+        <div class="section-body" style="padding:12px;">
+            <%
+                // Build sessions for roadmap
+                const levelMap2 = {};
+                attendance.forEach(a => {
+                    if (!levelMap2[a.level]) levelMap2[a.level] = [];
+                    levelMap2[a.level].push(a);
+                });
+                const levelKeys2 = Object.keys(levelMap2).sort((a,b) => parseInt(a.replace('Month ','')) - parseInt(b.replace('Month ','')));
+                const currentLevel2 = student.current_level || 'Month 1';
+                const sessionsPerLevel2 = 8;
+                const allLevels2 = [...new Set([...levelKeys2, currentLevel2])].sort((a,b) => parseInt(a.replace('Month ','')) - parseInt(b.replace('Month ','')));
+
+                const allSessions2 = [];
+                allLevels2.forEach(level => {
+                    const existing = (levelMap2[level] || []).sort((a,b) => a.session_number - b.session_number);
+                    if (level === currentLevel2) {
+                        // Current level: show all 8 sessions (fill remaining as locked)
+                        for (let i = 1; i <= sessionsPerLevel2; i++) {
+                            const found = existing.find(e => e.session_number === i);
+                            if (found) {
+                                allSessions2.push({ level, session: i, status: found.status, date: found.date });
+                            } else {
+                                allSessions2.push({ level, session: i, status: 'locked', date: null });
+                            }
+                        }
+                    } else {
+                        // Past levels: only show sessions that have attendance
+                        existing.forEach(s => {
+                            allSessions2.push({ level, session: s.session_number, status: s.status, date: s.date });
+                        });
+                    }
+                });
+                let markedCurrent2 = false;
+                allSessions2.forEach(s => {
+                    if (s.status === 'locked' && !markedCurrent2) { s.status = 'current'; markedCurrent2 = true; }
+                });
+
+                const nodesPerRow2 = 4;
+                const rows2 = [];
+                for (let i = 0; i < allSessions2.length; i += nodesPerRow2) {
+                    rows2.push(allSessions2.slice(i, i + nodesPerRow2));
+                }
+
+                // Rank gates
+                const rankGatePos2 = {};
+                ranks.forEach((r, idx) => {
+                    if (idx === 0) { rankGatePos2[0] = r; }
+                    else { rankGatePos2[Math.min(rows2.length - 1, Math.round((idx / ranks.length) * rows2.length))] = r; }
+                });
+            %>
+
+            <style>
+                .rm-row { display:flex; align-items:center; padding:4px 8px; }
+                .rm-row.rtl { flex-direction:row-reverse; }
+                .rm-node {
+                    width:42px; height:42px; border-radius:50%; display:flex;
+                    align-items:center; justify-content:center; font-weight:700;
+                    font-size:0.7rem; margin:3px 5px; position:relative;
+                    cursor:pointer; transition:transform 0.2s; flex-shrink:0;
+                }
+                .rm-node:hover { transform:scale(1.12); }
+                .rm-node.present { background:linear-gradient(135deg,#2e7d32,#66bb6a); border:2px solid #a5d6a7; color:#fff; }
+                .rm-node.absent { background:linear-gradient(135deg,#b71c1c,#ef5350); border:2px solid #ef9a9a; color:#fff; }
+                .rm-node.late { background:linear-gradient(135deg,#e65100,#ffa726); border:2px solid #ffcc80; color:#fff; }
+                .rm-node.excused { background:linear-gradient(135deg,#00695c,#26a69a); border:2px solid #80cbc4; color:#fff; }
+                .rm-node.current { background:linear-gradient(135deg,#ff6f00,#ffca28); border:2px solid #fff; color:#fff; animation:rmPulse 2s infinite; }
+                .rm-node.locked { background:#f0f2f8; border:2px dashed #cbd5e1; color:#aaa; }
+                .rm-conn { flex:1; height:2px; min-width:6px; background:#e0e0e0; border-radius:2px; }
+                .rm-conn.done { background:linear-gradient(90deg,#4caf50,#81c784); }
+                .rm-gate {
+                    display:flex; align-items:center; justify-content:center; gap:8px;
+                    padding:10px 14px; margin:8px 8px; border-radius:10px;
+                    background:#f0f2f8; border:1px solid #e0e0e0;
+                }
+                .rm-gate.unlocked { border-color:var(--primary-light); background:#e8eaf6; }
+                .rm-gate.locked { opacity:0.4; }
+                .rm-gate-icon { font-size:1.3rem; }
+                .rm-gate-info { color:#333; font-size:0.72rem; }
+                .rm-gate-info strong { font-weight:700; color:var(--primary); }
+                .rm-level-lbl { color:#999; font-size:0.65rem; font-weight:600; text-align:center; margin:6px 0 2px; }
+                .rm-node .rm-tip {
+                    position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+                    background:rgba(0,0,0,0.85); color:#fff; padding:4px 8px; border-radius:6px;
+                    font-size:0.6rem; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 0.2s; z-index:20;
+                }
+                .rm-node:hover .rm-tip { opacity:1; }
+                @keyframes rmPulse { 0%,100%{box-shadow:0 0 10px rgba(255,202,40,0.3);} 50%{box-shadow:0 0 25px rgba(255,202,40,0.7);} }
+            </style>
+
+            <% rows2.forEach((row, rowIdx) => {
+                const isRtl = rowIdx % 2 === 1;
+                const displayRow = isRtl ? [...row].reverse() : row;
+                if (rankGatePos2[rowIdx]) { const r = rankGatePos2[rowIdx]; const unlocked = xp >= r.minXP; %>
+            <div class="rm-gate <%= unlocked ? 'unlocked' : 'locked' %>">
+                <span class="rm-gate-icon"><%= r.icon %></span>
+                <span class="rm-gate-info"><strong><%= r.name %></strong> · <%= unlocked ? '✓' : r.minXP + ' XP' %></span>
+            </div>
+            <% }
+                const rowLevel = row[0] ? row[0].level : '';
+                const prevRowLevel = rowIdx > 0 && rows2[rowIdx-1][0] ? rows2[rowIdx-1][0].level : '';
+                if (rowLevel !== prevRowLevel) { %>
+            <div class="rm-level-lbl">── <%= rowLevel %> ──</div>
             <% } %>
+            <div class="rm-row <%= isRtl ? 'rtl' : '' %>">
+                <% displayRow.forEach((s, i) => { const isDone = s.status==='present'||s.status==='late'||s.status==='excused'; %>
+                    <% if (i > 0) { %><div class="rm-conn <%= isDone ? 'done' : '' %>"></div><% } %>
+                    <div class="rm-node <%= s.status %>">
+                        <% if (s.status==='present') { %>✓<% } else if (s.status==='absent') { %>✗<% } else if (s.status==='late') { %>⏰<% } else if (s.status==='excused') { %>✓<% } else if (s.status==='current') { %>▶<% } else { %><%= s.session %><% } %>
+                        <div class="rm-tip"><%= s.level %> · S<%= s.session %></div>
+                    </div>
+                <% }); %>
+            </div>
+            <% }); %>
+
+            <!-- Mini legend -->
+            <div style="display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+                <span style="font-size:0.6rem;color:#999;display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#66bb6a;display:inline-block;"></span>Present</span>
+                <span style="font-size:0.6rem;color:#999;display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#ffa726;display:inline-block;"></span>Late</span>
+                <span style="font-size:0.6rem;color:#999;display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:#ef5350;display:inline-block;"></span>Absent</span>
+                <span style="font-size:0.6rem;color:#999;display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#ff6f00,#ffca28);display:inline-block;"></span>Next</span>
+            </div>
         </div>
     </div>
 

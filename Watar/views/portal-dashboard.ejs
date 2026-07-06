@@ -250,8 +250,10 @@
                 const allSessions2 = [];
                 allLevels2.forEach(level => {
                     const existing = (levelMap2[level] || []).sort((a,b) => a.session_number - b.session_number);
+                    const levelNum = parseInt(level.replace('Month ', ''));
+                    const currentNum = parseInt(currentLevel2.replace('Month ', ''));
                     if (level === currentLevel2) {
-                        // Current level: show all 8 sessions (fill remaining as locked)
+                        // Current level: show all 8 sessions
                         for (let i = 1; i <= sessionsPerLevel2; i++) {
                             const found = existing.find(e => e.session_number === i);
                             if (found) {
@@ -260,16 +262,35 @@
                                 allSessions2.push({ level, session: i, status: 'locked', date: null });
                             }
                         }
+                    } else if (levelNum < currentNum) {
+                        // Past levels: show all sessions, missing ones as absent
+                        const maxS = existing.length > 0 ? Math.max(...existing.map(e => e.session_number)) : 0;
+                        for (let i = 1; i <= maxS; i++) {
+                            const found = existing.find(e => e.session_number === i);
+                            if (found) {
+                                allSessions2.push({ level, session: i, status: found.status, date: found.date });
+                            } else {
+                                allSessions2.push({ level, session: i, status: 'absent', date: null });
+                            }
+                        }
                     } else {
-                        // Past levels: only show sessions that have attendance
                         existing.forEach(s => {
                             allSessions2.push({ level, session: s.session_number, status: s.status, date: s.date });
                         });
                     }
                 });
                 let markedCurrent2 = false;
-                allSessions2.forEach(s => {
-                    if (s.status === 'locked' && !markedCurrent2) { s.status = 'current'; markedCurrent2 = true; }
+                // Find the last attended session in current level, mark the next one as current
+                let lastAttendedIdx2 = -1;
+                allSessions2.forEach((s, idx) => {
+                    if (s.level === currentLevel2 && (s.status === 'present' || s.status === 'late' || s.status === 'excused' || s.status === 'absent')) {
+                        lastAttendedIdx2 = idx;
+                    }
+                });
+                allSessions2.forEach((s, idx) => {
+                    if (s.level === currentLevel2 && s.status === 'locked' && idx > lastAttendedIdx2 && !markedCurrent2) {
+                        s.status = 'current'; markedCurrent2 = true;
+                    }
                 });
 
                 const nodesPerRow2 = 4;
@@ -321,6 +342,14 @@
                     font-size:0.6rem; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 0.2s; z-index:20;
                 }
                 .rm-node:hover .rm-tip { opacity:1; }
+                .rm-date-tip {
+                    position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
+                    background:rgba(0,0,0,0.85); color:#fff; padding:2px 7px; border-radius:5px;
+                    font-size:0.58rem; font-weight:600; white-space:nowrap;
+                    opacity:0; pointer-events:none; transition:opacity 0.2s; z-index:20;
+                }
+                .rm-node:hover .rm-date-tip { opacity:1; }
+                @media (hover: none) { .rm-node:active .rm-date-tip { opacity:1; } }
                 @keyframes rmPulse { 0%,100%{box-shadow:0 0 10px rgba(255,202,40,0.3);} 50%{box-shadow:0 0 25px rgba(255,202,40,0.7);} }
             </style>
 
@@ -343,7 +372,7 @@
                     <% if (i > 0) { %><div class="rm-conn <%= isDone ? 'done' : '' %>"></div><% } %>
                     <div class="rm-node <%= s.status %>">
                         <% if (s.status==='present') { %>✓<% } else if (s.status==='absent') { %>✗<% } else if (s.status==='late') { %>⏰<% } else if (s.status==='excused') { %>✓<% } else if (s.status==='current') { %>▶<% } else { %><%= s.session %><% } %>
-                        <div class="rm-tip"><%= s.level %> · S<%= s.session %></div>
+                        <span class="rm-date-tip"><%= s.date ? new Date(s.date).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) : '' %></span>
                     </div>
                 <% }); %>
             </div>

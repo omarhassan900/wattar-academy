@@ -119,6 +119,18 @@
         }
         .s-node:hover .tip { opacity:1; }
 
+        /* Date tooltip - shows on hover/touch */
+        .date-tip {
+            position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
+            background:rgba(0,0,0,0.85); color:#fff; padding:3px 8px; border-radius:6px;
+            font-size:0.6rem; font-weight:600; white-space:nowrap;
+            opacity:0; pointer-events:none; transition:opacity 0.2s; z-index:20;
+        }
+        .s-node:hover .date-tip { opacity:1; }
+        @media (hover: none) {
+            .s-node:active .date-tip { opacity:1; }
+        }
+
         .legend {
             position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
             background:rgba(0,0,0,0.85); padding:8px 20px; border-radius:20px;
@@ -194,10 +206,16 @@
     });
 
     let markedCurrent = false;
-    allSessions.forEach(s => {
-        if (s.status === 'locked' && !markedCurrent) {
-            s.status = 'current';
-            markedCurrent = true;
+    // Find the last attended session in current level, mark the next one as current
+    let lastAttendedIdx = -1;
+    allSessions.forEach((s, idx) => {
+        if (s.level === currentLevel && (s.status === 'present' || s.status === 'late' || s.status === 'excused' || s.status === 'absent')) {
+            lastAttendedIdx = idx;
+        }
+    });
+    allSessions.forEach((s, idx) => {
+        if (s.level === currentLevel && s.status === 'locked' && idx > lastAttendedIdx && !markedCurrent) {
+            s.status = 'current'; markedCurrent = true;
         }
     });
 
@@ -287,6 +305,7 @@
                     <% } else if (s.status === 'current') { %>▶
                     <% } else { %><%= s.session %>
                     <% } %>
+                    <span class="date-tip"><%= s.date ? new Date(s.date).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) : '' %></span>
                 </div>
             <% }); %>
         </div>

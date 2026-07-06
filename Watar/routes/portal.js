@@ -77,6 +77,50 @@ module.exports = (app, db) => {
         res.redirect('/portal/login');
     }
 
+    // Log portal activity
+    let activityTrackingEnabled = false;
+
+    function logActivity(req, action, page, details) {
+        if (!activityTrackingEnabled) return;
+        if (!req.session.student) return;
+        const studentId = req.session.student.id;
+        const studentName = req.session.student.name;
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const ua = req.headers['user-agent'] || '';
+        db.run(`INSERT INTO portal_activity_log (student_id, student_name, action, page, details, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [studentId, studentName, action, page, details || null, ip, ua], (err) => {
+                if (err && err.message.includes('no such table')) {
+                    db.run(`CREATE TABLE IF NOT EXISTS portal_activity_log (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        student_id INTEGER NOT NULL,
+                        student_name TEXT,
+                        action TEXT NOT NULL,
+                        page TEXT,
+                        details TEXT,
+                        ip_address TEXT,
+                        user_agent TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )`, () => {
+                        db.run(`INSERT INTO portal_activity_log (student_id, student_name, action, page, details, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                            [studentId, studentName, action, page, details || null, ip, ua]);
+                    });
+                }
+            });
+    }
+
+    // Toggle activity tracking
+    app.post('/admin/toggle-activity-tracking', (req, res) => {
+        if (!req.session.user || req.session.user.role !== 'manager') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        activityTrackingEnabled = !activityTrackingEnabled;
+        res.json({ enabled: activityTrackingEnabled });
+    });
+
+    app.get('/admin/activity-tracking-status', (req, res) => {
+        res.json({ enabled: activityTrackingEnabled });
+    });
+
     // Student Login Page
     app.get('/portal/login', (req, res) => {
         if (req.session.student) return res.redirect('/portal');
@@ -106,6 +150,7 @@ module.exports = (app, db) => {
             };
 
             db.run('UPDATE student_accounts SET last_login = datetime("now") WHERE id = ?', [account.id]);
+            logActivity(req, 'login', '/portal/login', 'Student logged in');
             res.redirect('/portal');
         });
     });
@@ -118,6 +163,7 @@ module.exports = (app, db) => {
 
     // Gamified Roadmap
     app.get('/portal/roadmap', requireStudent, (req, res) => {
+        logActivity(req, 'view', '/portal/roadmap', 'Viewed roadmap');
         const studentId = req.session.student.id;
         const student = req.session.student;
 
@@ -137,11 +183,20 @@ module.exports = (app, db) => {
 
     // Practice Studio
     app.get('/portal/practice', requireStudent, (req, res) => {
+        logActivity(req, 'view', '/portal/practice', 'Viewed practice studio');
         res.render('portal-practice', { student: req.session.student });
+    });
+
+    // Log activity from client-side
+    app.post('/portal/log-activity', requireStudent, (req, res) => {
+        const { action, page, details } = req.body;
+        logActivity(req, action || 'interaction', page || '/portal', details || null);
+        res.json({ ok: true });
     });
 
     // Settings page
     app.get('/portal/settings', requireStudent, (req, res) => {
+        logActivity(req, 'view', '/portal/settings', 'Viewed settings');
         db.get(`SELECT sa.profile_pic, sa.bio, sa.display_name, sa.rank, sa.xp, s.date_of_birth 
                 FROM student_accounts sa 
                 JOIN students s ON sa.student_id = s.id 
@@ -200,6 +255,7 @@ module.exports = (app, db) => {
 
     // Student Dashboard
     app.get('/portal', requireStudent, (req, res) => {
+        logActivity(req, 'view', '/portal', 'Viewed dashboard');
         const student = req.session.student;
         const studentId = student.id;
 

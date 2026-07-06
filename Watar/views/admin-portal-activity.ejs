@@ -1,0 +1,175 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-chart-line text-primary me-2"></i>Portal Activity</h1>
+            <div class="d-flex align-items-center gap-3">
+                <span id="tracking-label" class="text-muted" style="font-size:0.85rem;">Loading...</span>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="trackingToggle" style="width:3rem;height:1.5rem;cursor:pointer;" onchange="toggleTracking()">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h3><%= students.length %></h3>
+                <p class="text-muted mb-0">Unique Visitors</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-eye fa-2x text-success mb-2"></i>
+                <h3><%= logs.length %></h3>
+                <p class="text-muted mb-0">Total Actions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-sign-in-alt fa-2x text-info mb-2"></i>
+                <h3><%= logs.filter(l => l.action === 'login').length %></h3>
+                <p class="text-muted mb-0">Total Logins</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h3><%= logs.length > 0 ? new Date(logs[0].created_at).toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) : '-' %></h3>
+                <p class="text-muted mb-0">Last Activity</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Students Who Visited -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Students Who Visited</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Total Visits</th>
+                                <th>Last Visit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% students.forEach(s => { %>
+                            <tr>
+                                <td><i class="fas fa-user-circle text-primary me-2"></i><strong><%= s.student_name %></strong></td>
+                                <td><span class="badge bg-info"><%= s.visits %></span></td>
+                                <td><%= new Date(s.last_visit).toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) %></td>
+                            </tr>
+                            <% }); %>
+                            <% if (students.length === 0) { %>
+                            <tr><td colspan="3" class="text-center text-muted py-4">No portal activity yet</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Full Activity Log -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Activity Log</h5>
+                <input type="text" id="logSearch" class="form-control form-control-sm" style="max-width:200px;" placeholder="Search...">
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Time</th>
+                                <th>Student</th>
+                                <th>Action</th>
+                                <th>Page</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTable">
+                            <% logs.forEach(log => { %>
+                            <tr>
+                                <td><small><%= new Date(log.created_at).toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %></small></td>
+                                <td><strong><%= log.student_name %></strong></td>
+                                <td>
+                                    <% if (log.action === 'login') { %>
+                                        <span class="badge bg-success"><i class="fas fa-sign-in-alt me-1"></i>Login</span>
+                                    <% } else if (log.action === 'view') { %>
+                                        <span class="badge bg-info"><i class="fas fa-eye me-1"></i>View</span>
+                                    <% } else if (log.action === 'practice_play') { %>
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-play me-1"></i>Practice</span>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary"><%= log.action %></span>
+                                    <% } %>
+                                </td>
+                                <td><code><%= log.page %></code></td>
+                                <td><small class="text-muted"><%= log.details || '' %></small></td>
+                            </tr>
+                            <% }); %>
+                            <% if (logs.length === 0) { %>
+                            <tr><td colspan="5" class="text-center text-muted py-4">No activity logged yet</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('logSearch').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#logTable tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
+
+// Tracking toggle
+async function loadTrackingStatus() {
+    const res = await fetch('/admin/activity-tracking-status');
+    const data = await res.json();
+    document.getElementById('trackingToggle').checked = data.enabled;
+    updateLabel(data.enabled);
+}
+
+async function toggleTracking() {
+    const res = await fetch('/admin/toggle-activity-tracking', { method: 'POST' });
+    const data = await res.json();
+    document.getElementById('trackingToggle').checked = data.enabled;
+    updateLabel(data.enabled);
+}
+
+function updateLabel(enabled) {
+    const label = document.getElementById('tracking-label');
+    if (enabled) {
+        label.innerHTML = '<i class="fas fa-circle text-success me-1" style="font-size:0.6rem;"></i>Tracking ON';
+        label.className = 'text-success';
+    } else {
+        label.innerHTML = '<i class="fas fa-circle text-muted me-1" style="font-size:0.6rem;"></i>Tracking OFF';
+        label.className = 'text-muted';
+    }
+}
+
+loadTrackingStatus();
+</script>

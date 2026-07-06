@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Studio — Wattar Academy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#1a237e;--primary-light:#3949ab;--accent:#ff6f00;}
+        body{background:#0d1117;color:#fff;font-family:'Cairo',sans-serif;min-height:100vh;}
+        .studio-nav{background:linear-gradient(135deg,var(--primary),var(--primary-light));padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+        .studio-nav a{color:rgba(255,255,255,0.8);text-decoration:none;font-size:0.85rem;}
+        .studio-nav .logo{font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:10px;}
+        .studio-container{max-width:900px;margin:0 auto;padding:20px 16px;}
+        .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;}
+        .controls select,.controls button{padding:6px 12px;border-radius:8px;font-size:0.8rem;font-weight:600;}
+        .controls select{background:#1e2a3a;color:#fff;border:1px solid #333;}
+        .btn-play{background:#28a745;color:#fff;border:none;cursor:pointer;}
+        .btn-stop{background:#dc3545;color:#fff;border:none;cursor:pointer;display:none;}
+        .btn-clear{background:#666;color:#fff;border:none;cursor:pointer;}
+        .btn-undo{background:#f57f17;color:#fff;border:none;cursor:pointer;}
+        #instrumentArea{background:#1a1a2e;border-radius:12px;padding:16px;margin-bottom:12px;min-height:200px;}
+        .seq-display{font-size:0.75rem;color:#aaa;margin-bottom:8px;}
+        .duration-bar{display:flex;gap:4px;align-items:center;margin-bottom:10px;}
+        .dur-btn{padding:4px 8px;border:1px solid #444;background:#222;color:#fff;border-radius:6px;cursor:pointer;font-size:0.85rem;}
+        .dur-btn.active{background:var(--accent);border-color:var(--accent);}
+    </style>
+</head>
+<body>
+<nav class="studio-nav">
+    <div class="logo"><i class="fas fa-headphones me-2"></i>Practice Studio</div>
+    <a href="/portal"><i class="fas fa-arrow-left me-1"></i>Back to Portal</a>
+</nav>
+<div class="studio-container">
+    <div class="controls">
+        <select id="inst-select" onchange="currentInstrument=this.value;sequence=[];buildUI();">
+            <option value="guitar">🎸 Guitar</option>
+            <option value="oud">🪕 Oud</option>
+            <option value="piano">🎹 Piano</option>
+            <option value="violin">🎻 Violin</option>
+            <option value="tabla">🥁 Tabla</option>
+        </select>
+        <select id="notation-select" onchange="notationMode=this.value;buildUI();">
+            <option value="abc">ABC</option>
+            <option value="solfege">Do Re Mi</option>
+        </select>
+        <input type="number" id="bpm-input" value="90" min="30" max="200" style="width:60px;padding:6px;border-radius:8px;background:#1e2a3a;color:#fff;border:1px solid #333;font-size:0.8rem;">
+        <span style="font-size:0.7rem;color:#888;">BPM</span>
+        <button class="btn-play" id="play-btn" onclick="playSequence()"><i class="fas fa-play me-1"></i>Play</button>
+        <button class="btn-stop" id="stop-btn" onclick="stopSequence()"><i class="fas fa-stop me-1"></i>Stop</button>
+        <button class="btn-undo" onclick="sequence.pop();buildUI();"><i class="fas fa-undo"></i></button>
+        <button class="btn-clear" onclick="sequence=[];buildUI();"><i class="fas fa-trash"></i></button>
+    </div>
+    <div class="duration-bar">
+        <span style="font-size:0.7rem;color:#888;">Duration:</span>
+        <span class="dur-btn active" data-dur="q" onclick="setDur(this)">♩</span>
+        <span class="dur-btn" data-dur="h" onclick="setDur(this)">𝅗𝅥</span>
+        <span class="dur-btn" data-dur="e" onclick="setDur(this)">♪</span>
+        <span class="dur-btn" data-dur="w" onclick="setDur(this)">𝅝</span>
+        <span class="dur-btn" data-dur="s" onclick="setDur(this)">𝅘𝅥𝅯</span>
+        <button style="padding:4px 8px;border:1px solid #666;background:#333;color:#fff;border-radius:6px;cursor:pointer;font-size:0.75rem;" onclick="addRest()">Rest</button>
+    </div>
+    <div class="seq-display">Sequence: <strong id="seqText">—</strong></div>
+    <div id="instrumentArea"><p style="text-align:center;color:#666;">Select an instrument above</p></div>
+</div>
+<script>
+const ABC=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const SOL=['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
+const openStrNotes=[4,11,7,2,9,4];
+const openMidi=[64,59,55,50,45,40];
+const strNames=['e','B','G','D','A','E'];
+let sequence=[], currentInstrument='guitar', notationMode='abc', currentDur='q', audioCtx=null, playTimer=null;
+
+function getNoteName(i){return notationMode==='solfege'?SOL[i]:ABC[i];}
+function getFreq(midi){return 440*Math.pow(2,(midi-69)/12);}
+function setDur(el){document.querySelectorAll('.dur-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');currentDur=el.dataset.dur;}
+function addRest(){sequence.push({type:'rest',duration:currentDur});buildUI();}
+
+function buildUI(){
+    const c=document.getElementById('instrumentArea');
+    if(currentInstrument==='guitar'||currentInstrument==='oud')buildFretboard(c);
+    else if(currentInstrument==='piano')buildPiano(c);
+    else if(currentInstrument==='violin')buildViolin(c);
+    else if(currentInstrument==='tabla')buildTabla(c);
+    else c.innerHTML='<p style="color:#666;text-align:center;">Coming soon</p>';
+    updateSeq();
+}
+
+function updateSeq(){
+    const el=document.getElementById('seqText');
+    if(!sequence.length){el.textContent='—';return;}
+    el.textContent=sequence.map((s,i)=>{
+        if(s.type==='rest')return '—';
+        if(s.type==='tabla')return['D','T','K','P'][s.noteIdx]||'?';
+        return getNoteName(s.noteIdx);
+    }).join(' → ');
+}
+
+function addFretNote(s,f){
+    sequence.push({type:'fret',string:s,fret:f,noteIdx:(openStrNotes[s]+f)%12,midi:openMidi[s]+f,duration:currentDur});
+    buildUI();
+}
+function addPianoNote(oct,noteIdx){
+    sequence.push({type:'piano',octave:oct,noteIdx:noteIdx,midi:(oct+1)*12+noteIdx,duration:currentDur});
+    buildUI();
+}
+function addTablaNote(id){
+    const idx=['dum','tek','ka','pa'].indexOf(id);
+    if(id==='rest'){sequence.push({type:'rest',duration:currentDur});}
+    else{sequence.push({type:'tabla',tablaId:id,noteIdx:idx,midi:36+idx,duration:currentDur});}
+    buildUI();
+}
+
+function buildFretboard(container){
+    const frets=currentInstrument==='oud'?10:12;const strings=6;const cellW=48;const cellH=32;
+    let html=`<div style="overflow-x:auto;"><div style="position:relative;min-width:${(frets+1)*cellW+40}px;height:${strings*cellH+45}px;background:linear-gradient(180deg,#8B5E3C,#6B3410);border-radius:8px;padding:18px 10px 28px 38px;border:2px solid #5C3317;">`;
+    for(let f=0;f<=frets;f++){html+=`<div style="position:absolute;left:${38+f*cellW}px;top:16px;width:${f===0?'4px':'2px'};height:${strings*cellH}px;background:${f===0?'#ddd':'#bbb'};"></div>`;}
+    for(let s=0;s<strings;s++){
+        const y=s*cellH+18;
+        html+=`<div style="position:absolute;left:38px;top:${y+cellH/2}px;width:${(frets+1)*cellW}px;height:${1+s*0.3}px;background:#bbb;"></div>`;
+        html+=`<div style="position:absolute;left:6px;top:${y+cellH/2-7}px;font-size:0.6rem;font-weight:700;color:#ffd700;">${strNames[s]}</div>`;
+        for(let f=0;f<=frets;f++){
+            const noteIdx=(openStrNotes[s]+f)%12;const name=getNoteName(noteIdx);
+            const inSeq=sequence.filter(x=>x.type==='fret'&&x.string===s&&x.fret===f).length;
+            const isSharp=[1,3,6,8,10].includes(noteIdx);
+            let bg=inSeq?'#28a745':isSharp?'#222':'#ff8c42';
+            html+=`<div onclick="addFretNote(${s},${f})" style="position:absolute;left:${f*cellW+38+cellW/2-12}px;top:${y+cellH/2-12}px;width:24px;height:24px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.45rem;font-weight:700;cursor:pointer;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,0.3);transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform=''">${name}</div>`;
+        }
+    }
+    html+=`</div></div>`;container.innerHTML=html;
+}
+
+function buildPiano(container){
+    let html='<div style="overflow-x:auto;"><div style="position:relative;height:130px;min-width:800px;">';
+    let x=0;const whiteW=32,blackW=20,whiteH=110,blackH=70;const whites=[],blacks=[];
+    for(let oct=3;oct<=5;oct++){
+        for(let i=0;i<12;i++){
+            const isBlack=[1,3,6,8,10].includes(i);const name=getNoteName(i);
+            const inSeq=sequence.filter(s=>s.type==='piano'&&s.octave===oct&&s.noteIdx===i).length;
+            if(!isBlack){
+                const bg=inSeq?'#28a745':'#fff';const col=inSeq?'#fff':'#333';
+                whites.push(`<div onclick="addPianoNote(${oct},${i})" style="position:absolute;left:${x}px;top:0;width:${whiteW-2}px;height:${whiteH}px;background:${bg};border:1px solid #999;border-radius:0 0 4px 4px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:0.5rem;font-weight:600;color:${col};cursor:pointer;z-index:1;">${name}</div>`);
+                x+=whiteW;
+            }else{
+                const bg=inSeq?'#28a745':'#222';
+                blacks.push(`<div onclick="addPianoNote(${oct},${i})" style="position:absolute;left:${x-blackW/2}px;top:0;width:${blackW}px;height:${blackH}px;background:${bg};border:1px solid #000;border-radius:0 0 3px 3px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:0.45rem;font-weight:600;color:#fff;cursor:pointer;z-index:3;">${name}</div>`);
+            }
+        }
+    }
+    html+=whites.join('')+blacks.join('')+'</div></div>';container.innerHTML=html;
+}
+
+function buildViolin(container){
+    const violinStr=['E5','A4','D4','G3'];const violinOpen=[4,9,2,7];const positions=8;
+    let html=`<div style="overflow-x:auto;"><div style="position:relative;min-width:500px;height:200px;background:linear-gradient(180deg,#2C1810,#3D2314);border-radius:8px;padding:20px 10px 30px 50px;">`;
+    for(let s=0;s<4;s++){
+        const y=s*40+20;
+        html+=`<div style="position:absolute;left:50px;top:${y+20}px;width:${(positions+1)*52}px;height:${1.5+s*0.5}px;background:#ccc;"></div>`;
+        html+=`<div style="position:absolute;left:10px;top:${y+14}px;font-size:0.7rem;font-weight:700;color:#ffd700;">${violinStr[s]}</div>`;
+        for(let p=0;p<=positions;p++){
+            const noteIdx=(violinOpen[s]+p)%12;const name=getNoteName(noteIdx);
+            const inSeq=sequence.filter(x=>x.type==='fret'&&x.string===s&&x.fret===p).length;
+            const bg=inSeq?'#28a745':[1,3,6,8,10].includes(noteIdx)?'#222':'#4a90d9';
+            html+=`<div onclick="addFretNote(${s},${p})" style="position:absolute;left:${p*52+50+26-14}px;top:${y+20-14}px;width:28px;height:28px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;cursor:pointer;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,0.4);transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''">${name}</div>`;
+        }
+    }
+    html+=`</div></div>`;container.innerHTML=html;
+}
+
+function buildTabla(container){
+    const colors=['#c62828','#1565c0','#2e7d32','#f57f17'];
+    let html='<div style="text-align:center;">';
+    html+='<div style="position:relative;width:160px;height:160px;margin:0 auto 12px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2c3e50,#0d1117);border:5px solid #4a4a4a;box-shadow:0 6px 20px rgba(0,0,0,0.5);">';
+    html+=`<div onclick="addTablaNote('dum')" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:rgba(198,40,40,0.2);border:2px solid #c62828;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#e57373;font-weight:800;font-size:1rem;transition:all 0.1s;" onmousedown="this.style.background='#c62828';this.style.color='#fff'" onmouseup="this.style.background='rgba(198,40,40,0.2)';this.style.color='#e57373'">DUM</div>`;
+    html+=`<div onclick="addTablaNote('tek')" style="position:absolute;top:6px;left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:12px;background:rgba(21,101,192,0.2);border:2px solid #1565c0;cursor:pointer;color:#64b5f6;font-weight:700;font-size:0.75rem;transition:all 0.1s;" onmousedown="this.style.background='#1565c0';this.style.color='#fff'" onmouseup="this.style.background='rgba(21,101,192,0.2)';this.style.color='#64b5f6'">TEK</div>`;
+    html+=`<div onclick="addTablaNote('ka')" style="position:absolute;top:50%;right:6px;transform:translateY(-50%);padding:6px 8px;border-radius:12px;background:rgba(46,125,50,0.2);border:2px solid #2e7d32;cursor:pointer;color:#81c784;font-weight:700;font-size:0.75rem;transition:all 0.1s;" onmousedown="this.style.background='#2e7d32';this.style.color='#fff'" onmouseup="this.style.background='rgba(46,125,50,0.2)';this.style.color='#81c784'">KA</div>`;
+    html+=`<div onclick="addTablaNote('pa')" style="position:absolute;top:50%;left:6px;transform:translateY(-50%);padding:6px 8px;border-radius:12px;background:rgba(245,127,23,0.2);border:2px solid #f57f17;cursor:pointer;color:#ffb74d;font-weight:700;font-size:0.75rem;transition:all 0.1s;" onmousedown="this.style.background='#f57f17';this.style.color='#fff'" onmouseup="this.style.background='rgba(245,127,23,0.2)';this.style.color='#ffb74d'">PA</div>`;
+    html+='</div></div>';container.innerHTML=html;
+}
+
+// Playback
+const durBeats={w:4,h:2,dq:1.5,q:1,de:0.75,e:0.5,s:0.25};
+function playSequence(){
+    stopSequence();
+    if(!sequence.length)return;
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    // Log practice activity
+    fetch('/portal/log-activity', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'practice_play',page:'/portal/practice',details:currentInstrument+' - '+sequence.length+' notes'})}).catch(()=>{});
+    const bpm=parseInt(document.getElementById('bpm-input').value)||90;
+    const beatMs=60000/bpm;let cur=0;
+    document.getElementById('play-btn').style.display='none';
+    document.getElementById('stop-btn').style.display='';
+    function tick(){
+        if(cur>=sequence.length){stopSequence();return;}
+        const st=sequence[cur];const dur=(durBeats[st.duration]||1)*beatMs/1000;
+        if(st.type==='fret')playGuitarTone(getFreq(openMidi[st.string]+st.fret),dur);
+        else if(st.type==='piano')playPianoTone(getFreq((st.octave+1)*12+st.noteIdx),dur);
+        else if(st.type==='tabla')playTablaTone(st.noteIdx,dur);
+        cur++;
+        playTimer=setTimeout(tick,(durBeats[st.duration]||1)*beatMs);
+    }
+    tick();
+}
+function stopSequence(){if(playTimer)clearTimeout(playTimer);playTimer=null;document.getElementById('play-btn').style.display='';document.getElementById('stop-btn').style.display='none';}
+
+function playGuitarTone(freq,dur){
+    const t=audioCtx.currentTime;const g=audioCtx.createGain();g.connect(audioCtx.destination);
+    const o=audioCtx.createOscillator();o.type='triangle';o.frequency.value=freq;
+    const o2=audioCtx.createOscillator();o2.type='sine';o2.frequency.value=freq*2;
+    const g2=audioCtx.createGain();g2.gain.value=0.3;
+    const f=audioCtx.createBiquadFilter();f.type='lowpass';f.frequency.value=2500;
+    o.connect(f);o2.connect(g2);g2.connect(f);f.connect(g);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.5,t+0.005);g.gain.exponentialRampToValueAtTime(0.01,t+dur*0.95);
+    o.start(t);o2.start(t);o.stop(t+dur);o2.stop(t+dur);
+}
+function playPianoTone(freq,dur){
+    const t=audioCtx.currentTime;const g=audioCtx.createGain();g.connect(audioCtx.destination);
+    const o=audioCtx.createOscillator();o.type='sine';o.frequency.value=freq;
+    const o2=audioCtx.createOscillator();o2.type='sine';o2.frequency.value=freq*2;
+    const g2=audioCtx.createGain();g2.gain.value=0.3;o.connect(g);o2.connect(g2);g2.connect(g);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.5,t+0.002);g.gain.exponentialRampToValueAtTime(0.01,t+dur*0.98);
+    o.start(t);o2.start(t);o.stop(t+dur);o2.stop(t+dur);
+}
+function playTablaTone(idx,dur){
+    const t=audioCtx.currentTime;const g=audioCtx.createGain();g.connect(audioCtx.destination);
+    const o=audioCtx.createOscillator();
+    if(idx===0){o.type='sine';o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(60,t+0.1);o.connect(g);g.gain.setValueAtTime(0.7,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.3);o.start(t);o.stop(t+0.35);}
+    else if(idx===1){o.type='triangle';o.frequency.value=800;o.connect(g);g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.08);o.start(t);o.stop(t+0.1);}
+    else if(idx===2){o.type='triangle';o.frequency.value=600;o.connect(g);g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.06);o.start(t);o.stop(t+0.08);}
+    else{o.type='sine';o.frequency.setValueAtTime(200,t);o.frequency.exponentialRampToValueAtTime(80,t+0.04);o.connect(g);g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.05);o.start(t);o.stop(t+0.07);}
+}
+
+// Init
+buildUI();
+</script>
+</body>
+</html>

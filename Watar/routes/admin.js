@@ -288,6 +288,23 @@ module.exports = (app, db) => {
     });
 
     // Database Admin Routes (Manager only)
+    app.get('/admin/portal-activity', requireAuth, requireRole(['manager']), (req, res) => {
+        db.all(`SELECT * FROM portal_activity_log ORDER BY created_at DESC LIMIT 200`, (err, logs) => {
+            if (err) logs = [];
+
+            // Get unique students who visited
+            db.all(`SELECT student_id, student_name, COUNT(*) as visits, MAX(created_at) as last_visit
+                    FROM portal_activity_log GROUP BY student_id ORDER BY last_visit DESC`, (err, students) => {
+                if (err) students = [];
+
+                res.render('admin-portal-activity', { logs: logs || [], students: students || [] }, (err, html) => {
+                    if (err) { console.error(err); return res.status(500).send('Render error'); }
+                    res.render('layout', { body: html, user: req.session.user, activemenu: 'admin' });
+                });
+            });
+        });
+    });
+
     app.get('/admin/db', requireAuth, requireRole(['manager']), (req, res) => {
         res.render('admin-db', {}, (err, html) => {
             if (err) {

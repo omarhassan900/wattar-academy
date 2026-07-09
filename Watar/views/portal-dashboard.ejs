@@ -463,6 +463,13 @@
                 <button onclick="pSequence=[];buildPractice();" style="padding:3px 8px;border:1px solid #c62828;border-radius:6px;background:#ffebee;color:#c62828;font-size:0.7rem;cursor:pointer;"><i class="fas fa-trash"></i></button>
                 <button id="p-play-btn" onclick="playPractice()" style="padding:3px 10px;border:none;border-radius:6px;background:#28a745;color:#fff;font-size:0.75rem;cursor:pointer;font-weight:600;"><i class="fas fa-play me-1"></i>Play</button>
                 <button id="p-stop-btn" onclick="stopPractice()" style="padding:3px 10px;border:none;border-radius:6px;background:#dc3545;color:#fff;font-size:0.75rem;cursor:pointer;font-weight:600;display:none;"><i class="fas fa-stop me-1"></i>Stop</button>
+                <label style="font-size:0.7rem;color:#666;display:flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="p-loop-check"> 🔁 Loop</label>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+                <span style="font-size:0.7rem;color:#888;">My Songs:</span>
+                <button onclick="savePSong(0)" class="p-song-btn" id="p-song-0" style="padding:3px 8px;border:1px solid #3949ab;border-radius:6px;background:#e8eaf6;color:#3949ab;font-size:0.65rem;cursor:pointer;">Slot 1: Empty</button>
+                <button onclick="savePSong(1)" class="p-song-btn" id="p-song-1" style="padding:3px 8px;border:1px solid #3949ab;border-radius:6px;background:#e8eaf6;color:#3949ab;font-size:0.65rem;cursor:pointer;">Slot 2: Empty</button>
+                <button onclick="savePSong(2)" class="p-song-btn" id="p-song-2" style="padding:3px 8px;border:1px solid #3949ab;border-radius:6px;background:#e8eaf6;color:#3949ab;font-size:0.65rem;cursor:pointer;">Slot 3: Empty</button>
             </div>
             <div style="font-size:0.7rem;color:#666;margin-bottom:6px;">Sequence: <strong id="p-seq-text">—</strong></div>
             <div id="practice-builder" style="background:#1a1a2e;border-radius:10px;padding:12px;min-height:100px;">
@@ -965,7 +972,7 @@ function buildPFretboard(c){
     let h=`<div style="overflow-x:auto;"><div style="position:relative;min-width:${(frets+1)*cellW+36}px;height:${6*cellH+40}px;background:linear-gradient(180deg,#8B5E3C,#6B3410);border-radius:8px;padding:16px 8px 26px 36px;">`;
     for(let f=0;f<=frets;f++)h+=`<div style="position:absolute;left:${36+f*cellW}px;top:14px;width:${f===0?'3px':'1px'};height:${6*cellH}px;background:#bbb;"></div>`;
     for(let s=0;s<6;s++){const y=s*cellH+16;h+=`<div style="position:absolute;left:36px;top:${y+cellH/2}px;width:${(frets+1)*cellW}px;height:${1+s*0.3}px;background:#bbb;"></div>`;h+=`<div style="position:absolute;left:4px;top:${y+cellH/2-6}px;font-size:0.55rem;font-weight:700;color:#ffd700;">${strNames[s]}</div>`;
-    for(let f=0;f<=frets;f++){const ni=(openStrNotes[s]+f)%12;const inS=pSequence.filter(x=>x.type==='fret'&&x.string===s&&x.fret===f).length;const bg=inS?'#28a745':[1,3,6,8,10].includes(ni)?'#222':'#ff8c42';h+=`<div onclick="pAddFret(${s},${f})" style="position:absolute;left:${f*cellW+36+cellW/2-11}px;top:${y+cellH/2-11}px;width:22px;height:22px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.42rem;font-weight:700;cursor:pointer;z-index:2;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform=''">${pGetName(ni)}</div>`;}}
+    for(let f=0;f<=frets;f++){const ni=(openStrNotes[s]+f)%12;const inS=pSequence.filter(x=>x.type==='fret'&&x.string===s&&x.fret===f).length;const bg=inS?'#28a745':[1,3,6,8,10].includes(ni)?'#222':'#ff8c42';h+=`<div onclick="pAddFret(${s},${f})" data-s="${s}" data-f="${f}" style="position:absolute;left:${f*cellW+36+cellW/2-11}px;top:${y+cellH/2-11}px;width:22px;height:22px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.42rem;font-weight:700;cursor:pointer;z-index:2;transition:all 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform=''">${pGetName(ni)}</div>`;}}
     h+=`</div></div>`;c.innerHTML=h;
 }
 function buildPPiano(c){
@@ -996,15 +1003,56 @@ function playPractice(){
     if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
     const bpm=parseInt(document.getElementById('practice-bpm').value)||90;const beatMs=60000/bpm;let cur=0;
     document.getElementById('p-play-btn').style.display='none';document.getElementById('p-stop-btn').style.display='';
-    function tick(){if(cur>=pSequence.length){stopPractice();return;}
-    const st=pSequence[cur];const dur=(durBeats[st.duration]||1)*beatMs/1000;
-    if(st.type==='fret'){const inst=pInstrument;if(inst==='guitar')playGuitar(getFreq(st.midi),dur,audioCtx.currentTime);else if(inst==='oud')playOud(getFreq(st.midi),dur,audioCtx.currentTime);else playViolin(getFreq(st.midi),dur,audioCtx.currentTime);}
-    else if(st.type==='piano')playPiano(getFreq(st.midi),dur,audioCtx.currentTime);
-    else if(st.type==='tabla')playTabla(st.midi,dur,audioCtx.currentTime);
-    cur++;pTimer=setTimeout(tick,(durBeats[st.duration]||1)*beatMs);}
+    function tick(){
+        // Reset glow
+        document.querySelectorAll('#practice-builder div[data-glow]').forEach(el=>{el.style.boxShadow='';el.style.transform=el.dataset.origTransform||'';});
+        if(cur>=pSequence.length){
+            if(document.getElementById('p-loop-check').checked){cur=0;}
+            else{stopPractice();return;}
+        }
+        const st=pSequence[cur];const dur=(durBeats[st.duration]||1)*beatMs/1000;
+        // Glow the active note
+        if(st.type==='fret'){
+            const el=document.querySelector(`#practice-builder div[data-s="${st.string}"][data-f="${st.fret}"]`);
+            if(el){el.dataset.glow='1';el.dataset.origTransform=el.style.transform;el.style.boxShadow='0 0 16px #ffd700';el.style.transform='scale(1.4)';}
+            const inst=pInstrument;if(inst==='guitar')playGuitar(getFreq(st.midi),dur,audioCtx.currentTime);else if(inst==='oud')playOud(getFreq(st.midi),dur,audioCtx.currentTime);else playViolin(getFreq(st.midi),dur,audioCtx.currentTime);
+        }
+        else if(st.type==='piano')playPiano(getFreq(st.midi),dur,audioCtx.currentTime);
+        else if(st.type==='tabla')playTabla(st.midi,dur,audioCtx.currentTime);
+        cur++;pTimer=setTimeout(tick,(durBeats[st.duration]||1)*beatMs);
+    }
     tick();
 }
-function stopPractice(){if(pTimer)clearTimeout(pTimer);pTimer=null;document.getElementById('p-play-btn').style.display='';document.getElementById('p-stop-btn').style.display='none';}
+function stopPractice(){if(pTimer)clearTimeout(pTimer);pTimer=null;document.getElementById('p-play-btn').style.display='';document.getElementById('p-stop-btn').style.display='none';document.querySelectorAll('#practice-builder div[data-glow]').forEach(el=>{el.style.boxShadow='';el.style.transform=el.dataset.origTransform||'';});}
+
+// Song save/load (localStorage, max 3, max 30 notes each)
+const SONG_KEY='wattar_practice_songs';
+let pSongs=JSON.parse(localStorage.getItem(SONG_KEY)||'[null,null,null]');
+function updateSongButtons(){
+    for(let i=0;i<3;i++){
+        const btn=document.getElementById('p-song-'+i);
+        if(pSongs[i]){btn.textContent='Slot '+(i+1)+': '+pSongs[i].name;btn.style.background='#3949ab';btn.style.color='#fff';}
+        else{btn.textContent='Slot '+(i+1)+': Empty';btn.style.background='#e8eaf6';btn.style.color='#3949ab';}
+    }
+}
+function savePSong(slot){
+    if(pSongs[slot]){
+        // Already has a song - ask to load or delete
+        const action=prompt('This slot has "'+pSongs[slot].name+'".\nType LOAD to load it, DELETE to clear it, or CANCEL.');
+        if(!action)return;
+        if(action.toUpperCase()==='LOAD'){pSequence=pSongs[slot].seq.map(s=>({...s}));pInstrument=pSongs[slot].inst||'guitar';document.getElementById('practice-inst').value=pInstrument;buildPractice();}
+        else if(action.toUpperCase()==='DELETE'){pSongs[slot]=null;localStorage.setItem(SONG_KEY,JSON.stringify(pSongs));updateSongButtons();}
+        return;
+    }
+    if(!pSequence.length){alert('Build a sequence first!');return;}
+    if(pSequence.length>30){alert('Max 30 notes per song. You have '+pSequence.length+'.');return;}
+    const name=prompt('Name this song (max 15 chars):');
+    if(!name)return;
+    pSongs[slot]={name:name.substring(0,15),seq:pSequence.map(s=>({...s})),inst:pInstrument};
+    localStorage.setItem(SONG_KEY,JSON.stringify(pSongs));
+    updateSongButtons();
+}
+updateSongButtons();
 </script>
 </body>
 </html>

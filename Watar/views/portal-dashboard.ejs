@@ -1055,7 +1055,7 @@ function updateSongButtons(){
 }
 function savePSong(slot){
     if(!pSequence.length){alert('Build a sequence first!');return;}
-    if(pSequence.length>30){alert('Max 30 notes per song. You have '+pSequence.length+'.');return;}
+    if(pSequence.length>90){alert('Max 90 notes per song. You have '+pSequence.length+'.');return;}
     if(pSongs[slot]){if(!confirm('Overwrite "'+pSongs[slot].name+'"?'))return;}
     const name=prompt('Name this song (max 15 chars):');
     if(!name)return;

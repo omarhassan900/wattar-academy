@@ -90,7 +90,7 @@ module.exports = (app, db) => {
         });
     });
 
-    app.post('/students', requireAuth, requireRole(['manager', 'reception']), (req, res) => {
+    app.post('/students', requireAuth, requireRole(['manager', 'reception', 'operations_manager']), (req, res) => {
         const { name, national_id, phone, parent_phone, email, start_date, current_level, instrument, address, date_of_birth, emergency_contact, emergency_phone, trainer_id } = req.body;
         
         // Convert empty national_id to NULL so UNIQUE constraint allows multiple empty values
@@ -121,7 +121,7 @@ module.exports = (app, db) => {
     });
 
     // Edit Student Route
-    app.post('/students/:id/edit', requireAuth, requireRole(['manager', 'reception']), (req, res) => {
+    app.post('/students/:id/edit', requireAuth, requireRole(['manager', 'reception', 'operations_manager']), (req, res) => {
         const { id } = req.params;
         const { name, national_id, phone, parent_phone, email, start_date, current_level, instrument, status, address, date_of_birth, emergency_contact, emergency_phone, trainer_id } = req.body;
         
@@ -203,7 +203,7 @@ module.exports = (app, db) => {
     });
 
     // Update student
-    app.post('/students/:id', requireAuth, requireRole(['manager', 'reception']), (req, res) => {
+    app.post('/students/:id', requireAuth, requireRole(['manager', 'reception', 'operations_manager']), (req, res) => {
         const studentId = req.params.id;
         const {
             name, national_id, date_of_birth, age_group, instrument, current_level,

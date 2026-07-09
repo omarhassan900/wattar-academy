@@ -467,9 +467,20 @@
             </div>
             <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
                 <span style="font-size:0.7rem;color:#888;">My Songs:</span>
-                <button onclick="savePSong(0)" class="p-song-btn" id="p-song-0" style="padding:3px 8px;border:1px solid #3949ab;border-radius:6px;background:#e8eaf6;color:#3949ab;font-size:0.65rem;cursor:pointer;">Slot 1: Empty</button>
-                <button onclick="savePSong(1)" class="p-song-btn" id="p-song-1" style="padding:3px 8px;border:1px solid #3949ab;border-radius:6px;background:#e8eaf6;color:#3949ab;font-size:0.65rem;cursor:pointer;">Slot 2: Empty</button>
-                <button onclick="savePSong(2)" class="p-song-btn" id="p-song-2" style="padding:3px 8px;border:1px solid #3949ab;border-radius:6px;background:#e8eaf6;color:#3949ab;font-size:0.65rem;cursor:pointer;">Slot 3: Empty</button>
+                <button onclick="savePSong(0)" style="padding:3px 8px;border:1px solid #28a745;border-radius:6px;background:#e8f5e9;color:#2e7d32;font-size:0.65rem;cursor:pointer;">💾 Save</button>
+                <span id="p-song-0" style="font-size:0.65rem;color:#666;">Empty</span>
+                <button onclick="loadPSong(0)" id="p-load-0" style="padding:2px 6px;border:none;border-radius:4px;background:#3949ab;color:#fff;font-size:0.6rem;cursor:pointer;display:none;">▶ Load</button>
+                <button onclick="deletePSong(0)" id="p-del-0" style="padding:2px 6px;border:none;border-radius:4px;background:#c62828;color:#fff;font-size:0.6rem;cursor:pointer;display:none;">✕</button>
+                <span style="color:#ddd;">|</span>
+                <button onclick="savePSong(1)" style="padding:3px 8px;border:1px solid #28a745;border-radius:6px;background:#e8f5e9;color:#2e7d32;font-size:0.65rem;cursor:pointer;">💾 Save</button>
+                <span id="p-song-1" style="font-size:0.65rem;color:#666;">Empty</span>
+                <button onclick="loadPSong(1)" id="p-load-1" style="padding:2px 6px;border:none;border-radius:4px;background:#3949ab;color:#fff;font-size:0.6rem;cursor:pointer;display:none;">▶ Load</button>
+                <button onclick="deletePSong(1)" id="p-del-1" style="padding:2px 6px;border:none;border-radius:4px;background:#c62828;color:#fff;font-size:0.6rem;cursor:pointer;display:none;">✕</button>
+                <span style="color:#ddd;">|</span>
+                <button onclick="savePSong(2)" style="padding:3px 8px;border:1px solid #28a745;border-radius:6px;background:#e8f5e9;color:#2e7d32;font-size:0.65rem;cursor:pointer;">💾 Save</button>
+                <span id="p-song-2" style="font-size:0.65rem;color:#666;">Empty</span>
+                <button onclick="loadPSong(2)" id="p-load-2" style="padding:2px 6px;border:none;border-radius:4px;background:#3949ab;color:#fff;font-size:0.6rem;cursor:pointer;display:none;">▶ Load</button>
+                <button onclick="deletePSong(2)" id="p-del-2" style="padding:2px 6px;border:none;border-radius:4px;background:#c62828;color:#fff;font-size:0.6rem;cursor:pointer;display:none;">✕</button>
             </div>
             <div style="font-size:0.7rem;color:#666;margin-bottom:6px;">Sequence: <strong id="p-seq-text">—</strong></div>
             <div id="practice-builder" style="background:#1a1a2e;border-radius:10px;padding:12px;min-height:100px;">
@@ -1030,25 +1041,39 @@ const SONG_KEY='wattar_practice_songs';
 let pSongs=JSON.parse(localStorage.getItem(SONG_KEY)||'[null,null,null]');
 function updateSongButtons(){
     for(let i=0;i<3;i++){
-        const btn=document.getElementById('p-song-'+i);
-        if(pSongs[i]){btn.textContent='Slot '+(i+1)+': '+pSongs[i].name;btn.style.background='#3949ab';btn.style.color='#fff';}
-        else{btn.textContent='Slot '+(i+1)+': Empty';btn.style.background='#e8eaf6';btn.style.color='#3949ab';}
+        const label=document.getElementById('p-song-'+i);
+        const loadBtn=document.getElementById('p-load-'+i);
+        const delBtn=document.getElementById('p-del-'+i);
+        if(pSongs[i]){
+            label.textContent=pSongs[i].name;label.style.color='#3949ab';label.style.fontWeight='700';
+            loadBtn.style.display='';delBtn.style.display='';
+        }else{
+            label.textContent='Empty';label.style.color='#999';label.style.fontWeight='400';
+            loadBtn.style.display='none';delBtn.style.display='none';
+        }
     }
 }
 function savePSong(slot){
-    if(pSongs[slot]){
-        // Already has a song - ask to load or delete
-        const action=prompt('This slot has "'+pSongs[slot].name+'".\nType LOAD to load it, DELETE to clear it, or CANCEL.');
-        if(!action)return;
-        if(action.toUpperCase()==='LOAD'){pSequence=pSongs[slot].seq.map(s=>({...s}));pInstrument=pSongs[slot].inst||'guitar';document.getElementById('practice-inst').value=pInstrument;buildPractice();}
-        else if(action.toUpperCase()==='DELETE'){pSongs[slot]=null;localStorage.setItem(SONG_KEY,JSON.stringify(pSongs));updateSongButtons();}
-        return;
-    }
     if(!pSequence.length){alert('Build a sequence first!');return;}
     if(pSequence.length>30){alert('Max 30 notes per song. You have '+pSequence.length+'.');return;}
+    if(pSongs[slot]){if(!confirm('Overwrite "'+pSongs[slot].name+'"?'))return;}
     const name=prompt('Name this song (max 15 chars):');
     if(!name)return;
     pSongs[slot]={name:name.substring(0,15),seq:pSequence.map(s=>({...s})),inst:pInstrument};
+    localStorage.setItem(SONG_KEY,JSON.stringify(pSongs));
+    updateSongButtons();
+}
+function loadPSong(slot){
+    if(!pSongs[slot])return;
+    pSequence=pSongs[slot].seq.map(s=>({...s}));
+    pInstrument=pSongs[slot].inst||'guitar';
+    document.getElementById('practice-inst').value=pInstrument;
+    buildPractice();
+}
+function deletePSong(slot){
+    if(!pSongs[slot])return;
+    if(!confirm('Delete "'+pSongs[slot].name+'"?'))return;
+    pSongs[slot]=null;
     localStorage.setItem(SONG_KEY,JSON.stringify(pSongs));
     updateSongButtons();
 }

@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1><i class="fas fa-users text-primary me-2"></i>Students Management</h1>
-            <% if (user.role === 'manager' || user.role === 'reception') { %>
+            <% if (user.role === 'manager' || user.role === 'reception' || user.role === 'operations_manager') { %>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                 <i class="fas fa-user-plus me-2"></i>Add New Student
             </button>
@@ -61,7 +61,7 @@
                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">No Students Found</h4>
                     <p class="text-muted">Start by adding your first student to the academy.</p>
-                    <% if (user.role === 'manager' || user.role === 'reception') { %>
+                    <% if (user.role === 'manager' || user.role === 'reception' || user.role === 'operations_manager') { %>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                         <i class="fas fa-user-plus me-2"></i>Add First Student
                     </button>
@@ -80,7 +80,7 @@
                                 <th>Level</th>
                                 <th>Start Date</th>
                                 <th>Status</th>
-                                <% if (user.role === 'manager' || user.role === 'reception') { %>
+                                <% if (user.role === 'manager' || user.role === 'reception' || user.role === 'operations_manager') { %>
                                 <th>Actions</th>
                                 <% } %>
                             </tr>
@@ -147,7 +147,7 @@
                                         <span class="badge bg-secondary"><%= student.status %></span>
                                     <% } %>
                                 </td>
-                                <% if (user.role === 'manager' || user.role === 'reception') { %>
+                                <% if (user.role === 'manager' || user.role === 'reception' || user.role === 'operations_manager') { %>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary me-1 edit-student-btn" 
                                             title="Edit Student">
@@ -170,7 +170,7 @@
     </div>
 </div>
 
-<% if (user.role === 'manager' || user.role === 'reception') { %>
+<% if (user.role === 'manager' || user.role === 'reception' || user.role === 'operations_manager') { %>
 <!-- Add Student Modal -->
 <div class="modal fade" id="addStudentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">

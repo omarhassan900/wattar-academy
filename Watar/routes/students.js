@@ -168,6 +168,32 @@ module.exports = (app, db) => {
         }
     });
 
+    // Delete Student Route (Manager only)
+    app.post('/students/:id/delete', requireAuth, requireRole(['manager']), (req, res) => {
+        const { id } = req.params;
+
+        // Delete related data first
+        db.serialize(() => {
+            db.run('DELETE FROM attendance WHERE student_id = ?', [id]);
+            db.run('DELETE FROM student_evaluations WHERE student_id = ?', [id]);
+            db.run('DELETE FROM student_feedback WHERE student_id = ?', [id]);
+            db.run('DELETE FROM student_accounts WHERE student_id = ?', [id]);
+            db.run('DELETE FROM assignments WHERE student_id = ?', [id]);
+            db.run('DELETE FROM schedule_templates WHERE student_id = ?', [id]);
+            db.run('DELETE FROM students WHERE id = ?', [id], function(err) {
+                if (err) {
+                    console.error('Error deleting student:', err);
+                    return res.status(500).send('Database error');
+                }
+                if (this.changes === 0) {
+                    return res.status(404).send('Student not found');
+                }
+                console.log(`Student ${id} deleted by manager`);
+                res.sendStatus(200);
+            });
+        });
+    });
+
     // Get single student (API endpoint)
     app.get('/students/:id', requireAuth, (req, res) => {
         const studentId = req.params.id;

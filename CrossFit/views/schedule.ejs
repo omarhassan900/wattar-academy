@@ -1,0 +1,25 @@
+<h4 class="mb-4"><i class="fas fa-calendar-alt me-2"></i>Weekly Schedule</h4>
+
+<div class="card">
+    <div class="card-body">
+        <% const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']; %>
+        <div class="row">
+            <% days.forEach(day => { %>
+            <div class="col-md mb-3">
+                <h6 class="text-center text-uppercase border-bottom pb-2"><%= day %></h6>
+                <% const dayClasses = classes.filter(c => c.day_of_week === day); %>
+                <% dayClasses.forEach(c => { %>
+                <div class="p-2 mb-2 rounded" style="background: <%= c.color %>20; border-left: 3px solid <%= c.color %>;">
+                    <small class="fw-bold" style="color: <%= c.color %>"><%= c.class_type_name %></small><br>
+                    <small class="text-muted"><%= c.start_time %> - <%= c.end_time %></small><br>
+                    <small><%= c.coach_name || 'TBD' %></small>
+                </div>
+                <% }); %>
+                <% if (dayClasses.length === 0) { %>
+                <small class="text-muted d-block text-center">—</small>
+                <% } %>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+</div>

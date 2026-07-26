@@ -1,0 +1,89 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-clipboard-check me-2"></i>Attendance</h4>
+    <form method="GET" class="d-flex gap-2">
+        <input type="date" class="form-control" name="date" value="<%= date %>">
+        <button class="btn btn-dark">Go</button>
+    </form>
+</div>
+
+<!-- Today's Classes -->
+<div class="row mb-4">
+    <% classes.forEach(cls => { %>
+    <div class="col-md-4 mb-3">
+        <div class="card" style="border-top: 3px solid <%= cls.color %>;">
+            <div class="card-body">
+                <h6><%= cls.class_type_name %></h6>
+                <small class="text-muted"><%= cls.start_time %> - <%= cls.end_time %></small><br>
+                <small><i class="fas fa-user me-1"></i><%= cls.coach_name || 'TBD' %></small>
+            </div>
+        </div>
+    </div>
+    <% }); %>
+    <% if (classes.length === 0) { %>
+    <div class="col-12"><p class="text-muted">No classes scheduled for this day.</p></div>
+    <% } %>
+</div>
+
+<!-- Check-in Form -->
+<div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0">Record Check-in</h6></div>
+    <div class="card-body">
+        <form method="POST" action="/attendance" class="row g-2 align-items-end">
+            <input type="hidden" name="date" value="<%= date %>">
+            <div class="col-md-4">
+                <label class="form-label">Member</label>
+                <select class="form-select" name="member_id" required>
+                    <option value="">Select member...</option>
+                    <% members.forEach(m => { %>
+                    <option value="<%= m.id %>"><%= m.full_name %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Class</label>
+                <select class="form-select" name="class_id" required>
+                    <option value="">Select class...</option>
+                    <% classes.forEach(cls => { %>
+                    <option value="<%= cls.id %>"><%= cls.class_type_name %> (<%= cls.start_time %>)</option>
+                    <% }); %>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="present">Present</option>
+                    <option value="late">Late</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Check In</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Today's Records -->
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">Records for <%= date %> (<%= records.length %>)</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Member</th><th>Class</th><th>Time</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                <% records.forEach(r => { %>
+                <tr>
+                    <td><%= r.member_name %></td>
+                    <td><%= r.class_type_name %></td>
+                    <td><%= r.check_in_time || '—' %></td>
+                    <td><span class="badge bg-<%= r.status === 'present' ? 'success' : r.status === 'late' ? 'warning' : 'danger' %>"><%= r.status %></span></td>
+                    <td>
+                        <form method="POST" action="/attendance/<%= r.id %>/delete?date=<%= date %>" class="d-inline">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% if (records.length === 0) { %><p class="text-muted text-center">No check-ins yet.</p><% } %>
+    </div>
+</div>

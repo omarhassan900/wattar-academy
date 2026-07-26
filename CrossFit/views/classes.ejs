@@ -1,0 +1,54 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-dumbbell me-2"></i>Classes</h4>
+    <% if (['admin','manager'].includes(user.role)) { %>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClassModal">
+        <i class="fas fa-plus me-2"></i>Add Class
+    </button>
+    <% } %>
+</div>
+
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>Type</th><th>Day</th><th>Time</th><th>Coach</th><th>Capacity</th><th></th></tr></thead>
+            <tbody>
+                <% classes.forEach(c => { %>
+                <tr>
+                    <td><span class="badge" style="background:<%= c.color %>"><%= c.class_type_name %></span></td>
+                    <td><%= c.day_of_week.charAt(0).toUpperCase() + c.day_of_week.slice(1) %></td>
+                    <td><%= c.start_time %> - <%= c.end_time %></td>
+                    <td><%= c.coach_name || 'TBD' %></td>
+                    <td><%= c.max_capacity %></td>
+                    <td>
+                        <% if (['admin','manager'].includes(user.role)) { %>
+                        <form method="POST" action="/classes/<%= c.id %>/delete" class="d-inline" onsubmit="return confirm('Cancel this class?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% if (classes.length === 0) { %><p class="text-muted text-center">No classes yet.</p><% } %>
+    </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/classes">
+                <div class="modal-header"><h5 class="modal-title">Add Class</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Class Type</label><select class="form-select" name="class_type_id" required><% classTypes.forEach(ct => { %><option value="<%= ct.id %>"><%= ct.name %></option><% }); %></select></div>
+                    <div class="mb-3"><label class="form-label">Day</label><select class="form-select" name="day_of_week" required><option value="sunday">Sunday</option><option value="monday">Monday</option><option value="tuesday">Tuesday</option><option value="wednesday">Wednesday</option><option value="thursday">Thursday</option><option value="friday">Friday</option><option value="saturday">Saturday</option></select></div>
+                    <div class="row"><div class="col-6 mb-3"><label class="form-label">Start Time</label><input type="time" class="form-control" name="start_time" required></div><div class="col-6 mb-3"><label class="form-label">End Time</label><input type="time" class="form-control" name="end_time" required></div></div>
+                    <div class="mb-3"><label class="form-label">Coach</label><select class="form-select" name="coach_id"><option value="">TBD</option><% coaches.forEach(c => { %><option value="<%= c.id %>"><%= c.full_name %></option><% }); %></select></div>
+                    <div class="mb-3"><label class="form-label">Max Capacity</label><input type="number" class="form-control" name="max_capacity" value="20"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Class</button></div>
+            </form>
+        </div>
+    </div>
+</div>

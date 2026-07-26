@@ -1,0 +1,144 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-users me-2"></i>Members Management</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+        <i class="fas fa-user-plus me-2"></i>Add Member
+    </button>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="search" placeholder="Search name or phone..." value="<%= filters.search || '' %>">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                    <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                    <option value="frozen" <%= filters.status === 'frozen' ? 'selected' : '' %>>Frozen</option>
+                    <option value="expired" <%= filters.status === 'expired' ? 'selected' : '' %>>Expired</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-dark w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Members Table -->
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Membership</th>
+                    <th>Expires</th>
+                    <th>Level</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% members.forEach(m => { %>
+                <tr>
+                    <td><strong><%= m.full_name %></strong></td>
+                    <td><%= m.phone %></td>
+                    <td><span class="badge bg-secondary"><%= m.membership_type || 'N/A' %></span></td>
+                    <td><%= m.membership_end || '—' %></td>
+                    <td><%= m.skill_level %></td>
+                    <td>
+                        <% if (m.status === 'active') { %>
+                            <span class="badge bg-success">Active</span>
+                        <% } else if (m.status === 'frozen') { %>
+                            <span class="badge bg-info">Frozen</span>
+                        <% } else if (m.status === 'expired') { %>
+                            <span class="badge bg-danger">Expired</span>
+                        <% } else { %>
+                            <span class="badge bg-secondary">Inactive</span>
+                        <% } %>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal<%= m.id %>">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <% if (m.status === 'active') { %>
+                        <form method="POST" action="/members/<%= m.id %>/freeze" class="d-inline">
+                            <button class="btn btn-sm btn-outline-info" title="Freeze"><i class="fas fa-snowflake"></i></button>
+                        </form>
+                        <% } else if (m.status === 'frozen') { %>
+                        <form method="POST" action="/members/<%= m.id %>/activate" class="d-inline">
+                            <button class="btn btn-sm btn-outline-success" title="Activate"><i class="fas fa-play"></i></button>
+                        </form>
+                        <% } %>
+                    </td>
+                </tr>
+
+                <!-- Edit Modal -->
+                <div class="modal fade" id="editModal<%= m.id %>" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="/members/<%= m.id %>/edit">
+                                <div class="modal-header"><h5 class="modal-title">Edit <%= m.full_name %></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-12 mb-2"><label class="form-label">Full Name</label><input type="text" class="form-control" name="full_name" value="<%= m.full_name %>" required></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Phone</label><input type="text" class="form-control" name="phone" value="<%= m.phone %>"></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Email</label><input type="email" class="form-control" name="email" value="<%= m.email || '' %>"></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Gender</label><select class="form-select" name="gender"><option value="male" <%= m.gender==='male'?'selected':'' %>>Male</option><option value="female" <%= m.gender==='female'?'selected':'' %>>Female</option></select></div>
+                                        <div class="col-6 mb-2"><label class="form-label">DOB</label><input type="date" class="form-control" name="date_of_birth" value="<%= m.date_of_birth || '' %>"></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Emergency Contact</label><input type="text" class="form-control" name="emergency_contact" value="<%= m.emergency_contact || '' %>"></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Emergency Phone</label><input type="text" class="form-control" name="emergency_phone" value="<%= m.emergency_phone || '' %>"></div>
+                                        <div class="col-12 mb-2"><label class="form-label">Address</label><input type="text" class="form-control" name="address" value="<%= m.address || '' %>"></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Membership</label><select class="form-select" name="membership_type"><option value="monthly" <%= m.membership_type==='monthly'?'selected':'' %>>Monthly</option><option value="quarterly" <%= m.membership_type==='quarterly'?'selected':'' %>>Quarterly</option><option value="semi_annual" <%= m.membership_type==='semi_annual'?'selected':'' %>>Semi-Annual</option><option value="annual" <%= m.membership_type==='annual'?'selected':'' %>>Annual</option><option value="class_pack" <%= m.membership_type==='class_pack'?'selected':'' %>>Class Pack</option><option value="drop_in" <%= m.membership_type==='drop_in'?'selected':'' %>>Drop-in</option></select></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Skill Level</label><select class="form-select" name="skill_level"><option value="beginner" <%= m.skill_level==='beginner'?'selected':'' %>>Beginner</option><option value="intermediate" <%= m.skill_level==='intermediate'?'selected':'' %>>Intermediate</option><option value="advanced" <%= m.skill_level==='advanced'?'selected':'' %>>Advanced</option><option value="competition" <%= m.skill_level==='competition'?'selected':'' %>>Competition</option></select></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Start</label><input type="date" class="form-control" name="membership_start" value="<%= m.membership_start || '' %>"></div>
+                                        <div class="col-6 mb-2"><label class="form-label">End</label><input type="date" class="form-control" name="membership_end" value="<%= m.membership_end || '' %>"></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Coach</label><select class="form-select" name="coach_id"><option value="">None</option><% coaches.forEach(c => { %><option value="<%= c.id %>" <%= m.coach_id==c.id?'selected':'' %>><%= c.full_name %></option><% }); %></select></div>
+                                        <div class="col-6 mb-2"><label class="form-label">Status</label><select class="form-select" name="status"><option value="active" <%= m.status==='active'?'selected':'' %>>Active</option><option value="inactive" <%= m.status==='inactive'?'selected':'' %>>Inactive</option><option value="frozen" <%= m.status==='frozen'?'selected':'' %>>Frozen</option><option value="expired" <%= m.status==='expired'?'selected':'' %>>Expired</option></select></div>
+                                        <div class="col-12 mb-2"><label class="form-label">Health Notes</label><textarea class="form-control" name="health_notes" rows="2"><%= m.health_notes || '' %></textarea></div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </tbody>
+        </table>
+        <% if (members.length === 0) { %><p class="text-muted text-center">No members found.</p><% } %>
+    </div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal fade" id="addMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/members">
+                <div class="modal-header"><h5 class="modal-title">Add New Member</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 mb-2"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="full_name" required></div>
+                        <div class="col-6 mb-2"><label class="form-label">Phone *</label><input type="tel" class="form-control" name="phone" required></div>
+                        <div class="col-6 mb-2"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Gender</label><select class="form-select" name="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Date of Birth</label><input type="date" class="form-control" name="date_of_birth"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Emergency Contact</label><input type="text" class="form-control" name="emergency_contact"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Emergency Phone</label><input type="text" class="form-control" name="emergency_phone"></div>
+                        <div class="col-12 mb-2"><label class="form-label">Address</label><input type="text" class="form-control" name="address"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Membership Type</label><select class="form-select" name="membership_type"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="semi_annual">Semi-Annual</option><option value="annual">Annual</option><option value="class_pack">Class Pack</option><option value="drop_in">Drop-in</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Skill Level</label><select class="form-select" name="skill_level"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="competition">Competition</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Coach</label><select class="form-select" name="coach_id"><option value="">None</option><% coaches.forEach(c => { %><option value="<%= c.id %>"><%= c.full_name %></option><% }); %></select></div>
+                        <div class="col-12 mb-2"><label class="form-label">Health Notes</label><textarea class="form-control" name="health_notes" rows="2" placeholder="Injuries, conditions, etc."></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Member</button></div>
+            </form>
+        </div>
+    </div>
+</div>

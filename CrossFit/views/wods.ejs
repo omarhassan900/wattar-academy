@@ -1,0 +1,72 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-fire me-2"></i>WODs (Workout of the Day)</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWodModal">
+        <i class="fas fa-plus me-2"></i>Add WOD
+    </button>
+</div>
+
+<!-- Month Filter -->
+<div class="mb-3">
+    <form method="GET" class="d-flex gap-2 align-items-center">
+        <input type="month" class="form-control" name="month" value="<%= month %>" style="max-width:200px;">
+        <button class="btn btn-dark">Go</button>
+    </form>
+</div>
+
+<!-- WOD Cards -->
+<div class="row">
+    <% wods.forEach(w => { %>
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1"><%= w.title %></h6>
+                        <small class="text-muted"><%= w.date %> &bull; <%= w.class_type %></small>
+                        <span class="badge bg-dark ms-2"><%= w.workout_type %></span>
+                    </div>
+                    <form method="POST" action="/wods/<%= w.id %>/delete" onsubmit="return confirm('Delete?')">
+                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                    </form>
+                </div>
+                <hr>
+                <p class="mb-1" style="white-space: pre-wrap; font-size: 0.9rem;"><%= w.description %></p>
+                <% if (w.time_cap_minutes) { %>
+                <small class="text-danger"><i class="fas fa-stopwatch me-1"></i><%= w.time_cap_minutes %> min cap</small>
+                <% } %>
+                <% if (w.coach_name) { %>
+                <small class="d-block text-muted"><i class="fas fa-user me-1"></i><%= w.coach_name %></small>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    <% }); %>
+    <% if (wods.length === 0) { %>
+    <div class="col-12"><p class="text-muted text-center">No WODs for this month.</p></div>
+    <% } %>
+</div>
+
+<!-- Add WOD Modal -->
+<div class="modal fade" id="addWodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/wods">
+                <div class="modal-header"><h5 class="modal-title">Add WOD</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Title *</label><input type="text" class="form-control" name="title" required placeholder="e.g. Fran, Murph, or custom name"></div>
+                    <div class="row">
+                        <div class="col-6 mb-3"><label class="form-label">Date *</label><input type="date" class="form-control" name="date" required></div>
+                        <div class="col-6 mb-3"><label class="form-label">Class Type</label><select class="form-select" name="class_type"><option value="crossfit">CrossFit</option><option value="boxing">Boxing</option><option value="endurance">Endurance</option></select></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3"><label class="form-label">Workout Type</label><select class="form-select" name="workout_type"><option value="amrap">AMRAP</option><option value="emom">EMOM</option><option value="for_time">For Time</option><option value="strength">Strength</option><option value="skill">Skill</option><option value="custom">Custom</option></select></div>
+                        <div class="col-6 mb-3"><label class="form-label">Time Cap (min)</label><input type="number" class="form-control" name="time_cap_minutes" placeholder="Optional"></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Description *</label><textarea class="form-control" name="description" rows="4" required placeholder="Workout details..."></textarea></div>
+                    <div class="mb-3"><label class="form-label">Coach</label><select class="form-select" name="coach_id"><option value="">—</option><% coaches.forEach(c => { %><option value="<%= c.id %>"><%= c.full_name %></option><% }); %></select></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add WOD</button></div>
+            </form>
+        </div>
+    </div>
+</div>

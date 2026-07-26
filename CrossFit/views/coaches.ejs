@@ -1,0 +1,78 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-user-tie me-2"></i>Coaches</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCoachModal">
+        <i class="fas fa-plus me-2"></i>Add Coach
+    </button>
+</div>
+
+<div class="row">
+    <% coaches.forEach(c => { %>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="mb-1"><%= c.full_name %></h6>
+                        <small class="text-muted"><%= c.specialization || 'General' %></small>
+                    </div>
+                    <span class="badge bg-<%= c.status === 'active' ? 'success' : 'secondary' %> align-self-start"><%= c.status %></span>
+                </div>
+                <hr>
+                <small><i class="fas fa-phone me-1"></i><%= c.phone || '—' %></small><br>
+                <small><i class="fas fa-envelope me-1"></i><%= c.email || '—' %></small>
+                <% if (c.bio) { %><p class="mt-2 mb-0" style="font-size:0.85rem;"><%= c.bio %></p><% } %>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editCoach<%= c.id %>"><i class="fas fa-edit"></i> Edit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Coach Modal -->
+    <div class="modal fade" id="editCoach<%= c.id %>" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="/coaches/<%= c.id %>/edit">
+                    <div class="modal-header"><h5 class="modal-title">Edit <%= c.full_name %></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <div class="mb-2"><label class="form-label">Name</label><input type="text" class="form-control" name="full_name" value="<%= c.full_name %>" required></div>
+                        <div class="mb-2"><label class="form-label">Phone</label><input type="text" class="form-control" name="phone" value="<%= c.phone || '' %>"></div>
+                        <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" name="email" value="<%= c.email || '' %>"></div>
+                        <div class="mb-2"><label class="form-label">Specialization</label><input type="text" class="form-control" name="specialization" value="<%= c.specialization || '' %>" placeholder="CrossFit, Boxing, etc."></div>
+                        <div class="mb-2"><label class="form-label">Bio</label><textarea class="form-control" name="bio" rows="2"><%= c.bio || '' %></textarea></div>
+                        <div class="mb-2"><label class="form-label">Status</label><select class="form-select" name="status"><option value="active" <%= c.status==='active'?'selected':'' %>>Active</option><option value="inactive" <%= c.status==='inactive'?'selected':'' %>>Inactive</option></select></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary">Save</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <% }); %>
+</div>
+<% if (coaches.length === 0) { %><p class="text-muted text-center">No coaches yet.</p><% } %>
+
+<!-- Add Coach Modal -->
+<div class="modal fade" id="addCoachModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/coaches">
+                <div class="modal-header"><h5 class="modal-title">Add Coach</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="full_name" required></div>
+                    <div class="mb-2"><label class="form-label">Phone</label><input type="text" class="form-control" name="phone"></div>
+                    <div class="mb-2"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div>
+                    <div class="mb-2"><label class="form-label">Specialization</label><input type="text" class="form-control" name="specialization" placeholder="CrossFit, Boxing, etc."></div>
+                    <div class="mb-2"><label class="form-label">Bio</label><textarea class="form-control" name="bio" rows="2"></textarea></div>
+                    <hr>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="create_account" id="createAccount" value="1">
+                        <label class="form-check-label" for="createAccount">Create login account</label>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Username</label><input type="text" class="form-control" name="username"></div>
+                    <div class="mb-2"><label class="form-label">Password</label><input type="password" class="form-control" name="password"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Coach</button></div>
+            </form>
+        </div>
+    </div>
+</div>

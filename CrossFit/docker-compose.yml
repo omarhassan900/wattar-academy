@@ -9,9 +9,9 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-in-production}
+      - DB_PATH=/app/data/crossfit.db
     volumes:
       - ./data:/app/data
-      - ./crossfit.db:/app/crossfit.db
       - ./uploads:/app/public/uploads
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/login', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]

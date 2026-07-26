@@ -43,6 +43,7 @@ require('./routes/schedule')(app, db);
 require('./routes/wods')(app, db);
 require('./routes/payments')(app, db);
 require('./routes/public-register')(app, db);
+require('./routes/users')(app, db);
 
 // Start server
 app.listen(PORT, () => {

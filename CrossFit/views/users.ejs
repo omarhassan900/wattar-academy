@@ -1,0 +1,142 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-user-cog me-2"></i>User Management</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+        <i class="fas fa-user-plus me-2"></i>Add User
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">All Users (<%= users.length %>)</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                <% users.forEach(u => { %>
+                <tr data-id="<%= u.id %>" data-username="<%= u.username %>" data-fullname="<%= u.full_name %>" data-email="<%= u.email || '' %>" data-role="<%= u.role %>" data-status="<%= u.status %>">
+                    <td><strong><%= u.username %></strong></td>
+                    <td><%= u.full_name %></td>
+                    <td><%= u.email || '—' %></td>
+                    <td>
+                        <% if (u.role === 'admin') { %>
+                            <span class="badge bg-danger"><i class="fas fa-shield-alt me-1"></i>Admin</span>
+                        <% } else if (u.role === 'manager') { %>
+                            <span class="badge bg-warning text-dark"><i class="fas fa-user-tie me-1"></i>Manager</span>
+                        <% } else if (u.role === 'reception') { %>
+                            <span class="badge bg-info"><i class="fas fa-desktop me-1"></i>Reception</span>
+                        <% } else if (u.role === 'coach') { %>
+                            <span class="badge bg-success"><i class="fas fa-dumbbell me-1"></i>Coach</span>
+                        <% } else { %>
+                            <span class="badge bg-secondary"><%= u.role %></span>
+                        <% } %>
+                    </td>
+                    <td><span class="badge bg-<%= u.status === 'active' ? 'success' : 'secondary' %>"><%= u.status %></span></td>
+                    <td><%= u.created_at ? new Date(u.created_at).toLocaleDateString() : '' %></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-dark edit-user-btn"><i class="fas fa-edit"></i></button>
+                        <% if (u.id !== 1) { %>
+                        <button class="btn btn-sm btn-outline-danger delete-user-btn"><i class="fas fa-trash"></i></button>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% if (users.length === 0) { %><p class="text-muted text-center">No users yet.</p><% } %>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/users">
+                <div class="modal-header"><h5 class="modal-title">Add New User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Username *</label><input type="text" class="form-control" name="username" required></div>
+                    <div class="mb-3"><label class="form-label">Password *</label><input type="password" class="form-control" name="password" required minlength="6"><small class="text-muted">Minimum 6 characters</small></div>
+                    <div class="mb-3"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="full_name" required></div>
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Role *</label>
+                        <select class="form-select" name="role" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin — Full system access</option>
+                            <option value="manager">Manager — Dashboard, members, payments</option>
+                            <option value="reception">Reception — Check-ins & member management</option>
+                            <option value="coach">Coach — Schedule, WODs, attendance</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add User</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editUserForm" method="POST">
+                <div class="modal-header"><h5 class="modal-title">Edit User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Username</label><input type="text" class="form-control" id="edit_username" readonly></div>
+                    <div class="mb-3"><label class="form-label">New Password</label><input type="password" class="form-control" id="edit_password" name="password" minlength="6"><small class="text-muted">Leave blank to keep current</small></div>
+                    <div class="mb-3"><label class="form-label">Full Name *</label><input type="text" class="form-control" id="edit_full_name" name="full_name" required></div>
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="edit_email" name="email"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Role *</label>
+                        <select class="form-select" id="edit_role" name="role" required>
+                            <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="reception">Reception</option>
+                            <option value="coach">Coach</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="edit_status" name="status">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Changes</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-user-btn')) {
+            const row = e.target.closest('tr');
+            document.getElementById('edit_username').value = row.dataset.username;
+            document.getElementById('edit_full_name').value = row.dataset.fullname;
+            document.getElementById('edit_email').value = row.dataset.email;
+            document.getElementById('edit_role').value = row.dataset.role;
+            document.getElementById('edit_status').value = row.dataset.status;
+            document.getElementById('edit_password').value = '';
+            document.getElementById('editUserForm').action = '/users/' + row.dataset.id + '/edit';
+            new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        }
+        if (e.target.closest('.delete-user-btn')) {
+            if (confirm('Delete this user?')) {
+                const row = e.target.closest('tr');
+                fetch('/users/' + row.dataset.id + '/delete', { method: 'POST' })
+                    .then(r => { if (r.ok) window.location.reload(); else alert('Error'); });
+            }
+        }
+    });
+});
+</script>

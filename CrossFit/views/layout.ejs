@@ -72,6 +72,9 @@
                 <% if (['admin','manager'].includes(user.role)) { %>
                 <a class="nav-link <%= currentUrl.startsWith('/coaches') ? 'active' : '' %>" href="/coaches"><i class="fas fa-user-tie me-2"></i>Coaches</a>
                 <% } %>
+                <% if (user.role === 'admin') { %>
+                <a class="nav-link <%= currentUrl.startsWith('/users') ? 'active' : '' %>" href="/users"><i class="fas fa-user-cog me-2"></i>Users</a>
+                <% } %>
                 <hr class="border-light mx-3">
                 <a class="nav-link text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
             </nav>
@@ -101,6 +104,9 @@
                     <a class="nav-link text-white" href="/payments"><i class="fas fa-money-bill me-2"></i>Payments</a>
                     <% if (['admin','manager'].includes(user.role)) { %>
                     <a class="nav-link text-white" href="/coaches"><i class="fas fa-user-tie me-2"></i>Coaches</a>
+                    <% } %>
+                    <% if (user.role === 'admin') { %>
+                    <a class="nav-link text-white" href="/users"><i class="fas fa-user-cog me-2"></i>Users</a>
                     <% } %>
                     <a class="nav-link text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
                 </nav>

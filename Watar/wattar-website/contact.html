@@ -1,202 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact — Wattar Academy</title>
-    <meta name="description" content="Get in touch with Wattar Academy. Start your musical journey today.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Wattar Academy</title>
+<meta name="description" content="Book a free trial at Wattar Academy in Mokattam, Cairo. Call or WhatsApp 01009205520.">
+<meta property="og:title" content="Contact — Wattar Academy">
+<meta property="og:description" content="Book a free trial at Wattar Academy in Mokattam, Cairo. Call or WhatsApp 01009205520.">
+<meta property="og:image" content="images/logo.jpg">
+<meta name="theme-color" content="#06050b">
+<link rel="icon" href="images/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700;800&family=Noto+Kufi+Arabic:wght@500;700;800&family=Noto+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-page="contact">
+<div class="ambient"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<canvas id="bg3d" aria-hidden="true"></canvas>
 
-<!-- Navbar -->
-<nav class="navbar">
-    <div class="container">
-        <a href="index.html" class="navbar-logo">
-            <img src="images/logo.jpg" alt="Wattar Academy">
-            <span>Wattar Academy</span>
-        </a>
-        <ul class="nav-links">
-            <li><a href="/site/" data-i18n="navHome">Home</a></li>
-            <li><a href="/site/about.html" data-i18n="navAbout">About</a></li>
-            <li><a href="/site/programs.html" data-i18n="navPrograms">Programs</a></li>
-            <li><a href="/site/contact.html" class="active" data-i18n="navContact">Contact</a></li>
-            <li><a href="/portal/login" style="font-weight:600;">Student Portal</a></li>
-            <li><button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button></li>
-        </ul>
-        <button class="menu-toggle" onclick="openMobileNav()" aria-label="Open menu">
-            <span></span><span></span><span></span>
-        </button>
+<!-- NAV -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand"><img src="images/logo.jpg" alt=""><span data-i18n="brand">Wattar Academy</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html" data-page="home" data-i18n="navHome">Home</a></li>
+      <li><a href="about.html" data-page="about" data-i18n="navAbout">About</a></li>
+      <li><a href="programs.html" data-page="programs" data-i18n="navPrograms">Programs</a></li>
+      <li><a href="contact.html" data-page="contact" data-i18n="navContact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="pill-btn lang" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+      <a href="/portal/login" class="pill-btn primary" data-i18n="navPortal">Student Portal</a>
+      <button class="menu-toggle" onclick="openMobileNav()" aria-label="Open menu"><span></span><span></span><span></span></button>
     </div>
+  </div>
 </nav>
-
-<!-- Mobile Nav -->
 <div class="mobile-nav" id="mobileNav">
-    <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close menu">&times;</button>
-    <a href="index.html" data-i18n="navHome" onclick="closeMobileNav()">Home</a>
-    <a href="about.html" data-i18n="navAbout" onclick="closeMobileNav()">About</a>
-    <a href="programs.html" data-i18n="navPrograms" onclick="closeMobileNav()">Programs</a>
-    <a href="contact.html" data-i18n="navContact" onclick="closeMobileNav()">Contact</a>
-    <a href="/portal/login" onclick="closeMobileNav()" style="font-weight:600;">Student Portal</a>
-    <button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+  <button class="close" onclick="closeMobileNav()" aria-label="Close menu">&times;</button>
+  <a href="index.html" data-page="home" data-i18n="navHome" onclick="closeMobileNav()">Home</a>
+  <a href="about.html" data-page="about" data-i18n="navAbout" onclick="closeMobileNav()">About</a>
+  <a href="programs.html" data-page="programs" data-i18n="navPrograms" onclick="closeMobileNav()">Programs</a>
+  <a href="contact.html" data-page="contact" data-i18n="navContact" onclick="closeMobileNav()">Contact</a>
+  <a href="/portal/login" class="grad-text" data-i18n="navPortal">Student Portal</a>
+  <button class="pill-btn lang" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
 </div>
-
-<!-- Hero -->
-<section class="hero" style="min-height:50vh;">
-    <div class="container" style="display:block;text-align:center;">
-        <h1 data-i18n="contHeroTitle">Get in Touch</h1>
-        <p style="color:var(--gray-300);font-size:1.15rem;max-width:600px;margin:1rem auto 0;" data-i18n="contHeroSubtitle">Ready to start your musical journey? We'd love to hear from you.</p>
+<nav class="hud" aria-label="Instruments"></nav>
+<!-- HERO -->
+<header class="hero page-hero" data-inst="mic" data-side="right">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow reveal"><span class="dot">♪</span><span data-i18n="contKicker">Contact</span></div>
+      <h1 class="reveal d1"><span data-i18n="contHeroTitle1">Let's start your</span><br><span class="grad-text" data-i18n="contHeroTitle2">musical journey.</span></h1>
+      <p class="lead reveal d2" data-i18n="contHeroSubtitle">Send us your details and the instrument you love. We'll call you back to set up a free trial session.</p>
+      <div class="hero-buttons reveal d3">
+        <a href="#contactForm" class="btn btn-primary"><span data-i18n="formTitle">Book a free trial</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="https://wa.me/201009205520" class="btn btn-glass" target="_blank" rel="noopener" data-i18n="whatsappCta">Chat on WhatsApp</a>
+      </div>
     </div>
+    <div></div>
+  </div>
+</header>
+
+<!-- FORM + INFO -->
+<section class="block" style="padding-top:0" data-inst="guitar" data-side="center">
+  <div class="container contact-grid">
+    <div class="glow-card form-card reveal">
+      <form id="contactForm" novalidate>
+        <h2 data-i18n="formTitle">Book a free trial</h2>
+        <div class="form-grid">
+          <div class="field"><label for="f-name" data-i18n="formName">Full name</label><input id="f-name" name="name" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="f-phone" data-i18n="formPhone">Phone number</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" dir="ltr" required></div>
+          <div class="field"><label for="f-email" data-i18n="formEmail">Email (optional)</label><input id="f-email" name="email" type="email" autocomplete="email" dir="ltr"></div>
+          <div class="field"><label for="f-age" data-i18n="formAge">Age (optional)</label><input id="f-age" name="age" type="number" min="3" max="99"></div>
+          <div class="field full"><label for="f-inst" data-i18n="formInstrument">Instrument of interest</label>
+            <select id="f-inst" name="instrument"><option value="" data-i18n="formSelect">Select an instrument</option><option value="Guitar" data-i18n="guitar">Guitar</option><option value="Piano" data-i18n="piano">Piano</option><option value="Violin" data-i18n="violin">Violin</option><option value="Drums" data-i18n="drums">Drums</option><option value="Oud" data-i18n="oud">Oud</option><option value="Vocals" data-i18n="vocals">Vocals</option></select></div>
+          <div class="field full"><label for="f-msg" data-i18n="formMessage">Message (optional)</label><textarea id="f-msg" name="message" rows="4"></textarea></div>
+        </div>
+        <button type="submit" class="btn btn-primary"><span data-i18n="formSubmit">Send</span></button>
+        <p class="form-msg" id="formMsg" role="alert" hidden></p>
+      </form>
+      <div class="form-success" id="formSuccess" hidden>
+        <div class="check">✓</div>
+        <h3 data-i18n="formSuccess">Thank you! We'll be in touch soon.</h3>
+        <p data-i18n="formSuccessSub">Our team will call you on the number you gave us.</p>
+      </div>
+    </div>
+    <div>
+      <div class="info-list">
+        <div class="glow-card info reveal"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg></div><div><strong data-i18n="contAddress">Address</strong><p data-i18n="contAddressVal">Mokattam, Behind Hosny</p></div></div>
+        <div class="glow-card info reveal d1"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></div><div><strong data-i18n="contPhone">Phone &amp; WhatsApp</strong><p dir="ltr" style="text-align:start">01009205520</p><a href="https://wa.me/201009205520" target="_blank" rel="noopener" class="map-link" data-i18n="whatsappCta">Chat on WhatsApp</a></div></div>
+        <div class="glow-card info reveal d2"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><strong data-i18n="contHours">Working hours</strong><p data-i18n="hoursA">Sun – Thu: 3PM – 10PM</p><p data-i18n="hoursB">Sat: 12PM – 10PM</p></div></div>
+        <div class="glow-card info reveal d3"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div><strong data-i18n="contFollow">Follow us</strong>
+          <div class="socials"><a href="https://www.instagram.com/watar.academy/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3 8.4 2.2 8.8 2.2 12 2.2zm0 4.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-9.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/></svg></a><a href="https://www.facebook.com/wataracademy01/" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M14 8.5V6.8c0-.8.5-1 1-1h2.4V2.1L14.1 2C10.5 2 9.7 4.7 9.7 6.5v2H7.6v3.8h2.1V22H14v-9.7h2.9l.4-3.8H14z"/></svg></a></div></div></div>
+      </div>
+      <div class="map reveal"><iframe title="Wattar Academy on Google Maps" src="https://maps.google.com/maps?q=Watar+Academy+Mokattam+Cairo&amp;output=embed" loading="lazy" allowfullscreen></iframe></div>
+      <a class="map-link" href="https://maps.google.com/?q=Watar+Academy+Mokattam+Cairo" target="_blank" rel="noopener" data-i18n="openMaps">Open in Google Maps</a>
+    </div>
+  </div>
 </section>
 
-<!-- Contact Form + Info -->
-<section class="section">
-    <div class="container">
-        <div class="contact-grid">
-            <!-- Form -->
-            <div>
-                <h2 style="margin-bottom:2rem;" data-i18n="heroContact">Get in Touch</h2>
-
-                <form id="contactForm">
-                    <div class="form-group">
-                        <label data-i18n="formName">Full Name</label>
-                        <input type="text" name="name" required data-i18n="formName">
-                    </div>
-                    <div class="form-group">
-                        <label data-i18n="formPhone">Phone Number</label>
-                        <input type="tel" name="phone" required data-i18n="formPhone">
-                    </div>
-                    <div class="form-group">
-                        <label data-i18n="formEmail">Email (optional)</label>
-                        <input type="email" name="email" data-i18n="formEmail">
-                    </div>
-                    <div class="form-group">
-                        <label data-i18n="formInstrument">Instrument of Interest</label>
-                        <select name="instrument">
-                            <option value="" data-i18n="formSelect">Select an instrument</option>
-                            <option value="Guitar" data-i18n="guitar">Guitar</option>
-                            <option value="Piano" data-i18n="piano">Piano</option>
-                            <option value="Violin" data-i18n="violin">Violin</option>
-                            <option value="Drums" data-i18n="drums">Drums</option>
-                            <option value="Oud" data-i18n="oud">Oud</option>
-                            <option value="Vocals" data-i18n="vocals">Vocals</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label data-i18n="formAge">Age (optional)</label>
-                        <input type="number" name="age" min="3" max="99">
-                    </div>
-                    <div class="form-group">
-                        <label data-i18n="formMessage">Message (optional)</label>
-                        <textarea name="message" rows="4" data-i18n="formMessage"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%;" data-i18n="formSubmit">Send Message</button>
-                </form>
-
-                <div id="formSuccess" class="form-success">
-                    <div style="font-size:3rem;margin-bottom:1rem;">✓</div>
-                    <h3 data-i18n="formSuccess">Thank you! We'll be in touch soon.</h3>
-                </div>
-            </div>
-
-            <!-- Contact Info -->
-            <div>
-                <ul class="contact-info-list">
-                    <li class="contact-info-item">
-                        <div class="contact-info-icon"><i class="fas fa-map-marker-alt"></i></div>
-                        <div>
-                            <strong data-i18n="contAddress">Address</strong>
-                            <p data-i18n="contAddressVal">Your address here</p>
-                        </div>
-                    </li>
-                    <li class="contact-info-item">
-                        <div class="contact-info-icon"><i class="fas fa-phone"></i></div>
-                        <div>
-                            <strong data-i18n="contPhone">Phone</strong>
-                            <p data-i18n="contPhoneVal">+966 XX XXX XXXX</p>
-                        </div>
-                    </li>
-                    <li class="contact-info-item">
-                        <div class="contact-info-icon"><i class="fas fa-envelope"></i></div>
-                        <div>
-                            <strong data-i18n="contEmail">Email</strong>
-                            <p data-i18n="contEmailVal">info@wattaracademy.com</p>
-                        </div>
-                    </li>
-                    <li class="contact-info-item">
-                        <div class="contact-info-icon"><i class="fas fa-clock"></i></div>
-                        <div>
-                            <strong data-i18n="contHours">Working Hours</strong>
-                            <p data-i18n="contHoursVal">Sun – Thu: 10AM – 9PM</p>
-                        </div>
-                    </li>
-                </ul>
-
-                <div class="social-links">
-                    <a href="https://www.instagram.com/watar.academy/" class="social-link" aria-label="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-                    <a href="https://www.facebook.com/wataracademy01/" class="social-link" aria-label="Facebook" target="_blank"><i class="fab fa-facebook-f"></i></a>
-                </div>
-
-                <!-- Map -->
-                <div style="width:100%;height:300px;margin-top:40px;border:1px solid var(--gray-200);">
-                    <iframe src="https://maps.google.com/maps?q=Watar+Academy+Mokattam+Cairo&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-                </div>
-            </div>
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a href="index.html" class="brand"><img src="images/logo.jpg" alt=""><span data-i18n="brand">Wattar Academy</span></a>
+        <p class="foot-desc" data-i18n="footerDesc">Professional music education for all ages and skill levels.</p>
+        <div class="socials">
+          <a href="https://www.instagram.com/watar.academy/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3 8.4 2.2 8.8 2.2 12 2.2zm0 4.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-9.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/></svg></a>
+          <a href="https://www.facebook.com/wataracademy01/" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M14 8.5V6.8c0-.8.5-1 1-1h2.4V2.1L14.1 2C10.5 2 9.7 4.7 9.7 6.5v2H7.6v3.8h2.1V22H14v-9.7h2.9l.4-3.8H14z"/></svg></a>
         </div>
+      </div>
+      <div><h4 data-i18n="footerPages">Pages</h4><ul>
+        <li><a href="index.html" data-i18n="navHome">Home</a></li><li><a href="about.html" data-i18n="navAbout">About</a></li>
+        <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li><li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+        <li><a href="/portal/login" data-i18n="navPortal">Student Portal</a></li></ul></div>
+      <div><h4 data-i18n="footerPrograms">Programs</h4><ul>
+        <li data-i18n="guitar">Guitar</li><li data-i18n="piano">Piano</li><li data-i18n="violin">Violin</li>
+        <li data-i18n="drums">Drums</li><li data-i18n="oud">Oud</li><li data-i18n="vocals">Vocals</li></ul></div>
+      <div><h4 data-i18n="footerVisit">Visit us</h4><ul>
+        <li data-i18n="contAddressVal">Mokattam, Behind Hosny</li>
+        <li><a href="tel:01009205520" dir="ltr">01009205520</a></li>
+        <li data-i18n="hoursA">Sun – Thu: 3PM – 10PM</li>
+        <li data-i18n="hoursB">Sat: 12PM – 10PM</li></ul></div>
     </div>
-</section>
-
-<!-- Footer -->
-<footer class="footer">
-    <div class="container">
-        <div class="footer-grid">
-            <div>
-                <div class="footer-logo">
-                    <img src="images/logo.jpg" alt="Wattar Academy">
-                    <span>Wattar Academy</span>
-                </div>
-                <p data-i18n="footerDesc">Professional music education for all ages and skill levels.</p>
-            </div>
-            <div>
-                <h4 data-i18n="footerPages">Pages</h4>
-                <ul class="footer-links">
-                    <li><a href="index.html" data-i18n="navHome">Home</a></li>
-                    <li><a href="about.html" data-i18n="navAbout">About</a></li>
-                    <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
-                    <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 data-i18n="footerPrograms">Programs</h4>
-                <ul class="footer-links">
-                    <li><a href="programs.html" data-i18n="guitar">Guitar</a></li>
-                    <li><a href="programs.html" data-i18n="piano">Piano</a></li>
-                    <li><a href="programs.html" data-i18n="violin">Violin</a></li>
-                    <li><a href="programs.html" data-i18n="drums">Drums</a></li>
-                    <li><a href="programs.html" data-i18n="oud">Oud</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 data-i18n="footerConnect">Connect</h4>
-                <ul class="footer-links">
-                    <li><a href="https://www.instagram.com/watar.academy/" target="_blank"><i class="fab fa-instagram"></i> Instagram</a></li>
-                    <li><a href="https://www.facebook.com/wataracademy01/" target="_blank"><i class="fab fa-facebook"></i> Facebook</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span data-i18n="footerRights">© 2026 Wattar Academy. All rights reserved.</span>
-            <div class="footer-social">
-                <a href="https://www.instagram.com/watar.academy/" aria-label="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-                <a href="https://www.facebook.com/wataracademy01/" aria-label="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
-            </div>
-        </div>
-    </div>
+    <div class="foot-bottom"><span data-i18n="footerRights">© 2026 Wattar Academy. All rights reserved.</span><span data-i18n="footerMade">Made with ♪ in Cairo</span></div>
+  </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

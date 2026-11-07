@@ -1,155 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wattar Academy — Where Music Begins</title>
-    <meta name="description" content="Wattar Academy is a professional music education center offering structured programs for all ages and skill levels.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wattar Academy — Where Music Begins</title>
+<meta name="description" content="Wattar Academy — music school in Mokattam, Cairo. Guitar, piano, violin, drums, oud and vocals with a structured 4-year curriculum.">
+<meta property="og:title" content="Wattar Academy — Where Music Begins">
+<meta property="og:description" content="Wattar Academy — music school in Mokattam, Cairo. Guitar, piano, violin, drums, oud and vocals with a structured 4-year curriculum.">
+<meta property="og:image" content="images/logo.jpg">
+<meta name="theme-color" content="#06050b">
+<link rel="icon" href="images/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700;800&family=Noto+Kufi+Arabic:wght@500;700;800&family=Noto+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-page="home">
+<div class="ambient"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<canvas id="bg3d" aria-hidden="true"></canvas>
 
-<!-- Navbar -->
-<nav class="navbar">
-    <div class="container">
-        <a href="index.html" class="navbar-logo">
-            <img src="images/logo.jpg" alt="Wattar Academy">
-            <span>Wattar Academy</span>
-        </a>
-        <ul class="nav-links">
-            <li><a href="/site/" class="active" data-i18n="navHome">Home</a></li>
-            <li><a href="/site/about.html" data-i18n="navAbout">About</a></li>
-            <li><a href="/site/programs.html" data-i18n="navPrograms">Programs</a></li>
-            <li><a href="/site/contact.html" data-i18n="navContact">Contact</a></li>
-            <li><a href="/portal/login" style="font-weight:600;">Student Portal</a></li>
-            <li><button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button></li>
-        </ul>
-        <button class="menu-toggle" onclick="openMobileNav()" aria-label="Open menu">
-            <span></span><span></span><span></span>
-        </button>
+<!-- NAV -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand"><img src="images/logo.jpg" alt=""><span data-i18n="brand">Wattar Academy</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html" data-page="home" data-i18n="navHome">Home</a></li>
+      <li><a href="about.html" data-page="about" data-i18n="navAbout">About</a></li>
+      <li><a href="programs.html" data-page="programs" data-i18n="navPrograms">Programs</a></li>
+      <li><a href="contact.html" data-page="contact" data-i18n="navContact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="pill-btn lang" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+      <a href="/portal/login" class="pill-btn primary" data-i18n="navPortal">Student Portal</a>
+      <button class="menu-toggle" onclick="openMobileNav()" aria-label="Open menu"><span></span><span></span><span></span></button>
     </div>
+  </div>
 </nav>
-
-<!-- Mobile Nav -->
 <div class="mobile-nav" id="mobileNav">
-    <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close menu">&times;</button>
-    <a href="index.html" data-i18n="navHome" onclick="closeMobileNav()">Home</a>
-    <a href="about.html" data-i18n="navAbout" onclick="closeMobileNav()">About</a>
-    <a href="programs.html" data-i18n="navPrograms" onclick="closeMobileNav()">Programs</a>
-    <a href="contact.html" data-i18n="navContact" onclick="closeMobileNav()">Contact</a>
-    <a href="/portal/login" onclick="closeMobileNav()" style="font-weight:600;">Student Portal</a>
-    <button class="lang-toggle" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+  <button class="close" onclick="closeMobileNav()" aria-label="Close menu">&times;</button>
+  <a href="index.html" data-page="home" data-i18n="navHome" onclick="closeMobileNav()">Home</a>
+  <a href="about.html" data-page="about" data-i18n="navAbout" onclick="closeMobileNav()">About</a>
+  <a href="programs.html" data-page="programs" data-i18n="navPrograms" onclick="closeMobileNav()">Programs</a>
+  <a href="contact.html" data-page="contact" data-i18n="navContact" onclick="closeMobileNav()">Contact</a>
+  <a href="/portal/login" class="grad-text" data-i18n="navPortal">Student Portal</a>
+  <button class="pill-btn lang" onclick="toggleLanguage()" data-i18n="langToggle">العربية</button>
+</div>
+<nav class="hud" aria-label="Instruments"></nav>
+<!-- HERO -->
+<header class="hero" data-inst="guitar" data-side="right">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow reveal"><span class="dot">♪</span><span data-i18n="heroEyebrow">Music academy · Mokattam, Cairo</span></div>
+      <h1 class="reveal d1"><span data-i18n="heroTitle1">Where music</span><br><span class="grad-text" data-i18n="heroTitle2">begins.</span></h1>
+      <p class="lead reveal d2" data-i18n="heroSubtitle">A structured 4-year journey from your very first note to the stage — guitar, piano, violin, drums, oud and vocals, for every age.</p>
+      <div class="hero-buttons reveal d3">
+        <a href="programs.html" class="btn btn-primary"><span data-i18n="heroCta">Explore programs</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="contact.html" class="btn btn-glass" data-i18n="heroContact">Book a free trial</a>
+      </div>
+      <div class="strum-bar reveal d3">
+        <button class="sound-btn" id="soundBtn"><span class="bars"><i></i><i></i><i></i></span><span data-i18n="soundOff">Sound off</span></button>
+        <span data-i18n="strumHint">Swipe across the strings to play</span>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="fallback"><img src="images/logo.jpg" alt="Wattar Academy"></div>
+    </div>
+  </div>
+  <div class="scroll-cue"></div>
+</header>
+
+<!-- STATS -->
+<div class="container reveal">
+  <div class="stats">
+    <div class="stat"><div class="num grad-text" data-count="100" data-suffix="+">0</div><div class="label" data-i18n="statStudents">Active students</div></div>
+    <div class="stat"><div class="num grad-text" data-count="6">0</div><div class="label" data-i18n="statInstruments">Instruments</div></div>
+    <div class="stat"><div class="num grad-text" data-count="48">0</div><div class="label" data-i18n="statLevels">Progressive levels</div></div>
+    <div class="stat"><div class="num grad-text" data-count="4">0</div><div class="label" data-i18n="statYears">Year curriculum</div></div>
+  </div>
 </div>
 
-<!-- Hero -->
-<section class="hero">
-    <div class="container">
-        <div class="hero-content">
-            <h1 data-i18n="heroTitle">Where Music Begins</h1>
-            <p data-i18n="heroSubtitle">Wattar Academy is a professional music education center offering structured programs for all ages and skill levels.</p>
-            <div class="hero-buttons">
-                <a href="programs.html" class="btn btn-white" data-i18n="heroCta">Explore Programs</a>
-                <a href="contact.html" class="btn btn-outline" style="color:#fff;border-color:#fff;" data-i18n="heroContact">Get in Touch</a>
-            </div>
-        </div>
-        <div class="hero-visual">
-            <img src="images/logo.jpg" alt="Wattar Academy Logo" class="hero-logo">
-        </div>
+<!-- WHY -->
+<section class="block" data-inst="piano" data-side="left">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="kicker" data-i18n="whyKicker">Why Wattar</span>
+      <h2 data-i18n="featTitle">Built to turn beginners into musicians</h2>
+      <p data-i18n="featSubtitle">A structured approach to music education that builds real skills.</p>
     </div>
+    <div class="features">
+      <div class="glow-card tilt reveal"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2Z"/><path d="M8 7h6M8 11h6"/></svg></div><h3 data-i18n="feat1Title">Structured curriculum</h3><p data-i18n="feat1Desc">48 levels over 4 years, each with 4 sessions designed to build skills step by step.</p></div>
+      <div class="glow-card tilt reveal d1"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></div><h3 data-i18n="feat2Title">Expert trainers</h3><p data-i18n="feat2Desc">Learn from professional musicians who are passionate about teaching and dedicated to your growth.</p></div>
+      <div class="glow-card tilt reveal d2"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 14l3-3 2 2 4-4"/></svg></div><h3 data-i18n="feat3Title">Student portal</h3><p data-i18n="feat3Desc">Track your progress, practice assignments and your roadmap online, anytime.</p></div>
+      <div class="glow-card tilt reveal d3"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><h3 data-i18n="feat4Title">Wattar Band</h3><p data-i18n="feat4Desc">Join our academy band and feel the thrill of performing live with fellow musicians.</p></div>
+    </div>
+  </div>
 </section>
 
-<!-- Features -->
-<section class="section">
-    <div class="container">
-        <div class="section-header center">
-            <h2 data-i18n="featTitle">Why Wattar Academy</h2>
-            <p class="section-subtitle" data-i18n="featSubtitle">A structured approach to music education that builds real skills.</p>
-        </div>
-        <div class="cards-grid">
-            <div class="card">
-                <div class="card-icon">📚</div>
-                <h3 data-i18n="feat1Title">Structured Curriculum</h3>
-                <p data-i18n="feat1Desc">A 4-year progressive program with 48 levels, each with 4 sessions designed to build skills step by step.</p>
-            </div>
-            <div class="card">
-                <div class="card-icon">🎓</div>
-                <h3 data-i18n="feat2Title">Expert Trainers</h3>
-                <p data-i18n="feat2Desc">Learn from professional musicians who are passionate about teaching and dedicated to your growth.</p>
-            </div>
-            <div class="card">
-                <div class="card-icon">🎵</div>
-                <h3 data-i18n="feat3Title">Multiple Instruments</h3>
-                <p data-i18n="feat3Desc">Guitar, Piano, Violin, Drums, Oud and more. Find the instrument that speaks to you.</p>
-            </div>
-            <div class="card">
-                <div class="card-icon">🎸</div>
-                <h3 data-i18n="feat4Title">Wattar Band</h3>
-                <p data-i18n="feat4Desc">Join our academy band program and experience the thrill of performing with fellow musicians.</p>
-            </div>
-        </div>
+<!-- INSTRUMENTS -->
+<section class="block" style="padding-top:0" data-inst="violin" data-side="right">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="kicker" data-i18n="instrKicker">Programs</span>
+      <h2 data-i18n="instrTitle">Find the instrument that speaks to you</h2>
+      <p data-i18n="instrSubtitle">Each taught by specialized trainers, from first lesson to performance.</p>
     </div>
+    <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c4b5fd"/><stop offset=".55" stop-color="#22d3ee"/><stop offset="1" stop-color="#f0abfc"/></linearGradient></defs></svg>
+    <div class="instruments">
+      <div class="glow-card tilt inst reveal"><div class="ico"><svg viewBox="0 0 48 48" fill="none" stroke="url(#ig)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M31 17l9-9M36 6l6 6"/><path d="M29 19c-3-3-8-2-9 1-1 2-3 2-5 2-5 0-9 4-9 10 0 6 4 10 10 10 6 0 10-4 10-9 0-2 0-4 2-5 3-1 4-6 1-9Z"/><circle cx="18" cy="30" r="3"/><path d="M12 36l4-4"/></svg></div><div><h3><a href="programs.html#guitar" data-i18n="guitar">Guitar</a></h3><p data-i18n="guitarDesc">Acoustic &amp; electric, chords to solos.</p></div></div>
+      <div class="glow-card tilt inst reveal d1"><div class="ico"><svg viewBox="0 0 48 48" fill="none" stroke="url(#ig)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="38" height="28" rx="3"/><path d="M14 10v28M24 10v28M34 10v28"/><path d="M11 10v15M18 10v15M30 10v15M38 10v15" stroke-width="4"/></svg></div><div><h3><a href="programs.html#piano" data-i18n="piano">Piano</a></h3><p data-i18n="pianoDesc">Reading, technique and repertoire.</p></div></div>
+      <div class="glow-card tilt inst reveal d2"><div class="ico"><svg viewBox="0 0 48 48" fill="none" stroke="url(#ig)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4v12"/><path d="M19 16c-4 0-6 3-5 6 1 2-1 3-1 5 0 2 2 3 1 5-1 4 2 8 10 8s11-4 10-8c-1-2 1-3 1-5 0-2-2-3-1-5 1-3-1-6-5-6Z"/><path d="M21 26c1 1 1 3 0 4M27 26c-1 1-1 3 0 4M24 18v18"/><path d="M8 44L40 12" stroke-width="1.6"/></svg></div><div><h3><a href="programs.html#violin" data-i18n="violin">Violin</a></h3><p data-i18n="violinDesc">Bowing, tone and classical pieces.</p></div></div>
+      <div class="glow-card tilt inst reveal"><div class="ico"><svg viewBox="0 0 48 48" fill="none" stroke="url(#ig)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="22" rx="16" ry="6"/><path d="M8 22v12c0 3 7 6 16 6s16-3 16-6V22"/><path d="M14 4l8 14M34 4l-8 14"/></svg></div><div><h3><a href="programs.html#drums" data-i18n="drums">Drums</a></h3><p data-i18n="drumsDesc">Groove, timing and coordination.</p></div></div>
+      <div class="glow-card tilt inst reveal d1"><div class="ico"><svg viewBox="0 0 48 48" fill="none" stroke="url(#ig)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 22c-8 0-15 6-15 13 0 5 5 8 13 8s14-5 14-12c0-5-4-9-12-9Z"/><path d="M26 24L40 8M37 5l6 6"/><circle cx="19" cy="33" r="3"/></svg></div><div><h3><a href="programs.html#oud" data-i18n="oud">Oud</a></h3><p data-i18n="oudDesc">Maqamat and the Arabic tradition.</p></div></div>
+      <div class="glow-card tilt inst reveal d2"><div class="ico"><svg viewBox="0 0 48 48" fill="none" stroke="url(#ig)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="17" y="4" width="14" height="24" rx="7"/><path d="M11 22c0 7 6 12 13 12s13-5 13-12M24 34v9M17 43h14"/></svg></div><div><h3><a href="programs.html#vocals" data-i18n="vocals">Vocals</a></h3><p data-i18n="vocalsDesc">Breathing, pitch and stage confidence.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CURRICULUM -->
+<section class="block" style="padding-top:0" data-inst="drums" data-side="left">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="kicker" data-i18n="currKicker">The journey</span>
+      <h2 data-i18n="currTitle">4 years. 48 levels. One musician.</h2>
+      <p data-i18n="currSubtitle">A progressive path from beginner to advanced musician.</p>
+    </div>
+    <div class="timeline" id="timeline">
+      <div class="track"><div class="fill"></div></div>
+      <div class="glow-card tilt step reveal"><span class="big">01</span><div class="yr" data-i18n="year1">Year 1</div><h3 data-i18n="year1Title">Foundation</h3><p data-i18n="year1Desc">Core skills, proper technique and music reading.</p></div>
+      <div class="glow-card tilt step reveal d1"><span class="big">02</span><div class="yr" data-i18n="year2">Year 2</div><h3 data-i18n="year2Title">Development</h3><p data-i18n="year2Desc">Wider repertoire, new styles and ensemble playing.</p></div>
+      <div class="glow-card tilt step reveal d2"><span class="big">03</span><div class="yr" data-i18n="year3">Year 3</div><h3 data-i18n="year3Title">Refinement</h3><p data-i18n="year3Desc">Advanced technique, expression and performance prep.</p></div>
+      <div class="glow-card tilt step reveal d3"><span class="big">04</span><div class="yr" data-i18n="year4">Year 4</div><h3 data-i18n="year4Title">Mastery</h3><p data-i18n="year4Desc">Professional-level skills, solo performance and a graduation recital.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- BAND -->
+<section class="block" data-inst="oud" data-side="right">
+  <div class="container band">
+    <div class="reveal">
+      <span class="kicker" data-i18n="bandKicker">On stage</span>
+      <h2 data-i18n="bandTitle">More than lessons — a real band.</h2>
+      <p data-i18n="bandDesc">Selected students join the Wattar Band: they rehearse together, perform live and discover the collaborative side of music. The band runs in cycles with regular rehearsals and shows.</p>
+      <a href="contact.html" class="btn btn-primary"><span data-i18n="bandCta">Join the band</span><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+    <div class="band-visual" aria-hidden="true"></div>
+  </div>
 </section>
 
 <!-- CTA -->
-<section class="section section-dark">
-    <div class="container text-center">
-        <h2 data-i18n="heroCta">Explore Programs</h2>
-        <p class="section-subtitle" style="margin:0 auto 2rem;" data-i18n="heroSubtitle">Wattar Academy is a professional music education center offering structured programs for all ages and skill levels.</p>
-        <a href="contact.html" class="btn btn-white" data-i18n="heroContact">Get in Touch</a>
+<section class="container" data-inst="mic" data-side="center" style="padding-top:220px">
+  <div class="cta reveal">
+    <span class="kicker" data-i18n="ctaKicker">Start today</span>
+    <h2 data-i18n="ctaTitle">Your first note is one message away.</h2>
+    <p data-i18n="ctaSubtitle">Tell us which instrument you love and we'll set up a free trial session.</p>
+    <div class="hero-buttons">
+      <a href="contact.html" class="btn btn-primary"><span data-i18n="heroContact">Book a free trial</span></a>
+      <a href="https://wa.me/201009205520" class="btn btn-glass" target="_blank" rel="noopener">WhatsApp · 01009205520</a>
     </div>
+  </div>
 </section>
 
-<!-- Footer -->
-<footer class="footer">
-    <div class="container">
-        <div class="footer-grid">
-            <div>
-                <div class="footer-logo">
-                    <img src="images/logo.jpg" alt="Wattar Academy">
-                    <span>Wattar Academy</span>
-                </div>
-                <p data-i18n="footerDesc">Professional music education for all ages and skill levels.</p>
-            </div>
-            <div>
-                <h4 data-i18n="footerPages">Pages</h4>
-                <ul class="footer-links">
-                    <li><a href="index.html" data-i18n="navHome">Home</a></li>
-                    <li><a href="about.html" data-i18n="navAbout">About</a></li>
-                    <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li>
-                    <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 data-i18n="footerPrograms">Programs</h4>
-                <ul class="footer-links">
-                    <li><a href="programs.html" data-i18n="guitar">Guitar</a></li>
-                    <li><a href="programs.html" data-i18n="piano">Piano</a></li>
-                    <li><a href="programs.html" data-i18n="violin">Violin</a></li>
-                    <li><a href="programs.html" data-i18n="drums">Drums</a></li>
-                    <li><a href="programs.html" data-i18n="oud">Oud</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 data-i18n="footerConnect">Connect</h4>
-                <ul class="footer-links">
-                    <li><a href="https://www.instagram.com/watar.academy/" target="_blank"><i class="fab fa-instagram"></i> Instagram</a></li>
-                    <li><a href="https://www.facebook.com/wataracademy01/" target="_blank"><i class="fab fa-facebook"></i> Facebook</a></li>
-                </ul>
-            </div>
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a href="index.html" class="brand"><img src="images/logo.jpg" alt=""><span data-i18n="brand">Wattar Academy</span></a>
+        <p class="foot-desc" data-i18n="footerDesc">Professional music education for all ages and skill levels.</p>
+        <div class="socials">
+          <a href="https://www.instagram.com/watar.academy/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3 8.4 2.2 8.8 2.2 12 2.2zm0 4.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-9.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/></svg></a>
+          <a href="https://www.facebook.com/wataracademy01/" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M14 8.5V6.8c0-.8.5-1 1-1h2.4V2.1L14.1 2C10.5 2 9.7 4.7 9.7 6.5v2H7.6v3.8h2.1V22H14v-9.7h2.9l.4-3.8H14z"/></svg></a>
         </div>
-        <div class="footer-bottom">
-            <span data-i18n="footerRights">© 2026 Wattar Academy. All rights reserved.</span>
-            <div class="footer-social">
-                <a href="https://www.instagram.com/watar.academy/" aria-label="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-                <a href="https://www.facebook.com/wataracademy01/" aria-label="Facebook" target="_blank"><i class="fab fa-facebook"></i></a>
-            </div>
-        </div>
+      </div>
+      <div><h4 data-i18n="footerPages">Pages</h4><ul>
+        <li><a href="index.html" data-i18n="navHome">Home</a></li><li><a href="about.html" data-i18n="navAbout">About</a></li>
+        <li><a href="programs.html" data-i18n="navPrograms">Programs</a></li><li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+        <li><a href="/portal/login" data-i18n="navPortal">Student Portal</a></li></ul></div>
+      <div><h4 data-i18n="footerPrograms">Programs</h4><ul>
+        <li data-i18n="guitar">Guitar</li><li data-i18n="piano">Piano</li><li data-i18n="violin">Violin</li>
+        <li data-i18n="drums">Drums</li><li data-i18n="oud">Oud</li><li data-i18n="vocals">Vocals</li></ul></div>
+      <div><h4 data-i18n="footerVisit">Visit us</h4><ul>
+        <li data-i18n="contAddressVal">Mokattam, Behind Hosny</li>
+        <li><a href="tel:01009205520" dir="ltr">01009205520</a></li>
+        <li data-i18n="hoursA">Sun – Thu: 3PM – 10PM</li>
+        <li data-i18n="hoursB">Sat: 12PM – 10PM</li></ul></div>
     </div>
+    <div class="foot-bottom"><span data-i18n="footerRights">© 2026 Wattar Academy. All rights reserved.</span><span data-i18n="footerMade">Made with ♪ in Cairo</span></div>
+  </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

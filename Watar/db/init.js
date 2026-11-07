@@ -374,7 +374,7 @@ db.serialize(() => {
         email VARCHAR(100),
         start_date DATE NOT NULL,
         current_level TEXT,
-        status TEXT CHECK(status IN ('active', 'inactive', 'freez', 'New')) DEFAULT 'active',
+r        status TEXT CHECK(status IN ('active', 'inactive', 'freez', 'New')) DEFAULT 'active',
         notes TEXT,
         instrument VARCHAR(100),
         address TEXT,
@@ -483,5 +483,22 @@ setTimeout(() => {
         }
     });
 }, 2000);
+
+// Portal activity log table
+db.run(`CREATE TABLE IF NOT EXISTS portal_activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    student_name TEXT,
+    action TEXT NOT NULL,
+    page TEXT,
+    details TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id)
+)`, (err) => {
+    if (err) console.error('Error creating portal_activity_log table:', err);
+    else console.log('✓ portal_activity_log table ready');
+});
 
 module.exports = db;

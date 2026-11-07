@@ -32,8 +32,7 @@ module.exports = (app, db) => {
 
     app.get('/', requireAuth, (req, res) => {
         const role = req.session.user.role;
-        if (role === 'reception') return res.redirect('/attendance');
         if (role === 'coach') return res.redirect('/schedule');
-        res.redirect('/dashboard');
+        res.redirect('/members');
     });
 };

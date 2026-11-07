@@ -1,117 +1,160 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><i class="fas fa-users me-2"></i>Members Management</h4>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
-        <i class="fas fa-user-plus me-2"></i>Add Member
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="fas fa-users me-2"></i>Members</h4>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+        <i class="fas fa-user-plus me-1"></i>Add Member
     </button>
 </div>
 
 <!-- Filters -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <input type="text" class="form-control" name="search" placeholder="Search name or phone..." value="<%= filters.search || '' %>">
-            </div>
-            <div class="col-md-3">
-                <select class="form-select" name="status">
-                    <option value="">All Statuses</option>
-                    <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
-                    <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
-                    <option value="frozen" <%= filters.status === 'frozen' ? 'selected' : '' %>>Frozen</option>
-                    <option value="expired" <%= filters.status === 'expired' ? 'selected' : '' %>>Expired</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-dark w-100">Filter</button>
-            </div>
-        </form>
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <input type="text" class="form-control form-control-sm" id="searchFilter" placeholder="Search name or phone..." style="width:180px;" value="<%= filters.search || '' %>">
+            <select class="form-select form-select-sm" id="statusFilter" style="width:130px;">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="frozen">Frozen</option>
+                <option value="expired">Expired</option>
+            </select>
+            <select class="form-select form-select-sm" id="classFilter" style="width:130px;">
+                <option value="">All Classes</option>
+                <option value="crossfit">CrossFit</option>
+                <option value="boxing">Boxing</option>
+                <option value="kick_boxing">Kick Boxing</option>
+            </select>
+            <select class="form-select form-select-sm" id="typeFilter" style="width:120px;">
+                <option value="">All Types</option>
+                <option value="1_month">1 Month</option>
+                <option value="3_months">3 Months</option>
+                <option value="6_months">6 Months</option>
+                <option value="1_year">1 Year</option>
+            </select>
+            <select class="form-select form-select-sm" id="coachFilter" style="width:130px;">
+                <option value="">All Coaches</option>
+                <% coaches.forEach(c => { %>
+                <option value="<%= c.id %>"><%= c.full_name %></option>
+                <% }); %>
+            </select>
+            <select class="form-select form-select-sm" id="salesFilter" style="width:120px;">
+                <option value="">All Sales</option>
+                <% users.forEach(u => { %>
+                <option value="<%= u.id %>"><%= u.full_name %></option>
+                <% }); %>
+            </select>
+            <button id="clearFilters" class="btn btn-outline-secondary btn-sm" title="Clear"><i class="fas fa-times"></i></button>
+            <span class="text-muted small ms-auto"><span id="memberCount"><%= members.length %></span> members</span>
+        </div>
     </div>
 </div>
 
+<p class="text-muted small mb-2"><i class="fas fa-info-circle me-1"></i>Click the edit button on a row to modify. Password required.</p>
+
+<%
+function formatDate(d) {
+    if (!d) return '';
+    const parts = d.split('-');
+    if (parts.length === 3) return parts[2] + '-' + parts[1] + '-' + parts[0];
+    return d;
+}
+function formatMembership(t) {
+    if (t === '1_month') return '1 Month';
+    if (t === '3_months') return '3 Months';
+    if (t === '6_months') return '6 Months';
+    if (t === '1_year') return '1 Year';
+    return t || '';
+}
+%>
+
 <!-- Members Table -->
 <div class="card">
-    <div class="card-body table-responsive">
-        <table class="table table-hover">
-            <thead>
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover table-sm mb-0" style="font-size: 0.85rem;">
+            <thead class="table-dark">
                 <tr>
+                    <th>ID</th>
                     <th>Name</th>
                     <th>Phone</th>
-                    <th>Membership</th>
-                    <th>Expires</th>
-                    <th>Level</th>
+                    <th>Class</th>
+                    <th>Type</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Coach</th>
+                    <th>Paid</th>
+                    <th>Freeze Days</th>
+                    <th>Sales</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <% members.forEach(m => { %>
-                <tr>
-                    <td><strong><%= m.full_name %></strong></td>
-                    <td><%= m.phone %></td>
-                    <td><span class="badge bg-secondary"><%= m.membership_type || 'N/A' %></span></td>
-                    <td><%= m.membership_end || '—' %></td>
-                    <td><%= m.skill_level %></td>
-                    <td>
-                        <% if (m.status === 'active') { %>
-                            <span class="badge bg-success">Active</span>
-                        <% } else if (m.status === 'frozen') { %>
-                            <span class="badge bg-info">Frozen</span>
-                        <% } else if (m.status === 'expired') { %>
-                            <span class="badge bg-danger">Expired</span>
-                        <% } else { %>
-                            <span class="badge bg-secondary">Inactive</span>
-                        <% } %>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal<%= m.id %>">
+                <% members.forEach(m => { 
+                    let currentFreezeDays = m.freeze_days || 0;
+                    if (m.status === 'frozen' && m.freeze_start) {
+                        const start = new Date(m.freeze_start);
+                        const now = new Date();
+                        currentFreezeDays += Math.floor((now - start) / (1000 * 60 * 60 * 24));
+                    }
+                %>
+                <tr data-id="<%= m.id %>" data-name="<%= m.full_name.toLowerCase() %>" data-phone="<%= m.phone %>" data-status="<%= m.status %>" data-classtype="<%= m.class_type || 'crossfit' %>" data-memtype="<%= m.membership_type || '' %>" data-coach="<%= m.coach_id || '' %>" data-sales="<%= m.sales_by || '' %>">
+                    <td><%= m.id %></td>
+                    <td class="cell-display" data-field="full_name"><%= m.full_name %></td>
+                    <td class="cell-display text-nowrap" data-field="phone"><%= m.phone %></td>
+                    <td class="cell-display" data-field="class_type"><span class="badge-pill badge-<%= m.class_type || 'crossfit' %>"><%= m.class_type || 'crossfit' %></span></td>
+                    <td class="cell-display" data-field="membership_type" data-value="<%= m.membership_type || '' %>"><span class="badge-pill badge-<%= m.membership_type || '' %>"><%= formatMembership(m.membership_type) %></span></td>
+                    <td class="cell-display text-nowrap" data-field="membership_start" data-raw="<%= m.membership_start || '' %>"><%= formatDate(m.membership_start) %></td>
+                    <td class="cell-display text-nowrap" data-field="membership_end" data-raw="<%= m.membership_end || '' %>"><%= formatDate(m.membership_end) %></td>
+                    <td class="cell-display" data-field="coach_id" data-value="<%= m.coach_id || '' %>"><% if (m.coach_name) { %><span class="badge-pill badge-coach"><i class="fas fa-user me-1"></i><%= m.coach_name %></span><% } else { %>—<% } %></td>
+                    <td class="text-success fw-bold"><%= m.total_paid ? parseFloat(m.total_paid).toFixed(0) : '0' %></td>
+                    <td><span class="badge bg-<%= currentFreezeDays > 0 ? 'info' : 'light text-dark' %>"><%= currentFreezeDays %></span></td>
+                    <td class="cell-display" data-field="sales_by" data-value="<%= m.sales_by || '' %>"><%= m.sales_name || '—' %></td>
+                    <td class="cell-display" data-field="status"><span class="badge-pill badge-<%= m.status %>"><%= m.status %></span></td>
+                    <td class="text-nowrap">
+                        <button class="btn btn-sm btn-outline-warning py-0 px-1 edit-row-btn" title="Edit Row">
                             <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success py-0 px-1 save-row-btn" title="Save" style="display:none;">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-1 cancel-row-btn" title="Cancel" style="display:none;">
+                            <i class="fas fa-times"></i>
                         </button>
                         <% if (m.status === 'active') { %>
                         <form method="POST" action="/members/<%= m.id %>/freeze" class="d-inline">
-                            <button class="btn btn-sm btn-outline-info" title="Freeze"><i class="fas fa-snowflake"></i></button>
+                            <button class="btn btn-sm btn-outline-info py-0 px-1" title="Freeze"><i class="fas fa-snowflake"></i></button>
                         </form>
                         <% } else if (m.status === 'frozen') { %>
                         <form method="POST" action="/members/<%= m.id %>/activate" class="d-inline">
-                            <button class="btn btn-sm btn-outline-success" title="Activate"><i class="fas fa-play"></i></button>
+                            <button class="btn btn-sm btn-outline-success py-0 px-1" title="Activate"><i class="fas fa-play"></i></button>
                         </form>
                         <% } %>
                     </td>
                 </tr>
-
-                <!-- Edit Modal -->
-                <div class="modal fade" id="editModal<%= m.id %>" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form method="POST" action="/members/<%= m.id %>/edit">
-                                <div class="modal-header"><h5 class="modal-title">Edit <%= m.full_name %></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                                <div class="modal-body">
-                                    <div class="row">
-                                        <div class="col-12 mb-2"><label class="form-label">Full Name</label><input type="text" class="form-control" name="full_name" value="<%= m.full_name %>" required></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Phone</label><input type="text" class="form-control" name="phone" value="<%= m.phone %>"></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Email</label><input type="email" class="form-control" name="email" value="<%= m.email || '' %>"></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Gender</label><select class="form-select" name="gender"><option value="male" <%= m.gender==='male'?'selected':'' %>>Male</option><option value="female" <%= m.gender==='female'?'selected':'' %>>Female</option></select></div>
-                                        <div class="col-6 mb-2"><label class="form-label">DOB</label><input type="date" class="form-control" name="date_of_birth" value="<%= m.date_of_birth || '' %>"></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Emergency Contact</label><input type="text" class="form-control" name="emergency_contact" value="<%= m.emergency_contact || '' %>"></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Emergency Phone</label><input type="text" class="form-control" name="emergency_phone" value="<%= m.emergency_phone || '' %>"></div>
-                                        <div class="col-12 mb-2"><label class="form-label">Address</label><input type="text" class="form-control" name="address" value="<%= m.address || '' %>"></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Membership</label><select class="form-select" name="membership_type"><option value="monthly" <%= m.membership_type==='monthly'?'selected':'' %>>Monthly</option><option value="quarterly" <%= m.membership_type==='quarterly'?'selected':'' %>>Quarterly</option><option value="semi_annual" <%= m.membership_type==='semi_annual'?'selected':'' %>>Semi-Annual</option><option value="annual" <%= m.membership_type==='annual'?'selected':'' %>>Annual</option><option value="class_pack" <%= m.membership_type==='class_pack'?'selected':'' %>>Class Pack</option><option value="drop_in" <%= m.membership_type==='drop_in'?'selected':'' %>>Drop-in</option></select></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Skill Level</label><select class="form-select" name="skill_level"><option value="beginner" <%= m.skill_level==='beginner'?'selected':'' %>>Beginner</option><option value="intermediate" <%= m.skill_level==='intermediate'?'selected':'' %>>Intermediate</option><option value="advanced" <%= m.skill_level==='advanced'?'selected':'' %>>Advanced</option><option value="competition" <%= m.skill_level==='competition'?'selected':'' %>>Competition</option></select></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Start</label><input type="date" class="form-control" name="membership_start" value="<%= m.membership_start || '' %>"></div>
-                                        <div class="col-6 mb-2"><label class="form-label">End</label><input type="date" class="form-control" name="membership_end" value="<%= m.membership_end || '' %>"></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Coach</label><select class="form-select" name="coach_id"><option value="">None</option><% coaches.forEach(c => { %><option value="<%= c.id %>" <%= m.coach_id==c.id?'selected':'' %>><%= c.full_name %></option><% }); %></select></div>
-                                        <div class="col-6 mb-2"><label class="form-label">Status</label><select class="form-select" name="status"><option value="active" <%= m.status==='active'?'selected':'' %>>Active</option><option value="inactive" <%= m.status==='inactive'?'selected':'' %>>Inactive</option><option value="frozen" <%= m.status==='frozen'?'selected':'' %>>Frozen</option><option value="expired" <%= m.status==='expired'?'selected':'' %>>Expired</option></select></div>
-                                        <div class="col-12 mb-2"><label class="form-label">Health Notes</label><textarea class="form-control" name="health_notes" rows="2"><%= m.health_notes || '' %></textarea></div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save</button></div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
                 <% }); %>
             </tbody>
         </table>
-        <% if (members.length === 0) { %><p class="text-muted text-center">No members found.</p><% } %>
+        <% if (members.length === 0) { %><p class="text-muted text-center py-3 mb-0">No members found.</p><% } %>
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Enter Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small mb-2">Enter your password to enable editing:</p>
+                <input type="password" class="form-control form-control-sm" id="editPassword" placeholder="Password..." autocomplete="off">
+                <div id="passwordError" class="text-danger small mt-1" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success btn-sm" id="unlockEditBtn"><i class="fas fa-unlock me-1"></i>Unlock</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -123,22 +166,269 @@
                 <div class="modal-header"><h5 class="modal-title">Add New Member</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-12 mb-2"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="full_name" required></div>
-                        <div class="col-6 mb-2"><label class="form-label">Phone *</label><input type="tel" class="form-control" name="phone" required></div>
-                        <div class="col-6 mb-2"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div>
-                        <div class="col-6 mb-2"><label class="form-label">Gender</label><select class="form-select" name="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
-                        <div class="col-6 mb-2"><label class="form-label">Date of Birth</label><input type="date" class="form-control" name="date_of_birth"></div>
-                        <div class="col-6 mb-2"><label class="form-label">Emergency Contact</label><input type="text" class="form-control" name="emergency_contact"></div>
-                        <div class="col-6 mb-2"><label class="form-label">Emergency Phone</label><input type="text" class="form-control" name="emergency_phone"></div>
-                        <div class="col-12 mb-2"><label class="form-label">Address</label><input type="text" class="form-control" name="address"></div>
-                        <div class="col-6 mb-2"><label class="form-label">Membership Type</label><select class="form-select" name="membership_type"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="semi_annual">Semi-Annual</option><option value="annual">Annual</option><option value="class_pack">Class Pack</option><option value="drop_in">Drop-in</option></select></div>
-                        <div class="col-6 mb-2"><label class="form-label">Skill Level</label><select class="form-select" name="skill_level"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="competition">Competition</option></select></div>
-                        <div class="col-6 mb-2"><label class="form-label">Coach</label><select class="form-select" name="coach_id"><option value="">None</option><% coaches.forEach(c => { %><option value="<%= c.id %>"><%= c.full_name %></option><% }); %></select></div>
-                        <div class="col-12 mb-2"><label class="form-label">Health Notes</label><textarea class="form-control" name="health_notes" rows="2" placeholder="Injuries, conditions, etc."></textarea></div>
+                        <div class="col-12 mb-2"><label class="form-label">Full Name *</label><input type="text" class="form-control form-control-sm" name="full_name" required></div>
+                        <div class="col-6 mb-2"><label class="form-label">Phone *</label><input type="tel" class="form-control form-control-sm" name="phone" required></div>
+                        <div class="col-6 mb-2"><label class="form-label">Email</label><input type="email" class="form-control form-control-sm" name="email"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Gender</label><select class="form-select form-select-sm" name="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Date of Birth</label><input type="date" class="form-control form-control-sm" name="date_of_birth"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Emergency Contact</label><input type="text" class="form-control form-control-sm" name="emergency_contact"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Emergency Phone</label><input type="text" class="form-control form-control-sm" name="emergency_phone"></div>
+                        <div class="col-12 mb-2"><label class="form-label">Address</label><input type="text" class="form-control form-control-sm" name="address"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Membership Type</label><select class="form-select form-select-sm" name="membership_type"><option value="1_month">1 Month</option><option value="3_months">3 Months</option><option value="6_months">6 Months</option><option value="1_year">1 Year</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Class Type</label><select class="form-select form-select-sm" name="class_type"><option value="crossfit">CrossFit</option><option value="boxing">Boxing</option><option value="kick_boxing">Kick Boxing</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Skill Level</label><select class="form-select form-select-sm" name="skill_level"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option><option value="competition">Competition</option></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Coach</label><select class="form-select form-select-sm" name="coach_id"><option value="">None</option><% coaches.forEach(c => { %><option value="<%= c.id %>"><%= c.full_name %></option><% }); %></select></div>
+                        <div class="col-6 mb-2"><label class="form-label">Sales</label><select class="form-select form-select-sm" name="sales_by"><option value="">None</option><% users.forEach(u => { %><option value="<%= u.id %>"><%= u.full_name %></option><% }); %></select></div>
+                        <div class="col-12 mb-2"><label class="form-label">Health Notes</label><textarea class="form-control form-control-sm" name="health_notes" rows="2" placeholder="Injuries, conditions, etc."></textarea></div>
                     </div>
                 </div>
-                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Member</button></div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary btn-sm">Add Member</button></div>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+    .row-editing td.cell-display { background: #fff3cd; }
+    .row-editing td.cell-display input,
+    .row-editing td.cell-display select {
+        font-size: 0.82rem; border: 1px solid #ffc107; border-radius: 3px; width: 100%; padding: 1px 4px;
+    }
+    /* Table column minimum widths to prevent cramping */
+    .table th, .table td { white-space: nowrap; vertical-align: middle; }
+    .table th:nth-child(1) { min-width: 40px; }   /* ID */
+    .table th:nth-child(2) { min-width: 120px; }  /* Name */
+    .table th:nth-child(3) { min-width: 110px; }  /* Phone */
+    .table th:nth-child(4) { min-width: 80px; }   /* Class */
+    .table th:nth-child(5) { min-width: 85px; }   /* Type */
+    .table th:nth-child(6) { min-width: 100px; }  /* Start */
+    .table th:nth-child(7) { min-width: 100px; }  /* End */
+    .table th:nth-child(8) { min-width: 100px; }  /* Coach */
+    .table th:nth-child(9) { min-width: 60px; }   /* Paid */
+    .table th:nth-child(10) { min-width: 50px; }  /* Freeze */
+    .table th:nth-child(11) { min-width: 80px; }  /* Sales */
+    .table th:nth-child(12) { min-width: 70px; }  /* Status */
+    .table th:nth-child(13) { min-width: 90px; }  /* Actions */
+    /* Value badges */
+    .badge-pill { border-radius: 12px; padding: 3px 10px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; display: inline-block; }
+    .badge-crossfit { background-color: #00462e; color: #fff; }
+    .badge-boxing { background-color: #2c3e50; color: #fff; }
+    .badge-kick_boxing { background-color: #8e44ad; color: #fff; }
+    .badge-1_month { background-color: #3498db; color: #fff; }
+    .badge-3_months { background-color: #27ae60; color: #fff; }
+    .badge-6_months { background-color: #f39c12; color: #fff; }
+    .badge-1_year { background-color: #e74c3c; color: #fff; }
+    .badge-coach { background-color: #1f007c; color: #fff; }
+    .badge-beginner { background-color: #00bcd4; color: #fff; }
+    .badge-intermediate { background-color: #ff9800; color: #fff; }
+    .badge-advanced { background-color: #9c27b0; color: #fff; }
+    .badge-competition { background-color: #f44336; color: #fff; }
+    .badge-active { background-color: #4caf50; color: #fff; }
+    .badge-inactive { background-color: #9e9e9e; color: #fff; }
+    .badge-frozen { background-color: #00bcd4; color: #fff; }
+    .badge-expired { background-color: #f44336; color: #fff; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+    let currentEditRow = null
+
+    // ===== Client-side Filters =====
+    const searchFilter = document.getElementById('searchFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const classFilter = document.getElementById('classFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const coachFilter = document.getElementById('coachFilter');
+    const salesFilter = document.getElementById('salesFilter');
+
+    function filterMembers() {
+        const search = searchFilter.value.toLowerCase();
+        const status = statusFilter.value;
+        const cls = classFilter.value;
+        const type = typeFilter.value;
+        const coach = coachFilter.value;
+        const sales = salesFilter.value;
+        let count = 0;
+
+        document.querySelectorAll('tbody tr[data-id]').forEach(row => {
+            const matchSearch = !search || row.dataset.name.includes(search) || row.dataset.phone.includes(search);
+            const matchStatus = !status || row.dataset.status === status;
+            const matchClass = !cls || row.dataset.classtype === cls;
+            const matchType = !type || row.dataset.memtype === type;
+            const matchCoach = !coach || row.dataset.coach === coach;
+            const matchSales = !sales || row.dataset.sales === sales;
+            const show = matchSearch && matchStatus && matchClass && matchType && matchCoach && matchSales;
+            row.style.display = show ? '' : 'none';
+            if (show) count++;
+        });
+        document.getElementById('memberCount').textContent = count;
+    }
+
+    searchFilter.addEventListener('input', filterMembers);
+    statusFilter.addEventListener('change', filterMembers);
+    classFilter.addEventListener('change', filterMembers);
+    typeFilter.addEventListener('change', filterMembers);
+    coachFilter.addEventListener('change', filterMembers);
+    salesFilter.addEventListener('change', filterMembers);
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        searchFilter.value = '';
+        statusFilter.value = '';
+        classFilter.value = '';
+        typeFilter.value = '';
+        coachFilter.value = '';
+        salesFilter.value = '';
+        filterMembers();
+    });
+    let verifiedPassword = null;
+
+    const coachesData = <%- JSON.stringify(coaches) %>;
+    const usersData = <%- JSON.stringify(users) %>;
+
+    // Click edit button -> ask for password
+    document.querySelectorAll('.edit-row-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentEditRow = this.closest('tr');
+            document.getElementById('editPassword').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+            passwordModal.show();
+            setTimeout(() => document.getElementById('editPassword').focus(), 300);
+        });
+    });
+
+    document.getElementById('unlockEditBtn').addEventListener('click', verifyAndUnlock);
+    document.getElementById('editPassword').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') verifyAndUnlock();
+    });
+
+    function verifyAndUnlock() {
+        const password = document.getElementById('editPassword').value;
+        if (!password) {
+            document.getElementById('passwordError').textContent = 'Please enter your password';
+            document.getElementById('passwordError').style.display = 'block';
+            return;
+        }
+        fetch('/members/verify-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        }).then(r => r.json()).then(d => {
+            if (d.success) {
+                verifiedPassword = password;
+                passwordModal.hide();
+                makeRowEditable(currentEditRow);
+            } else {
+                document.getElementById('passwordError').textContent = 'Incorrect password';
+                document.getElementById('passwordError').style.display = 'block';
+            }
+        });
+    }
+
+    function makeRowEditable(row) {
+        row.classList.add('row-editing');
+        row.querySelector('.edit-row-btn').style.display = 'none';
+        row.querySelector('.save-row-btn').style.display = '';
+        row.querySelector('.cancel-row-btn').style.display = '';
+
+        row.querySelectorAll('.cell-display').forEach(cell => {
+            const field = cell.dataset.field;
+            const currentText = cell.textContent.trim();
+            const currentValue = cell.dataset.value !== undefined ? cell.dataset.value : (cell.dataset.raw !== undefined ? cell.dataset.raw : currentText);
+            cell.dataset.originalText = currentText;
+            cell.dataset.originalValue = currentValue;
+
+            if (field === 'class_type') {
+                cell.innerHTML = buildSelect([['crossfit','CrossFit'],['boxing','Boxing'],['kick_boxing','Kick Boxing']], currentValue);
+            } else if (field === 'membership_type') {
+                cell.innerHTML = buildSelect([['1_month','1 Month'],['3_months','3 Months'],['6_months','6 Months'],['1_year','1 Year']], currentValue);
+            } else if (field === 'skill_level') {
+                cell.innerHTML = buildSelect([['beginner','Beginner'],['intermediate','Intermediate'],['advanced','Advanced'],['competition','Competition']], currentValue);
+            } else if (field === 'status') {
+                cell.innerHTML = buildSelect([['active','Active'],['inactive','Inactive'],['frozen','Frozen'],['expired','Expired']], currentValue);
+            } else if (field === 'coach_id') {
+                let opts = [['','None']];
+                coachesData.forEach(c => opts.push([c.id, c.full_name]));
+                cell.innerHTML = buildSelect(opts, currentValue);
+            } else if (field === 'sales_by') {
+                let opts = [['','None']];
+                usersData.forEach(u => opts.push([u.id, u.full_name]));
+                cell.innerHTML = buildSelect(opts, currentValue);
+            } else if (field === 'membership_start' || field === 'membership_end') {
+                const rawVal = cell.dataset.raw || '';
+                cell.innerHTML = '<input type="date" value="' + rawVal + '">';
+            } else {
+                cell.innerHTML = '<input type="text" value="' + currentText.replace(/"/g, '&quot;') + '">';
+            }
+        });
+    }
+
+    function buildSelect(options, selected) {
+        let html = '<select>';
+        options.forEach(([val, label]) => {
+            html += '<option value="' + val + '"' + (String(val) === String(selected) ? ' selected' : '') + '>' + label + '</option>';
+        });
+        html += '</select>';
+        return html;
+    }
+
+    // Save row
+    document.querySelectorAll('.save-row-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const memberId = row.dataset.id;
+            const changes = [];
+
+            row.querySelectorAll('.cell-display').forEach(cell => {
+                const field = cell.dataset.field;
+                const input = cell.querySelector('input, select');
+                if (!input) return;
+                const newValue = input.value;
+                const origValue = cell.dataset.originalValue;
+                if (newValue !== origValue) {
+                    changes.push({ field, value: newValue });
+                }
+            });
+
+            if (changes.length === 0) { cancelRowEdit(row); return; }
+
+            let saved = 0, errors = 0;
+            changes.forEach(change => {
+                fetch('/members/' + memberId + '/inline-edit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: verifiedPassword, field: change.field, value: change.value })
+                }).then(r => r.json()).then(d => {
+                    if (d.success) saved++; else errors++;
+                    if (saved + errors === changes.length) {
+                        if (errors === 0) location.reload();
+                        else alert('Some fields failed to save.');
+                    }
+                });
+            });
+        });
+    });
+
+    // Cancel
+    document.querySelectorAll('.cancel-row-btn').forEach(btn => {
+        btn.addEventListener('click', function() { cancelRowEdit(this.closest('tr')); });
+    });
+
+    function cancelRowEdit(row) {
+        row.classList.remove('row-editing');
+        row.querySelector('.edit-row-btn').style.display = '';
+        row.querySelector('.save-row-btn').style.display = 'none';
+        row.querySelector('.cancel-row-btn').style.display = 'none';
+        row.querySelectorAll('.cell-display').forEach(cell => { cell.textContent = cell.dataset.originalText; });
+    }
+
+    // Cancel if modal closed without unlocking
+    let unlockSucceeded = false;
+    document.getElementById('unlockEditBtn').addEventListener('click', function() { unlockSucceeded = true; });
+    document.getElementById('passwordModal').addEventListener('hidden.bs.modal', function() {
+        if (!unlockSucceeded && currentEditRow && !currentEditRow.classList.contains('row-editing')) {
+            // Modal closed without unlock - nothing to cancel
+        }
+        unlockSucceeded = false;
+    });
+});
+</script>

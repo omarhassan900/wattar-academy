@@ -21,12 +21,34 @@
                     <td><%= c.max_capacity %></td>
                     <td>
                         <% if (['admin','manager'].includes(user.role)) { %>
+                        <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editClass<%= c.id %>"><i class="fas fa-edit"></i></button>
                         <form method="POST" action="/classes/<%= c.id %>/delete" class="d-inline" onsubmit="return confirm('Cancel this class?')">
                             <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
                         </form>
                         <% } %>
                     </td>
                 </tr>
+
+                <!-- Edit Class Modal -->
+                <% if (['admin','manager'].includes(user.role)) { %>
+                <div class="modal fade" id="editClass<%= c.id %>" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="/classes/<%= c.id %>/edit">
+                                <div class="modal-header"><h5 class="modal-title">Edit Class</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="mb-3"><label class="form-label">Class Type</label><select class="form-select" name="class_type_id" required><% classTypes.forEach(ct => { %><option value="<%= ct.id %>" <%= c.class_type_id == ct.id ? 'selected' : '' %>><%= ct.name %></option><% }); %></select></div>
+                                    <div class="mb-3"><label class="form-label">Day</label><select class="form-select" name="day_of_week" required><option value="sunday" <%= c.day_of_week==='sunday'?'selected':'' %>>Sunday</option><option value="monday" <%= c.day_of_week==='monday'?'selected':'' %>>Monday</option><option value="tuesday" <%= c.day_of_week==='tuesday'?'selected':'' %>>Tuesday</option><option value="wednesday" <%= c.day_of_week==='wednesday'?'selected':'' %>>Wednesday</option><option value="thursday" <%= c.day_of_week==='thursday'?'selected':'' %>>Thursday</option><option value="friday" <%= c.day_of_week==='friday'?'selected':'' %>>Friday</option><option value="saturday" <%= c.day_of_week==='saturday'?'selected':'' %>>Saturday</option></select></div>
+                                    <div class="row"><div class="col-6 mb-3"><label class="form-label">Start Time</label><input type="time" class="form-control" name="start_time" value="<%= c.start_time %>" required></div><div class="col-6 mb-3"><label class="form-label">End Time</label><input type="time" class="form-control" name="end_time" value="<%= c.end_time %>" required></div></div>
+                                    <div class="mb-3"><label class="form-label">Coach</label><select class="form-select" name="coach_id"><option value="">TBD</option><% coaches.forEach(co => { %><option value="<%= co.id %>" <%= c.coach_id == co.id ? 'selected' : '' %>><%= co.full_name %></option><% }); %></select></div>
+                                    <div class="mb-3"><label class="form-label">Max Capacity</label><input type="number" class="form-control" name="max_capacity" value="<%= c.max_capacity %>"></div>
+                                </div>
+                                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
                 <% }); %>
             </tbody>
         </table>

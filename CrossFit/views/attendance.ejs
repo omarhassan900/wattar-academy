@@ -1,89 +1,154 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><i class="fas fa-clipboard-check me-2"></i>Attendance</h4>
-    <form method="GET" class="d-flex gap-2">
-        <input type="date" class="form-control" name="date" value="<%= date %>">
-        <button class="btn btn-dark">Go</button>
-    </form>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Attendance</h4>
+    <span class="text-muted">Today: <%= today %></span>
 </div>
 
-<!-- Today's Classes -->
-<div class="row mb-4">
-    <% classes.forEach(cls => { %>
-    <div class="col-md-4 mb-3">
-        <div class="card" style="border-top: 3px solid <%= cls.color %>;">
-            <div class="card-body">
-                <h6><%= cls.class_type_name %></h6>
-                <small class="text-muted"><%= cls.start_time %> - <%= cls.end_time %></small><br>
-                <small><i class="fas fa-user me-1"></i><%= cls.coach_name || 'TBD' %></small>
+<%
+function formatDate(d) {
+    if (!d) return '';
+    var parts = d.split('-');
+    if (parts.length === 3) return parts[2] + '-' + parts[1] + '-' + parts[0];
+    return d;
+}
+function formatMembership(t) {
+    if (t === '1_month') return '1 Month';
+    if (t === '3_months') return '3 Months';
+    if (t === '6_months') return '6 Months';
+    if (t === '1_year') return '1 Year';
+    return t || '';
+}
+%>
+
+<!-- Check-in Box -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="checkinInput" placeholder="Enter Member ID or search name..." autocomplete="off" list="memberList">
+                    <button class="btn btn-dark" id="checkinBtn"><i class="fas fa-check me-1"></i>Check In</button>
+                </div>
+                <datalist id="memberList">
+                    <% members.forEach(function(m) { %>
+                    <option value="<%= m.id %>"><%= m.full_name %> (#<%= m.id %>)</option>
+                    <% }); %>
+                </datalist>
+            </div>
+            <div class="col-md-7">
+                <div id="checkinResult" style="display:none;" class="alert py-2 mb-0 small"></div>
             </div>
         </div>
     </div>
-    <% }); %>
-    <% if (classes.length === 0) { %>
-    <div class="col-12"><p class="text-muted">No classes scheduled for this day.</p></div>
-    <% } %>
 </div>
 
-<!-- Check-in Form -->
-<div class="card mb-4">
-    <div class="card-header"><h6 class="mb-0">Record Check-in</h6></div>
-    <div class="card-body">
-        <form method="POST" action="/attendance" class="row g-2 align-items-end">
-            <input type="hidden" name="date" value="<%= date %>">
-            <div class="col-md-4">
-                <label class="form-label">Member</label>
-                <select class="form-select" name="member_id" required>
-                    <option value="">Select member...</option>
-                    <% members.forEach(m => { %>
-                    <option value="<%= m.id %>"><%= m.full_name %></option>
-                    <% }); %>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Class</label>
-                <select class="form-select" name="class_id" required>
-                    <option value="">Select class...</option>
-                    <% classes.forEach(cls => { %>
-                    <option value="<%= cls.id %>"><%= cls.class_type_name %> (<%= cls.start_time %>)</option>
-                    <% }); %>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Status</label>
-                <select class="form-select" name="status">
-                    <option value="present">Present</option>
-                    <option value="late">Late</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Check In</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Today's Records -->
+<!-- Members Table -->
 <div class="card">
-    <div class="card-header"><h6 class="mb-0">Records for <%= date %> (<%= records.length %>)</h6></div>
-    <div class="card-body table-responsive">
-        <table class="table table-sm">
-            <thead><tr><th>Member</th><th>Class</th><th>Time</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-                <% records.forEach(r => { %>
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover table-sm mb-0" style="font-size: 0.85rem;" id="attendanceTable">
+            <thead class="table-dark">
                 <tr>
-                    <td><%= r.member_name %></td>
-                    <td><%= r.class_type_name %></td>
-                    <td><%= r.check_in_time || '—' %></td>
-                    <td><span class="badge bg-<%= r.status === 'present' ? 'success' : r.status === 'late' ? 'warning' : 'danger' %>"><%= r.status %></span></td>
-                    <td>
-                        <form method="POST" action="/attendance/<%= r.id %>/delete?date=<%= date %>" class="d-inline">
-                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
-                        </form>
-                    </td>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Class</th>
+                    <th>Type</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Coach</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% members.forEach(function(m) { %>
+                <tr id="member-row-<%= m.id %>" data-member-id="<%= m.id %>" data-member-name="<%= m.full_name.toLowerCase() %>" data-end="<%= m.membership_end || '' %>" data-classtype="<%= m.class_type || 'crossfit' %>" data-status="<%= m.status %>">
+                    <td><%= m.id %></td>
+                    <td><strong><%= m.full_name %></strong></td>
+                    <td class="text-nowrap"><%= m.phone %></td>
+                    <td><span class="badge-pill badge-<%= m.class_type || 'crossfit' %>"><%= m.class_type || 'crossfit' %></span></td>
+                    <td><span class="badge-pill badge-<%= m.membership_type || '' %>"><%= formatMembership(m.membership_type) %></span></td>
+                    <td class="text-nowrap"><%= formatDate(m.membership_start) %></td>
+                    <td class="text-nowrap"><%= formatDate(m.membership_end) %></td>
+                    <td><% if (m.coach_name) { %><span class="badge-pill badge-coach"><i class="fas fa-user me-1"></i><%= m.coach_name %></span><% } else { %>—<% } %></td>
+                    <td><span class="badge-pill badge-<%= m.status %>"><%= m.status %></span></td>
                 </tr>
                 <% }); %>
             </tbody>
         </table>
-        <% if (records.length === 0) { %><p class="text-muted text-center">No check-ins yet.</p><% } %>
+        <% if (members.length === 0) { %><p class="text-muted text-center py-3 mb-0">No members found.</p><% } %>
     </div>
 </div>
+
+<style>
+    .row-valid { background-color: #d1e7dd !important; border-left: 4px solid #198754; }
+    .row-expiring { background-color: #fff3cd !important; border-left: 4px solid #fd7e14; }
+    .row-expired { background-color: #f8d7da !important; border-left: 4px solid #dc3545; }
+    .badge-pill { border-radius: 12px; padding: 3px 10px; font-size: 0.75rem; font-weight: 500; }
+    .badge-crossfit { background-color: #00462e; color: #fff; }
+    .badge-boxing { background-color: #2c3e50; color: #fff; }
+    .badge-kick_boxing { background-color: #8e44ad; color: #fff; }
+    .badge-1_month { background-color: #3498db; color: #fff; }
+    .badge-3_months { background-color: #27ae60; color: #fff; }
+    .badge-6_months { background-color: #f39c12; color: #fff; }
+    .badge-1_year { background-color: #e74c3c; color: #fff; }
+    .badge-coach { background-color: #e91e63; color: #fff; border-radius: 12px; padding: 3px 8px; font-size: 0.75rem; }
+    .badge-active { background-color: #4caf50; color: #fff; }
+    .badge-inactive { background-color: #9e9e9e; color: #fff; }
+    .badge-frozen { background-color: #00bcd4; color: #fff; }
+    .badge-expired { background-color: #f44336; color: #fff; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var input = document.getElementById('checkinInput');
+    var btn = document.getElementById('checkinBtn');
+    var result = document.getElementById('checkinResult');
+
+    btn.addEventListener('click', doCheckin);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter') doCheckin(); });
+
+    function doCheckin() {
+        var val = input.value.trim();
+        if (!val) return;
+
+        var memberId = val.match(/\d+/);
+        if (!memberId) { showResult('danger', 'Please enter a valid member ID'); return; }
+        memberId = memberId[0];
+
+        // Highlight the row
+        document.querySelectorAll('#attendanceTable tbody tr').forEach(function(row) {
+            row.classList.remove('row-valid', 'row-expiring', 'row-expired');
+        });
+
+        fetch('/attendance/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: memberId })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            var row = document.getElementById('member-row-' + memberId);
+            if (d.success) {
+                var msg = '<i class="fas fa-check-circle me-2"></i><strong>' + d.member_name + '</strong> checked in at ' + d.check_in_time;
+                if (d.pt_deducted) msg += ' <span class="badge bg-info ms-2">PT session deducted</span>';
+                if (d.warning) msg += '<br><small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>' + d.warning + '</small>';
+                showResult('success', msg);
+                if (row) { row.classList.add('row-valid'); row.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            } else {
+                var color = d.status === 'expired' ? 'danger' : d.status === 'duplicate' ? 'warning' : 'secondary';
+                showResult(color, '<i class="fas fa-times-circle me-2"></i>' + d.error);
+                if (row) {
+                    row.classList.add(d.status === 'expired' ? 'row-expired' : d.status === 'duplicate' ? 'row-expiring' : 'row-expired');
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            input.value = '';
+            input.focus();
+        });
+    }
+
+    function showResult(type, msg) {
+        result.className = 'alert alert-' + type + ' py-2 mb-0 small';
+        result.innerHTML = msg;
+        result.style.display = 'block';
+        setTimeout(function() { result.style.display = 'none'; }, 5000);
+    }
+});
+</script>

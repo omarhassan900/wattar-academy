@@ -1,0 +1,419 @@
+<!-- Password Gate -->
+<div id="cashPasswordGate" style="position:relative;">
+    <div id="cashLockOverlay" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(244,246,249,0.97); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div class="card shadow" style="width:350px;">
+            <div class="card-header bg-warning text-center" style="position:relative;">
+                <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Cash Management Locked</h5>
+                <button onclick="history.back()" style="position:absolute; top:8px; right:10px; background:none; border:none; color:#000; font-size:1.2rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="card-body text-center">
+                <p class="small text-muted mb-3">Enter manager credentials to access Cash Management</p>
+                <input type="text" class="form-control form-control-sm mb-2" id="cashGateUsername" placeholder="Username..." autocomplete="off">
+                <input type="password" class="form-control form-control-sm mb-2" id="cashGatePassword" placeholder="Password..." autocomplete="off">
+                <div id="cashGateError" class="text-danger small mb-2" style="display:none;"></div>
+                <button type="button" class="btn btn-success btn-sm w-100" id="cashGateUnlockBtn"><i class="fas fa-unlock me-1"></i>Unlock</button>
+            </div>
+        </div>
+    </div>
+<script>
+(function() {
+    <% if (unlocked) { %>
+    // Already unlocked server-side
+    document.getElementById('cashLockOverlay').style.display = 'none';
+    <% } else { %>
+    document.getElementById('cashGateUnlockBtn').addEventListener('click', unlockCash);
+    document.getElementById('cashGatePassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') unlockCash(); });
+
+    function unlockCash() {
+        var username = document.getElementById('cashGateUsername').value.trim();
+        var password = document.getElementById('cashGatePassword').value;
+        if (!username || !password) {
+            document.getElementById('cashGateError').textContent = 'Enter username and password';
+            document.getElementById('cashGateError').style.display = 'block';
+            return;
+        }
+        fetch('/cash/verify-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) {
+                // Redirect to cash page with token
+                window.location.href = '/cash?t=' + d.token;
+            } else {
+                document.getElementById('cashGateError').textContent = d.error || 'Access denied';
+                document.getElementById('cashGateError').style.display = 'block';
+            }
+        });
+    }
+    <% } %>
+})();
+</script>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="fas fa-money-bill-wave me-2 text-success"></i>Cash Management</h4>
+    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+        <i class="fas fa-plus me-1"></i>Add Transaction
+    </button>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-3">
+    <div class="col-md-4 mb-2">
+        <div class="card bg-success text-white">
+            <div class="card-body py-2">
+                <h6 class="mb-0"><i class="fas fa-arrow-down me-1"></i>Total Income</h6>
+                <h3 class="mb-0"><%= totalIncome.toFixed(2) %> EGP</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card bg-danger text-white">
+            <div class="card-body py-2">
+                <h6 class="mb-0"><i class="fas fa-arrow-up me-1"></i>Total Expenses</h6>
+                <h3 class="mb-0"><%= totalExpense.toFixed(2) %> EGP</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card <%= balance >= 0 ? 'bg-primary' : 'bg-warning' %> text-white">
+            <div class="card-body py-2">
+                <h6 class="mb-0"><i class="fas fa-wallet me-1"></i>Balance</h6>
+                <h3 class="mb-0"><%= balance.toFixed(2) %> EGP</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <select id="typeFilter" class="form-select form-select-sm">
+                    <option value="">All Types</option>
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="categoryFilter" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    <% categories.forEach(cat => { %>
+                    <option value="<%= cat.code %>"><%= cat.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="startDateFilter" class="form-control form-control-sm" title="Start date">
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="endDateFilter" class="form-control form-control-sm" title="End date">
+            </div>
+            <div class="col-md-2">
+                <button id="clearFilters" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-times me-1"></i>Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card">
+    <div class="card-header py-2">
+        <strong>Transactions (<span id="transactionCount"><%= transactions.length %></span>)</strong>
+    </div>
+    <div class="card-body p-0 table-responsive">
+        <% if (transactions.length === 0) { %>
+        <p class="text-muted text-center py-4 mb-0">No transactions yet.</p>
+        <% } else { %>
+        <table class="table table-hover table-sm mb-0" style="font-size: 0.85rem;">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Reference</th>
+                    <th>Member</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="transactionsTableBody">
+                <% transactions.forEach(t => { %>
+                <tr class="transaction-row"
+                    data-type="<%= t.type %>"
+                    data-category="<%= t.category_code %>"
+                    data-date="<%= t.transaction_date %>"
+                    data-id="<%= t.id %>"
+                    data-transaction-date="<%= t.transaction_date %>"
+                    data-transaction-type="<%= t.type %>"
+                    data-transaction-amount="<%= t.amount %>"
+                    data-transaction-category="<%= t.category_code %>"
+                    data-transaction-description="<%= t.description || '' %>"
+                    data-transaction-payment="<%= t.payment_method || '' %>"
+                    data-transaction-reference="<%= t.reference_number || '' %>">
+                    <td class="text-nowrap"><%= new Date(t.transaction_date).toLocaleDateString() %></td>
+                    <td>
+                        <% if (t.type === 'income') { %>
+                        <span class="badge bg-success">Income</span>
+                        <% } else { %>
+                        <span class="badge bg-danger">Expense</span>
+                        <% } %>
+                    </td>
+                    <td><span class="badge bg-info"><%= t.category_name || t.category_code %></span></td>
+                    <td><%= t.description || '-' %></td>
+                    <td class="fw-bold <%= t.type === 'income' ? 'text-success' : 'text-danger' %>">
+                        <%= t.type === 'income' ? '+' : '-' %><%= parseFloat(t.amount).toFixed(2) %>
+                    </td>
+                    <td><%= t.payment_method || '-' %></td>
+                    <td><%= t.reference_number || '-' %></td>
+                    <td><%= t.member_name || '-' %></td>
+                    <td class="text-nowrap">
+                        <button class="btn btn-outline-primary btn-sm edit-transaction-btn" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-outline-danger btn-sm delete-transaction-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% } %>
+    </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal fade" id="addTransactionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/cash">
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Transaction</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Date *</label>
+                            <input type="date" class="form-control form-control-sm" name="transaction_date" id="transaction_date" required>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Type *</label>
+                            <select class="form-select form-select-sm" name="type" id="type" required>
+                                <option value="">Select Type</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select form-select-sm" name="category_code" id="category_code" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Amount *</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" name="amount" required>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control form-control-sm" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select form-select-sm" name="payment_method">
+                                <option value="">Select</option>
+                                <option value="Cash">Cash</option>
+                                <option value="InstaPay">InstaPay</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Card">Card</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Reference #</label>
+                            <input type="text" class="form-control form-control-sm" name="reference_number">
+                        </div>
+                        <div class="col-12 mb-2" id="member-assign-group" style="display:none;">
+                            <label class="form-label">Assign to Member</label>
+                            <input type="text" class="form-control form-control-sm" id="member_search" placeholder="Type to search member..." autocomplete="off" list="membersList">
+                            <datalist id="membersList">
+                                <% members.forEach(m => { %>
+                                <option value="<%= m.full_name %> (#<%= m.id %>)" data-id="<%= m.id %>"></option>
+                                <% }); %>
+                            </datalist>
+                            <input type="hidden" name="member_id" id="member_id">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success btn-sm" id="addTransactionBtn"><i class="fas fa-save me-1"></i>Add Transaction</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Transaction Modal -->
+<div class="modal fade" id="editTransactionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editTransactionForm" method="POST">
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Transaction</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Date *</label>
+                            <input type="date" class="form-control form-control-sm" name="transaction_date" id="edit_transaction_date" required>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Type *</label>
+                            <select class="form-select form-select-sm" name="type" id="edit_type" required>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select form-select-sm" name="category_code" id="edit_category_code" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Amount *</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" name="amount" id="edit_amount" required>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control form-control-sm" name="description" id="edit_description" rows="2"></textarea>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select form-select-sm" name="payment_method" id="edit_payment_method">
+                                <option value="">Select</option>
+                                <option value="Cash">Cash</option>
+                                <option value="InstaPay">InstaPay</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Card">Card</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Reference #</label>
+                            <input type="text" class="form-control form-control-sm" name="reference_number" id="edit_reference_number">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save me-1"></i>Save Changes</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categories = <%- JSON.stringify(categories) %>;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('transaction_date').value = today;
+
+    // Income member categories
+    const memberCategories = ['CF', 'BOX', 'KB', 'PT'];
+
+    function updateCategoryOptions(selectId, type) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">Select Category</option>';
+        const filtered = type ? categories.filter(c => c.type === type) : categories;
+        filtered.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.code;
+            opt.textContent = cat.name;
+            select.appendChild(opt);
+        });
+    }
+
+    function toggleMemberField() {
+        const type = document.getElementById('type').value;
+        const cat = document.getElementById('category_code').value;
+        document.getElementById('member-assign-group').style.display =
+            (type === 'income' && memberCategories.includes(cat)) ? '' : 'none';
+    }
+
+    document.getElementById('type').addEventListener('change', function() {
+        updateCategoryOptions('category_code', this.value);
+        toggleMemberField();
+    });
+    document.getElementById('category_code').addEventListener('change', toggleMemberField);
+
+    // Member search -> set hidden member_id
+    const membersData = <%- JSON.stringify(members) %>;
+    document.getElementById('member_search').addEventListener('input', function() {
+        const match = membersData.find(m => this.value === m.full_name + ' (#' + m.id + ')');
+        document.getElementById('member_id').value = match ? match.id : '';
+    });
+
+    document.getElementById('edit_type').addEventListener('change', function() {
+        updateCategoryOptions('edit_category_code', this.value);
+    });
+
+    // Filters
+    const typeFilter = document.getElementById('typeFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const startDateFilter = document.getElementById('startDateFilter');
+    const endDateFilter = document.getElementById('endDateFilter');
+
+    // Update category dropdown based on type selection
+    typeFilter.addEventListener('change', function() {
+        const selectedType = this.value;
+        categoryFilter.innerHTML = '<option value="">All Categories</option>';
+        const filtered = selectedType ? categories.filter(c => c.type === selectedType) : categories;
+        filtered.forEach(cat => {
+            categoryFilter.innerHTML += '<option value="' + cat.code + '">' + cat.name + '</option>';
+        });
+        filterTransactions();
+    });
+
+    function filterTransactions() {
+        const rows = document.querySelectorAll('.transaction-row');
+        let count = 0;
+        rows.forEach(row => {
+            const typeMatch = !typeFilter.value || row.dataset.type === typeFilter.value;
+            const catMatch = !categoryFilter.value || row.dataset.category === categoryFilter.value;
+            const dateVal = row.dataset.date;
+            const startMatch = !startDateFilter.value || dateVal >= startDateFilter.value;
+            const endMatch = !endDateFilter.value || dateVal <= endDateFilter.value;
+            const match = typeMatch && catMatch && startMatch && endMatch;
+            row.style.display = match ? '' : 'none';
+            if (match) count++;
+        });
+        document.getElementById('transactionCount').textContent = count;
+    }
+
+    categoryFilter.addEventListener('change', filterTransactions);
+    startDateFilter.addEventListener('change', filterTransactions);
+    endDateFilter.addEventListener('change', filterTransactions);
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        typeFilter.value = ''; categoryFilter.value = ''; startDateFilter.value = ''; endDateFilter.value = '';
+        filterTransactions();
+    });
+
+    // Edit
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-transaction-btn')) {
+            const row = e.target.closest('.transaction-row');
+            document.getElementById('edit_transaction_date').value = row.dataset.transactionDate;
+            document.getElementById('edit_type').value = row.dataset.transactionType;
+            updateCategoryOptions('edit_category_code', row.dataset.transactionType);
+            document.getElementById('edit_category_code').value = row.dataset.transactionCategory;
+            document.getElementById('edit_amount').value = row.dataset.transactionAmount;
+            document.getElementById('edit_description').value = row.dataset.transactionDescription;
+            document.getElementById('edit_payment_method').value = row.dataset.transactionPayment;
+            document.getElementById('edit_reference_number').value = row.dataset.transactionReference;
+            document.getElementById('editTransactionForm').action = '/cash/' + row.dataset.id + '/edit';
+            new bootstrap.Modal(document.getElementById('editTransactionModal')).show();
+        }
+        if (e.target.closest('.delete-transaction-btn')) {
+            if (confirm('Delete this transaction?')) {
+                const row = e.target.closest('.transaction-row');
+                fetch('/cash/' + row.dataset.id + '/delete', { method: 'POST' }).then(r => {
+                    if (r.ok) location.reload(); else alert('Error deleting');
+                });
+            }
+        }
+    });
+});
+</script>
+
+</div><!-- close cashPasswordGate -->

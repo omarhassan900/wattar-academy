@@ -27,10 +27,10 @@ module.exports = (app, db) => {
         let end_date;
         const start = moment(start_date);
 
-        if (membership_type === 'monthly') end_date = start.add(1, 'month').format('YYYY-MM-DD');
-        else if (membership_type === 'quarterly') end_date = start.add(3, 'months').format('YYYY-MM-DD');
-        else if (membership_type === 'semi_annual') end_date = start.add(6, 'months').format('YYYY-MM-DD');
-        else if (membership_type === 'annual') end_date = start.add(1, 'year').format('YYYY-MM-DD');
+        if (membership_type === '1_month') end_date = start.add(1, 'month').format('YYYY-MM-DD');
+        else if (membership_type === '3_months') end_date = start.add(3, 'months').format('YYYY-MM-DD');
+        else if (membership_type === '6_months') end_date = start.add(6, 'months').format('YYYY-MM-DD');
+        else if (membership_type === '1_year') end_date = start.add(1, 'year').format('YYYY-MM-DD');
 
         db.run(`UPDATE members SET membership_type = ?, membership_start = ?, membership_end = ?, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [membership_type, req.body.start_date, end_date, req.params.id],

@@ -30,6 +30,13 @@ module.exports = (app, db) => {
             (err) => { if (err) console.error(err); res.redirect('/classes'); });
     });
 
+    app.post('/classes/:id/edit', requireAuth, requireRole(['admin', 'manager']), (req, res) => {
+        const { class_type_id, coach_id, day_of_week, start_time, end_time, max_capacity } = req.body;
+        db.run(`UPDATE classes SET class_type_id=?, coach_id=?, day_of_week=?, start_time=?, end_time=?, max_capacity=? WHERE id=?`,
+            [class_type_id, coach_id || null, day_of_week, start_time, end_time, max_capacity || 20, req.params.id],
+            (err) => { if (err) console.error(err); res.redirect('/classes'); });
+    });
+
     app.post('/classes/:id/delete', requireAuth, requireRole(['admin', 'manager']), (req, res) => {
         db.run(`UPDATE classes SET status = 'cancelled' WHERE id = ?`, [req.params.id], () => res.redirect('/classes'));
     });

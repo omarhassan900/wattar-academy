@@ -1,0 +1,238 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="fas fa-user-clock me-2"></i>Personal Training (PT)</h4>
+    <div>
+        <button class="btn btn-success btn-sm me-1" data-bs-toggle="modal" data-bs-target="#addPackageModal">
+            <i class="fas fa-box me-1"></i>Add Package
+        </button>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#logSessionModal">
+            <i class="fas fa-check me-1"></i>Log Session
+        </button>
+    </div>
+</div>
+
+<!-- Coach Stats -->
+<div class="row mb-3">
+    <% coachStats.forEach(function(c) { %>
+    <div class="col-md-3 col-6 mb-2">
+        <div class="card p-2 text-center" style="border-top: 3px solid #0f3460;">
+            <strong><%= c.full_name %></strong>
+            <div class="d-flex justify-content-around mt-1" style="font-size:0.8rem;">
+                <span class="text-muted">Total: <strong><%= c.total_sessions || 0 %></strong></span>
+                <span class="text-success">Done: <strong><%= c.completed || 0 %></strong></span>
+                <span class="text-primary">Remaining: <strong><%= c.remaining || 0 %></strong></span>
+            </div>
+        </div>
+    </div>
+    <% }); %>
+</div>
+
+<!-- Members with PT Packages - Grouped by Coach Tabs -->
+<div class="card mb-3">
+    <div class="card-header" style="background: linear-gradient(135deg, #0f3460, #1a1a2e); color: #fff;">
+        <h6 class="mb-0"><i class="fas fa-users me-2"></i>PT Members & Sessions Balance</h6>
+    </div>
+    <div class="card-body p-0">
+        <!-- Coach Tabs -->
+        <ul class="nav nav-tabs px-3 pt-2" id="ptMemberTabs">
+            <li class="nav-item"><a class="nav-link active" href="#" data-ptcoach="all">All</a></li>
+            <% coaches.forEach(function(c) { 
+                var coachMembers = ptMembers.filter(function(m) { return String(m.coach_id) === String(c.id); });
+                var totalRemaining = coachMembers.reduce(function(sum, m) { return sum + (m.pt_sessions_remaining || 0); }, 0);
+                var totalCompleted = coachMembers.reduce(function(sum, m) { return sum + (m.completed_sessions || 0); }, 0);
+            %>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-ptcoach="<%= c.id %>"><%= c.full_name %></a>
+            </li>
+            <% }); %>
+        </ul>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0" style="font-size: 0.85rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Member</th>
+                        <th>Phone</th>
+                        <th>Coach</th>
+                        <th>Remaining</th>
+                        <th>Completed</th>
+                        <th>Total Used</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% ptMembers.forEach(function(m) { %>
+                    <tr data-ptcoach-id="<%= m.coach_id || '' %>">
+                        <td><strong><%= m.full_name %></strong></td>
+                        <td><%= m.phone %></td>
+                        <td><% if (m.coach_name) { %><span class="badge" style="background:#0f3460;"><%= m.coach_name %></span><% } else { %>—<% } %></td>
+                        <td>
+                            <span class="badge bg-<%= m.pt_sessions_remaining > 3 ? 'success' : m.pt_sessions_remaining > 0 ? 'warning' : 'danger' %> fs-6">
+                                <%= m.pt_sessions_remaining %>
+                            </span>
+                        </td>
+                        <td><span class="badge bg-primary"><%= m.completed_sessions || 0 %></span></td>
+                        <td><%= m.total_sessions || 0 %></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <% if (ptMembers.length === 0) { %><p class="text-muted text-center py-3 mb-0">No PT packages assigned yet.</p><% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Coach Sub-Tabs -->
+<ul class="nav nav-tabs mb-3" id="coachTabs">
+    <li class="nav-item"><a class="nav-link active" href="#" data-coach="all">All Sessions</a></li>
+    <% coaches.forEach(function(c) { %>
+    <li class="nav-item"><a class="nav-link" href="#" data-coach="<%= c.id %>"><%= c.full_name %></a></li>
+    <% }); %>
+</ul>
+
+<!-- Sessions History -->
+<div class="card">
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover table-sm mb-0" style="font-size: 0.85rem;">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Member</th>
+                    <th>Coach</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% sessions.forEach(function(s) { %>
+                <tr data-coach-id="<%= s.coach_id %>">
+                    <td class="text-nowrap"><%= s.date %></td>
+                    <td><strong><%= s.member_name || '-' %></strong></td>
+                    <td><span class="badge" style="background:#0f3460;"><%= s.coach_name || '-' %></span></td>
+                    <td>
+                        <% if (s.status === 'completed') { %><span class="badge bg-success">Completed</span>
+                        <% } else if (s.status === 'scheduled') { %><span class="badge bg-primary">Scheduled</span>
+                        <% } else if (s.status === 'no_show') { %><span class="badge bg-danger">No Show</span>
+                        <% } else { %><span class="badge bg-secondary">Cancelled</span><% } %>
+                    </td>
+                    <td><%= s.notes || '-' %></td>
+                    <td>
+                        <form method="POST" action="/pt/<%= s.id %>/delete" class="d-inline">
+                            <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="return confirm('Delete this session? Session will be added back if completed.')"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% if (sessions.length === 0) { %><p class="text-muted text-center py-3 mb-0">No sessions logged yet.</p><% } %>
+    </div>
+</div>
+
+<!-- Add Package Modal -->
+<div class="modal fade" id="addPackageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/pt/add-package">
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-box me-2"></i>Add PT Package</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 mb-2">
+                            <label class="form-label">Member *</label>
+                            <select class="form-select form-select-sm" name="member_id" required>
+                                <option value="">Select Member</option>
+                                <% allMembers.forEach(function(m) { %>
+                                <option value="<%= m.id %>"><%= m.full_name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Number of Sessions *</label>
+                            <input type="number" class="form-control form-control-sm" name="sessions_count" min="1" required placeholder="e.g. 8, 12, 16">
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Assign Coach</label>
+                            <select class="form-select form-select-sm" name="coach_id">
+                                <option value="">Select Coach</option>
+                                <% coaches.forEach(function(c) { %>
+                                <option value="<%= c.id %>"><%= c.full_name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success btn-sm">Add Package</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Log Session Modal -->
+<div class="modal fade" id="logSessionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/pt/log-session">
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-check me-2"></i>Log PT Session</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Member *</label>
+                            <select class="form-select form-select-sm" name="member_id" required>
+                                <option value="">Select Member</option>
+                                <% ptMembers.forEach(function(m) { if (m.pt_sessions_remaining > 0) { %>
+                                <option value="<%= m.id %>"><%= m.full_name %> (<%= m.pt_sessions_remaining %> left)</option>
+                                <% } }); %>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Coach *</label>
+                            <select class="form-select form-select-sm" name="coach_id" required>
+                                <option value="">Select Coach</option>
+                                <% coaches.forEach(function(c) { %>
+                                <option value="<%= c.id %>"><%= c.full_name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Date *</label>
+                            <input type="date" class="form-control form-control-sm" name="date" required>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control form-control-sm" name="notes" rows="2" placeholder="Session notes..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary btn-sm">Log Session</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // PT Members coach tab filtering
+    document.querySelectorAll('#ptMemberTabs .nav-link').forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('#ptMemberTabs .nav-link').forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            var coachId = this.dataset.ptcoach;
+            document.querySelectorAll('tr[data-ptcoach-id]').forEach(function(row) {
+                row.style.display = (coachId === 'all' || row.dataset.ptcoachId === coachId) ? '' : 'none';
+            });
+        });
+    });
+
+    // Sessions history coach tab filtering
+    document.querySelectorAll('#coachTabs .nav-link').forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('#coachTabs .nav-link').forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            var coachId = this.dataset.coach;
+            document.querySelectorAll('tr[data-coach-id]').forEach(function(row) {
+                row.style.display = (coachId === 'all' || row.dataset.coachId === coachId) ? '' : 'none';
+            });
+        });
+    });
+});
+</script>

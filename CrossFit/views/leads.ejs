@@ -1,0 +1,477 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="fas fa-funnel-dollar me-2"></i>IV Data (Leads)</h4>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addLeadModal">
+        <i class="fas fa-user-plus me-1"></i>Add Lead
+    </button>
+</div>
+
+<!-- Sales Agent Sub-Tabs -->
+<ul class="nav nav-tabs mb-3" id="salesTabs">
+    <li class="nav-item">
+        <a class="nav-link active" href="#" data-sales="all">All</a>
+    </li>
+    <% salesUsers.forEach(s => { %>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-sales="<%= s.id %>"><%= s.full_name %></a>
+    </li>
+    <% }); %>
+</ul>
+
+<!-- Filters -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <% if (filters.error === 'duplicate') { %>
+        <div class="alert alert-danger py-2 mb-2 small">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Phone <strong><%= filters.phone %></strong> already exists! This lead belongs to <strong><%= filters.owner %></strong>.
+        </div>
+        <% } %>
+        <form method="GET" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <input type="text" class="form-control form-control-sm" name="search" placeholder="Search name or phone..." value="<%= filters.search || '' %>">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="new" <%= filters.status === 'new' ? 'selected' : '' %>>New</option>
+                    <option value="contacted" <%= filters.status === 'contacted' ? 'selected' : '' %>>Contacted</option>
+                    <option value="interested" <%= filters.status === 'interested' ? 'selected' : '' %>>Interested</option>
+                    <option value="callback" <%= filters.status === 'callback' ? 'selected' : '' %>>Callback</option>
+                    <option value="converted" <%= filters.status === 'converted' ? 'selected' : '' %>>Converted</option>
+                    <option value="lost" <%= filters.status === 'lost' ? 'selected' : '' %>>Lost</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-dark btn-sm w-100">Filter</button>
+            </div>
+            <div class="col-md-3 text-end">
+                <span class="text-muted small"><%= leads.length %> lead<%= leads.length !== 1 ? 's' : '' %></span>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Leads Table -->
+<div class="card">
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover table-sm mb-0" style="font-size: 0.85rem;">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Gender</th>
+                    <th>Source</th>
+                    <th>Sales</th>
+                    <th>Status</th>
+                    <th>Calls</th>
+                    <th>Last Call</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% leads.forEach(l => { %>
+                <tr data-sales-id="<%= l.sales_by %>" data-id="<%= l.id %>">
+                    <td><%= l.id %></td>
+                    <td class="lead-cell" data-field="full_name"><%= l.full_name %></td>
+                    <td class="lead-cell text-nowrap" data-field="phone"><%= l.phone %></td>
+                    <td class="lead-cell" data-field="email"><%= l.email || '' %></td>
+                    <td class="lead-cell" data-field="gender"><%= l.gender %></td>
+                    <td class="lead-cell" data-field="source"><%= l.source || '' %></td>
+                    <td class="lead-cell" data-field="sales_by" data-value="<%= l.sales_by %>"><% if (l.sales_name) { %><span class="badge-pill badge-sales"><i class="fas fa-user me-1"></i><%= l.sales_name %></span><% } else { %>-<% } %></td>
+                    <td class="lead-cell" data-field="status"><span class="badge-pill badge-lead-<%= l.status %>"><%= l.status %></span></td>
+                    <td><span class="badge bg-light text-dark"><%= l.call_count || 0 %></span></td>
+                    <td class="text-nowrap"><%= l.last_call_date ? new Date(l.last_call_date).toLocaleDateString() : '-' %></td>
+                    <td class="text-nowrap"><%= l.created_at ? new Date(l.created_at).toLocaleDateString() : '-' %></td>
+                    <td class="text-nowrap">
+                        <button class="btn btn-outline-warning btn-sm edit-lead-row-btn py-0 px-1" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm save-lead-row-btn py-0 px-1" title="Save" style="display:none;">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm cancel-lead-row-btn py-0 px-1" title="Cancel" style="display:none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm log-call-btn" data-id="<%= l.id %>" data-name="<%= l.full_name %>" title="Log Call">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm view-calls-btn" data-id="<%= l.id %>" data-name="<%= l.full_name %>" title="Call History">
+                            <i class="fas fa-history"></i>
+                        </button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% if (leads.length === 0) { %><p class="text-muted text-center py-3 mb-0">No leads found.</p><% } %>
+    </div>
+</div>
+
+<!-- Lead Edit Password Modal -->
+<div class="modal fade" id="leadPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Enter Credentials</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small mb-2">Enter your username & password to edit:</p>
+                <input type="text" class="form-control form-control-sm mb-2" id="leadEditUsername" placeholder="Username..." autocomplete="off">
+                <input type="password" class="form-control form-control-sm" id="leadEditPassword" placeholder="Password..." autocomplete="off">
+                <div id="leadPasswordError" class="text-danger small mt-1" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success btn-sm" id="leadUnlockBtn"><i class="fas fa-unlock me-1"></i>Unlock</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Lead Modal -->
+<div class="modal fade" id="addLeadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/leads">
+                <div class="modal-header"><h5 class="modal-title">Add New Lead</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 mb-2"><label class="form-label">Full Name *</label><input type="text" class="form-control form-control-sm" name="full_name" required></div>
+                        <div class="col-6 mb-2"><label class="form-label">Phone *</label><input type="tel" class="form-control form-control-sm" name="phone" required></div>
+                        <div class="col-6 mb-2"><label class="form-label">Email</label><input type="email" class="form-control form-control-sm" name="email"></div>
+                        <div class="col-6 mb-2"><label class="form-label">Gender</label><select class="form-select form-select-sm" name="gender"><option value="male">Male</option><option value="female">Female</option></select></div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Source</label>
+                            <select class="form-select form-select-sm" name="source">
+                                <option value="">Select Source</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="TikTok">TikTok</option>
+                                <option value="Google">Google</option>
+                                <option value="Walk-in">Walk-in</option>
+                                <option value="Referral">Referral</option>
+                                <option value="Friend">Friend</option>
+                                <option value="Event">Event</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select form-select-sm" name="status">
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="interested">Interested</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="form-label">Assign to Sales *</label>
+                            <select class="form-select form-select-sm" name="sales_by" required>
+                                <option value="">-- Select Sales Agent --</option>
+                                <% salesUsers.forEach(s => { %>
+                                <option value="<%= s.id %>"><%= s.full_name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-2"><label class="form-label">Notes</label><textarea class="form-control form-control-sm" name="notes" rows="2" placeholder="Any notes about this lead..."></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary btn-sm">Add Lead</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Log Call Modal -->
+<div class="modal fade" id="logCallModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-phone me-2"></i>Log Call - <span id="call-lead-name"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="call-lead-id">
+                <div class="mb-3">
+                    <label class="form-label">Outcome *</label>
+                    <select class="form-select" id="call-outcome">
+                        <option value="">Select outcome...</option>
+                        <option value="no_answer">No Answer</option>
+                        <option value="callback">Callback</option>
+                        <option value="interested">Interested</option>
+                        <option value="not_interested">Not Interested</option>
+                        <option value="converted">Converted</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="callback-group" style="display:none;">
+                    <label class="form-label">Callback in (days)</label>
+                    <input type="number" class="form-control" id="call-callback-days" min="1" placeholder="e.g. 3">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" id="call-notes" rows="2" placeholder="Call notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success btn-sm" id="save-call-btn"><i class="fas fa-save me-1"></i>Save Call</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call History Modal -->
+<div class="modal fade" id="callHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-history me-2"></i>Call History - <span id="history-lead-name"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="call-history-content">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const callModal = new bootstrap.Modal(document.getElementById('logCallModal'));
+    const historyModal = new bootstrap.Modal(document.getElementById('callHistoryModal'));
+    const leadPwModal = new bootstrap.Modal(document.getElementById('leadPasswordModal'));
+    let currentLeadRow = null;
+    let leadVerifiedPassword = null;
+    let leadVerifiedUsername = null;
+    const salesUsersData = <%- JSON.stringify(salesUsers) %>;
+
+    // ===== Inline Edit Logic =====
+    document.querySelectorAll('.edit-lead-row-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentLeadRow = this.closest('tr');
+            document.getElementById('leadEditUsername').value = '';
+            document.getElementById('leadEditPassword').value = '';
+            document.getElementById('leadPasswordError').style.display = 'none';
+            leadPwModal.show();
+            setTimeout(() => document.getElementById('leadEditUsername').focus(), 300);
+        });
+    });
+
+    document.getElementById('leadUnlockBtn').addEventListener('click', leadVerifyAndUnlock);
+    document.getElementById('leadEditPassword').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') leadVerifyAndUnlock();
+    });
+
+    function leadVerifyAndUnlock() {
+        const username = document.getElementById('leadEditUsername').value.trim();
+        const password = document.getElementById('leadEditPassword').value;
+        if (!username || !password) {
+            document.getElementById('leadPasswordError').textContent = 'Please enter username and password';
+            document.getElementById('leadPasswordError').style.display = 'block';
+            return;
+        }
+        fetch('/leads/verify-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, leadId: currentLeadRow.dataset.id })
+        }).then(r => r.json()).then(d => {
+            if (d.success) {
+                leadVerifiedPassword = password;
+                leadVerifiedUsername = username;
+                leadPwModal.hide();
+                makeLeadRowEditable(currentLeadRow);
+            } else {
+                document.getElementById('leadPasswordError').textContent = d.error || 'Incorrect username or password';
+                document.getElementById('leadPasswordError').style.display = 'block';
+            }
+        });
+    }
+
+    function makeLeadRowEditable(row) {
+        row.classList.add('lead-row-editing');
+        row.querySelector('.edit-lead-row-btn').style.display = 'none';
+        row.querySelector('.save-lead-row-btn').style.display = '';
+        row.querySelector('.cancel-lead-row-btn').style.display = '';
+
+        row.querySelectorAll('.lead-cell').forEach(cell => {
+            const field = cell.dataset.field;
+            const currentText = cell.textContent.trim();
+            const currentValue = cell.dataset.value !== undefined ? cell.dataset.value : currentText;
+            cell.dataset.originalValue = currentValue;
+
+            if (field === 'gender') {
+                cell.innerHTML = '<select class="form-select form-select-sm"><option value="male"' + (currentText === 'male' ? ' selected' : '') + '>male</option><option value="female"' + (currentText === 'female' ? ' selected' : '') + '>female</option></select>';
+            } else if (field === 'source') {
+                const sources = ['','Instagram','Facebook','TikTok','Google','Walk-in','Referral','Friend','Event','Other'];
+                let html = '<select class="form-select form-select-sm">';
+                sources.forEach(s => { html += '<option value="' + s + '"' + (s === currentText ? ' selected' : '') + '>' + (s || 'Select') + '</option>'; });
+                html += '</select>';
+                cell.innerHTML = html;
+            } else if (field === 'status') {
+                const statuses = ['new','contacted','interested','callback','converted','lost'];
+                let html = '<select class="form-select form-select-sm">';
+                statuses.forEach(s => { html += '<option value="' + s + '"' + (s === currentText ? ' selected' : '') + '>' + s + '</option>'; });
+                html += '</select>';
+                cell.innerHTML = html;
+            } else if (field === 'sales_by') {
+                const currentVal = cell.dataset.value || '';
+                let html = '<select class="form-select form-select-sm">';
+                salesUsersData.forEach(s => { html += '<option value="' + s.id + '"' + (String(s.id) === String(currentVal) ? ' selected' : '') + '>' + s.full_name + '</option>'; });
+                html += '</select>';
+                cell.innerHTML = html;
+            } else {
+                cell.innerHTML = '<input type="text" class="form-control form-control-sm" value="' + currentText.replace(/"/g, '&quot;') + '">';
+            }
+        });
+    }
+
+    // Save lead row
+    document.querySelectorAll('.save-lead-row-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const leadId = row.dataset.id;
+            const changes = [];
+
+            row.querySelectorAll('.lead-cell').forEach(cell => {
+                const field = cell.dataset.field;
+                const input = cell.querySelector('input, select');
+                if (!input) return;
+                const newValue = input.value;
+                if (newValue !== cell.dataset.originalValue) {
+                    changes.push({ field, value: newValue });
+                }
+            });
+
+            if (changes.length === 0) { cancelLeadRowEdit(row); return; }
+
+            let saved = 0, errors = 0;
+            changes.forEach(change => {
+                fetch('/leads/' + leadId + '/inline-edit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: leadVerifiedPassword, username: leadVerifiedUsername, field: change.field, value: change.value })
+                }).then(r => r.json()).then(d => {
+                    if (d.success) saved++; else errors++;
+                    if (saved + errors === changes.length) {
+                        if (errors === 0) location.reload();
+                        else alert('Some fields failed to save.');
+                    }
+                });
+            });
+        });
+    });
+
+    // Cancel lead row edit
+    document.querySelectorAll('.cancel-lead-row-btn').forEach(btn => {
+        btn.addEventListener('click', function() { cancelLeadRowEdit(this.closest('tr')); });
+    });
+
+    function cancelLeadRowEdit(row) {
+        row.classList.remove('lead-row-editing');
+        row.querySelector('.edit-lead-row-btn').style.display = '';
+        row.querySelector('.save-lead-row-btn').style.display = 'none';
+        row.querySelector('.cancel-lead-row-btn').style.display = 'none';
+        row.querySelectorAll('.lead-cell').forEach(cell => { cell.textContent = cell.dataset.originalValue; });
+    }
+
+    // Sales agent sub-tabs filtering
+    document.querySelectorAll('#salesTabs .nav-link').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('#salesTabs .nav-link').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const salesId = this.dataset.sales;
+            document.querySelectorAll('tbody tr[data-sales-id]').forEach(row => {
+                row.style.display = (salesId === 'all' || row.dataset.salesId === salesId) ? '' : 'none';
+            });
+        });
+    });
+
+    // Show/hide callback days field
+    document.getElementById('call-outcome').addEventListener('change', function() {
+        document.getElementById('callback-group').style.display = this.value === 'callback' ? 'block' : 'none';
+    });
+
+    // Log call button
+    document.querySelectorAll('.log-call-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('call-lead-id').value = this.dataset.id;
+            document.getElementById('call-lead-name').textContent = this.dataset.name;
+            document.getElementById('call-outcome').value = '';
+            document.getElementById('call-notes').value = '';
+            document.getElementById('call-callback-days').value = '';
+            document.getElementById('callback-group').style.display = 'none';
+            callModal.show();
+        });
+    });
+
+    // Save call
+    document.getElementById('save-call-btn').addEventListener('click', function() {
+        const id = document.getElementById('call-lead-id').value;
+        const outcome = document.getElementById('call-outcome').value;
+        if (!outcome) return alert('Please select an outcome');
+
+        const callbackDays = document.getElementById('call-callback-days').value;
+        if (outcome === 'callback' && !callbackDays) return alert('Please enter callback days');
+
+        let callbackDate = null;
+        if (outcome === 'callback' && callbackDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + parseInt(callbackDays));
+            callbackDate = d.toISOString().split('T')[0];
+        }
+
+        fetch('/leads/' + id + '/call', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ outcome, notes: document.getElementById('call-notes').value, callback_time: callbackDate })
+        }).then(r => r.json()).then(d => {
+            if (d.success) { alert('Call logged!'); location.reload(); }
+            else alert('Error: ' + d.error);
+        });
+    });
+
+    // View call history
+    document.querySelectorAll('.view-calls-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('history-lead-name').textContent = this.dataset.name;
+            document.getElementById('call-history-content').innerHTML = 'Loading...';
+            historyModal.show();
+
+            fetch('/leads/' + this.dataset.id + '/calls').then(r => r.json()).then(d => {
+                if (d.success && d.calls.length > 0) {
+                    let html = '<table class="table table-sm"><thead><tr><th>Date</th><th>By</th><th>Outcome</th><th>Callback</th><th>Notes</th></tr></thead><tbody>';
+                    const outcomeColors = { no_answer: 'secondary', callback: 'warning', interested: 'primary', not_interested: 'danger', converted: 'success' };
+                    d.calls.forEach(c => {
+                        const date = new Date(c.call_date).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                        html += '<tr><td><small>' + date + '</small></td><td>' + (c.caller_name || '-') + '</td><td><span class="badge bg-' + (outcomeColors[c.outcome] || 'secondary') + '">' + c.outcome.replace('_', ' ') + '</span></td><td>' + (c.callback_time || '-') + '</td><td>' + (c.notes || '-') + '</td></tr>';
+                    });
+                    html += '</tbody></table>';
+                    document.getElementById('call-history-content').innerHTML = html;
+                } else {
+                    document.getElementById('call-history-content').innerHTML = '<p class="text-muted text-center">No call history yet.</p>';
+                }
+            });
+        });
+    });
+});
+</script>
+
+<style>
+    .lead-row-editing td.lead-cell { background: #fff3cd; }
+    .lead-row-editing td.lead-cell input,
+    .lead-row-editing td.lead-cell select {
+        font-size: 0.82rem; border: 1px solid #ffc107; border-radius: 3px; width: 100%; padding: 1px 4px;
+    }
+    .badge-pill { border-radius: 12px; padding: 3px 10px; font-size: 0.75rem; font-weight: 500; }
+    .badge-sales { background-color: #e91e63; color: #fff; }
+    .badge-lead-new { background-color: #3498db; color: #fff; }
+    .badge-lead-contacted { background-color: #00bcd4; color: #fff; }
+    .badge-lead-interested { background-color: #f39c12; color: #fff; }
+    .badge-lead-callback { background-color: #9b59b6; color: #fff; }
+    .badge-lead-converted { background-color: #4caf50; color: #fff; }
+    .badge-lead-lost { background-color: #e74c3c; color: #fff; }
+</style>

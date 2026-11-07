@@ -1,0 +1,48 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="fas fa-history me-2"></i>Attendance History</h4>
+    <span class="text-muted small"><%= records.length %> records</span>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
+            <input type="text" class="form-control form-control-sm" name="member_search" placeholder="Search member..." style="width:180px;" value="<%= filters.member_search || '' %>">
+            <input type="date" class="form-control form-control-sm" name="date_from" style="width:150px;" value="<%= filters.date_from || '' %>">
+            <input type="date" class="form-control form-control-sm" name="date_to" style="width:150px;" value="<%= filters.date_to || '' %>">
+            <button type="submit" class="btn btn-dark btn-sm">Filter</button>
+            <a href="/attendance-history" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </form>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="card">
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover table-sm mb-0" style="font-size: 0.85rem;">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Member</th>
+                    <th>Phone</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% records.forEach(function(r) { %>
+                <tr>
+                    <td class="text-nowrap"><%= r.date %></td>
+                    <td><%= r.check_in_time || '-' %></td>
+                    <td><strong><%= r.member_name || '-' %></strong></td>
+                    <td><%= r.phone || '-' %></td>
+                    <td><%= r.class_type || '-' %></td>
+                    <td><span class="badge bg-success"><%= r.status %></span></td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% if (records.length === 0) { %><p class="text-muted text-center py-3 mb-0">No attendance records found.</p><% } %>
+    </div>
+</div>

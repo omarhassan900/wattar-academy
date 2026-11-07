@@ -37,7 +37,7 @@
                             <form method="POST" action="/memberships/<%= m.id %>/renew">
                                 <div class="modal-header"><h6 class="modal-title">Renew — <%= m.full_name %></h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                                 <div class="modal-body">
-                                    <div class="mb-2"><label class="form-label">Type</label><select class="form-select" name="membership_type"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="semi_annual">Semi-Annual</option><option value="annual">Annual</option></select></div>
+                                    <div class="mb-2"><label class="form-label">Type</label><select class="form-select" name="membership_type"><option value="1_month">1 Month</option><option value="3_months">3 Months</option><option value="6_months">6 Months</option><option value="1_year">1 Year</option></select></div>
                                     <div class="mb-2"><label class="form-label">Start Date</label><input type="date" class="form-control" name="start_date" value="<%= today %>" required></div>
                                 </div>
                                 <div class="modal-footer"><button type="submit" class="btn btn-primary btn-sm">Renew</button></div>

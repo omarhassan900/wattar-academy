@@ -44,6 +44,19 @@ require('./routes/wods')(app, db);
 require('./routes/payments')(app, db);
 require('./routes/public-register')(app, db);
 require('./routes/users')(app, db);
+require('./routes/leads')(app, db);
+require('./routes/invitations')(app, db);
+require('./routes/cash')(app, db);
+require('./routes/pt')(app, db);
+
+// Auto-expire memberships that have passed their end date
+function expireMemberships() {
+    db.run("UPDATE members SET status = 'expired' WHERE status = 'active' AND membership_end IS NOT NULL AND membership_end < date('now')", function(err) {
+        if (!err && this.changes > 0) console.log('Auto-expired', this.changes, 'membership(s)');
+    });
+}
+expireMemberships(); // Run on startup
+setInterval(expireMemberships, 60 * 60 * 1000); // Run every hour
 
 // Start server
 app.listen(PORT, () => {

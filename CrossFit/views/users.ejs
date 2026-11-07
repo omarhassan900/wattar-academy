@@ -1,3 +1,41 @@
+<!-- Password Gate -->
+<div id="usersPasswordGate" style="position:relative;">
+    <div id="usersLockOverlay" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(244,246,249,0.97); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div class="card shadow" style="width:350px;">
+            <div class="card-header text-white text-center" style="background: linear-gradient(135deg, #1a1a2e, #0f3460); position:relative;">
+                <h5 class="mb-0"><i class="fas fa-lock me-2"></i>User Management Locked</h5>
+                <button onclick="history.back()" style="position:absolute; top:8px; right:10px; background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="card-body text-center">
+                <p class="small text-muted mb-3">Enter manager credentials to access</p>
+                <input type="text" class="form-control form-control-sm mb-2" id="usersGateUsername" placeholder="Username..." autocomplete="off">
+                <input type="password" class="form-control form-control-sm mb-2" id="usersGatePassword" placeholder="Password..." autocomplete="off">
+                <div id="usersGateError" class="text-danger small mb-2" style="display:none;"></div>
+                <button type="button" class="btn btn-success btn-sm w-100" id="usersGateUnlockBtn"><i class="fas fa-unlock me-1"></i>Unlock</button>
+            </div>
+        </div>
+    </div>
+<script>
+(function() {
+    <% if (unlocked) { %>
+    document.getElementById('usersLockOverlay').style.display = 'none';
+    <% } else { %>
+    document.getElementById('usersGateUnlockBtn').addEventListener('click', unlockUsers);
+    document.getElementById('usersGatePassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') unlockUsers(); });
+    function unlockUsers() {
+        var username = document.getElementById('usersGateUsername').value.trim();
+        var password = document.getElementById('usersGatePassword').value;
+        if (!username || !password) { document.getElementById('usersGateError').textContent = 'Enter username and password'; document.getElementById('usersGateError').style.display = 'block'; return; }
+        fetch('/users/verify-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username, password: password }) })
+        .then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) { window.location.href = '/users?t=' + d.token; }
+            else { document.getElementById('usersGateError').textContent = d.error || 'Access denied'; document.getElementById('usersGateError').style.display = 'block'; }
+        });
+    }
+    <% } %>
+})();
+</script>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="fas fa-user-cog me-2"></i>User Management</h4>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
@@ -27,6 +65,8 @@
                             <span class="badge bg-info"><i class="fas fa-desktop me-1"></i>Reception</span>
                         <% } else if (u.role === 'coach') { %>
                             <span class="badge bg-success"><i class="fas fa-dumbbell me-1"></i>Coach</span>
+                        <% } else if (u.role === 'sales') { %>
+                            <span class="badge bg-primary"><i class="fas fa-handshake me-1"></i>Sales</span>
                         <% } else { %>
                             <span class="badge bg-secondary"><%= u.role %></span>
                         <% } %>
@@ -62,10 +102,11 @@
                         <label class="form-label">Role *</label>
                         <select class="form-select" name="role" required>
                             <option value="">Select Role</option>
-                            <option value="admin">Admin — Full system access</option>
+                            <% if (user.role === 'admin') { %><option value="admin">Admin — Full system access</option><% } %>
                             <option value="manager">Manager — Dashboard, members, payments</option>
                             <option value="reception">Reception — Check-ins & member management</option>
                             <option value="coach">Coach — Schedule, WODs, attendance</option>
+                            <option value="sales">Sales — Member registration & sales tracking</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -96,10 +137,11 @@
                     <div class="mb-3">
                         <label class="form-label">Role *</label>
                         <select class="form-select" id="edit_role" name="role" required>
-                            <option value="admin">Admin</option>
+                            <% if (user.role === 'admin') { %><option value="admin">Admin</option><% } %>
                             <option value="manager">Manager</option>
                             <option value="reception">Reception</option>
                             <option value="coach">Coach</option>
+                            <option value="sales">Sales</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -133,10 +175,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('.delete-user-btn')) {
             if (confirm('Delete this user?')) {
                 const row = e.target.closest('tr');
-                fetch('/users/' + row.dataset.id + '/delete', { method: 'POST' })
-                    .then(r => { if (r.ok) window.location.reload(); else alert('Error'); });
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/users/' + row.dataset.id + '/delete';
+                document.body.appendChild(form);
+                form.submit();
             }
         }
     });
 });
 </script>
+
+</div><!-- close usersPasswordGate -->

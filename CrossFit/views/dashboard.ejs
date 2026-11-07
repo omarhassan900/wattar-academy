@@ -1,91 +1,322 @@
-<h4 class="mb-4"><i class="fas fa-chart-line me-2"></i>Dashboard</h4>
+<!-- Password Gate -->
+<div id="dashPasswordGate" style="position:relative;">
+    <div id="dashLockOverlay" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(244,246,249,0.97); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div class="card shadow" style="width:350px;">
+            <div class="card-header text-white text-center" style="background: #2c3e50; position:relative;">
+                <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Dashboard Locked</h5>
+                <button onclick="history.back()" style="position:absolute; top:8px; right:10px; background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="card-body text-center">
+                <p class="small text-muted mb-3">Enter manager credentials to access</p>
+                <input type="text" class="form-control form-control-sm mb-2" id="dashGateUsername" placeholder="Username..." autocomplete="off">
+                <input type="password" class="form-control form-control-sm mb-2" id="dashGatePassword" placeholder="Password..." autocomplete="off">
+                <div id="dashGateError" class="text-danger small mb-2" style="display:none;"></div>
+                <button type="button" class="btn btn-success btn-sm w-100" id="dashGateUnlockBtn"><i class="fas fa-unlock me-1"></i>Unlock</button>
+            </div>
+        </div>
+    </div>
+<script>
+(function() {
+    <% if (unlocked) { %>
+    document.getElementById('dashLockOverlay').style.display = 'none';
+    <% } else { %>
+    document.getElementById('dashGateUnlockBtn').addEventListener('click', unlockDash);
+    document.getElementById('dashGatePassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') unlockDash(); });
+    function unlockDash() {
+        var username = document.getElementById('dashGateUsername').value.trim();
+        var password = document.getElementById('dashGatePassword').value;
+        if (!username || !password) { document.getElementById('dashGateError').textContent = 'Enter username and password'; document.getElementById('dashGateError').style.display = 'block'; return; }
+        fetch('/dashboard/verify-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username, password: password }) })
+        .then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) { window.location.href = '/dashboard?t=' + d.token; }
+            else { document.getElementById('dashGateError').textContent = d.error || 'Access denied'; document.getElementById('dashGateError').style.display = 'block'; }
+        });
+    }
+    <% } %>
+})();
+</script>
 
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-4"><i class="fas fa-chart-line text-primary me-2"></i>Welcome back, <%= user.full_name %>!</h4>
+    </div>
+</div>
+
+<!-- Row 1: Stats Cards -->
 <div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card p-3" style="border-color: #27ae60;">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <small class="text-muted">Active Members</small>
-                    <h3 class="mb-0"><%= stats.activeMembers %></h3>
-                </div>
-                <i class="fas fa-users fa-2x text-success"></i>
+    <div class="col-md-3">
+        <div class="card text-center h-100" style="border-top: 3px solid #43b29d;">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x mb-2" style="color:#43b29d;"></i>
+                <h3><%= stats.activeMembers %></h3>
+                <p class="text-muted mb-0">Active Members</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card p-3" style="border-color: #3498db;">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <small class="text-muted">Today's Check-ins</small>
-                    <h3 class="mb-0"><%= stats.todayCheckins %></h3>
-                </div>
-                <i class="fas fa-clipboard-check fa-2x text-primary"></i>
+    <div class="col-md-3">
+        <div class="card text-center h-100" style="border-top: 3px solid #3498db;">
+            <div class="card-body">
+                <i class="fas fa-snowflake fa-2x mb-2" style="color:#3498db;"></i>
+                <h3><%= stats.frozenMembers %></h3>
+                <p class="text-muted mb-0">Frozen</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card p-3" style="border-color: #e74c3c;">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <small class="text-muted">Expiring Soon</small>
-                    <h3 class="mb-0"><%= stats.expiringMemberships %></h3>
-                </div>
-                <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+    <div class="col-md-3">
+        <div class="card text-center h-100" style="border-top: 3px solid #e74c3c;">
+            <div class="card-body">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                <h3 class="text-danger"><%= stats.expiringMemberships %></h3>
+                <p class="text-muted mb-0">Expiring (7 days)</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card p-3" style="border-color: #f39c12;">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <small class="text-muted">Monthly Revenue</small>
-                    <h3 class="mb-0"><%= stats.monthlyRevenue %> EGP</h3>
-                </div>
-                <i class="fas fa-money-bill fa-2x text-warning"></i>
+    <div class="col-md-3">
+        <div class="card text-center h-100" style="border-top: 3px solid #2c3e50;">
+            <div class="card-body">
+                <i class="fas fa-address-book fa-2x mb-2" style="color:#2c3e50;"></i>
+                <h3><%= stats.totalMembers %></h3>
+                <p class="text-muted mb-0">Total Members</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-7 mb-4">
-        <div class="card p-4">
-            <h6><i class="fas fa-chart-bar me-2"></i>Weekly Attendance</h6>
-            <canvas id="attendanceChart" height="150"></canvas>
+<!-- Row 2: Financial Summary -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white h-100" style="background: #43b29d;">
+            <div class="card-body">
+                <h6><i class="fas fa-arrow-down me-2"></i>This Month Income</h6>
+                <h3 class="mb-0"><%= stats.monthlyIncome.toFixed(0) %> EGP</h3>
+            </div>
         </div>
     </div>
-    <div class="col-md-5 mb-4">
-        <div class="card p-4">
-            <h6 class="text-danger"><i class="fas fa-clock me-2"></i>Expiring Memberships</h6>
-            <% if (stats.expiringList.length === 0) { %>
-                <p class="text-muted">No expiring memberships this week.</p>
-            <% } else { %>
-                <div class="list-group list-group-flush">
-                    <% stats.expiringList.forEach(m => { %>
-                    <div class="list-group-item d-flex justify-content-between px-0">
-                        <span><%= m.full_name %></span>
-                        <small class="text-danger"><%= m.membership_end %></small>
+    <div class="col-md-4">
+        <div class="card text-white h-100" style="background: #e74c3c;">
+            <div class="card-body">
+                <h6><i class="fas fa-arrow-up me-2"></i>This Month Expenses</h6>
+                <h3 class="mb-0"><%= stats.monthlyExpense.toFixed(0) %> EGP</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white h-100" style="background: #2c3e50;">
+            <div class="card-body">
+                <h6><i class="fas fa-wallet me-2"></i>Total Balance</h6>
+                <h3 class="mb-0"><%= stats.cashBalance.toFixed(0) %> EGP</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Income vs Expenses + Net Profit -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header" style="background: #2c3e50; color: #fff;">
+                <h5 class="mb-0"><i class="fas fa-money-bill-trend-up me-2"></i>Income vs Expenses</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="incomeExpenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header" style="background: linear-gradient(135deg, #0f3460, #16213e); color: #fff;">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Monthly Net Profit</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="netProfitChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 4: Expenses & Income by Category (stacked bars) -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header text-white" style="background: #e74c3c;">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Expenses by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="expenseStackedChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #0f3460, #16213e);">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Income by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="incomeStackedChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 5: Members by Class + Leads -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header text-white" style="background: #2c3e50;">
+                <h5 class="mb-0"><i class="fas fa-dumbbell me-2"></i>Members by Class</h5>
+            </div>
+            <div class="card-body">
+                <% if (stats.membersByClass.length > 0) { 
+                    var totalActive = 0;
+                    stats.membersByClass.forEach(function(c) { totalActive += c.count; });
+                %>
+                <table class="table table-sm">
+                    <thead><tr><th>Class</th><th>Members</th><th>Distribution</th></tr></thead>
+                    <tbody>
+                    <% stats.membersByClass.forEach(function(c) { var pct = totalActive > 0 ? Math.round(c.count / totalActive * 100) : 0; %>
+                    <tr>
+                        <td><strong><%= c.class_type %></strong></td>
+                        <td><span class="badge" style="background:#43b29d;"><%= c.count %></span></td>
+                        <td><div class="progress" style="height:20px;"><div class="progress-bar" style="width:<%= pct %>%; background:#43b29d;"><%= pct %>%</div></div></td>
+                    </tr>
+                    <% }); %>
+                    </tbody>
+                </table>
+                <% } else { %>
+                <p class="text-muted text-center">No data</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header text-white" style="background: #e74c3c;">
+                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Sales Agent Performance</h5>
+            </div>
+            <div class="card-body">
+                <% if (stats.salesPerformance.length > 0) { %>
+                <table class="table table-sm table-hover mb-0">
+                    <thead><tr><th>Agent</th><th>Leads</th><th>Converted</th><th>Rate</th></tr></thead>
+                    <tbody>
+                    <% stats.salesPerformance.forEach(function(s) { var rate = s.lead_count > 0 ? Math.round(s.converted/s.lead_count*100) : 0; %>
+                    <tr>
+                        <td><strong><%= s.full_name %></strong></td>
+                        <td><span class="badge bg-primary"><%= s.lead_count %></span></td>
+                        <td><span class="badge bg-success"><%= s.converted %></span></td>
+                        <td><div class="progress" style="height:20px;"><div class="progress-bar bg-<%= rate >= 50 ? 'success' : rate >= 25 ? 'warning' : 'danger' %>" style="width:<%= rate %>%"><%= rate %>%</div></div></td>
+                    </tr>
+                    <% }); %>
+                    </tbody>
+                </table>
+                <% } else { %>
+                <p class="text-muted text-center">No leads data yet</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 6: Leads Cards + Expiring Memberships -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-funnel-dollar me-2" style="color:#0f3460;"></i>Leads Overview</h5></div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-3"><div class="card border-primary py-2"><h4 class="text-primary mb-0"><%= stats.totalLeads %></h4><small class="text-muted">Total</small></div></div>
+                    <div class="col-3"><div class="card border-warning py-2"><h4 class="text-warning mb-0"><%= stats.newLeads %></h4><small class="text-muted">New</small></div></div>
+                    <div class="col-3"><div class="card border-success py-2"><h4 class="text-success mb-0"><%= stats.convertedLeads %></h4><small class="text-muted">Won</small></div></div>
+                    <div class="col-3"><div class="card border-danger py-2"><h4 class="text-danger mb-0"><%= stats.lostLeads %></h4><small class="text-muted">Lost</small></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header text-white" style="background: #e74c3c;"><h5 class="mb-0"><i class="fas fa-clock me-2"></i>Expiring Memberships (by Sales)</h5></div>
+            <div class="card-body" style="max-height:250px; overflow-y:auto;">
+                <% if (stats.expiringList.length === 0) { %>
+                <p class="text-muted text-center">No expiring memberships this week</p>
+                <% } else { 
+                    var grouped = {};
+                    stats.expiringList.forEach(function(m) { if (!grouped[m.sales_name]) grouped[m.sales_name] = []; grouped[m.sales_name].push(m); });
+                    Object.keys(grouped).forEach(function(sales) { %>
+                <div class="mb-2">
+                    <span class="badge bg-dark mb-1"><%= sales %></span>
+                    <% grouped[sales].forEach(function(m) { %>
+                    <div class="d-flex justify-content-between border-bottom py-1" style="font-size:0.85rem;">
+                        <span><%= m.full_name %> <small class="text-muted">(<%= m.class_type %>)</small></span>
+                        <span class="text-danger"><%= m.membership_end %></span>
                     </div>
                     <% }); %>
                 </div>
-            <% } %>
+                <% }); } %>
+            </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/chart.min.js"></script>
 <script>
-const ctx = document.getElementById('attendanceChart').getContext('2d');
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: [<%= stats.weeklyAttendance.map(d => `'${d.date}'`).join(',') %>],
-        datasets: [{
-            label: 'Check-ins',
-            data: [<%= stats.weeklyAttendance.map(d => d.count).join(',') %>],
-            backgroundColor: '#e74c3c'
-        }]
-    },
-    options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+document.addEventListener('DOMContentLoaded', function() {
+    var colors = ['#43b29d','#e74c3c','#efc94c','#e27a3f','#9b59b6','#3498db','#2c3e50','#1abc9c','#f39c12','#34495e'];
+    var monthlyTrend = <%- JSON.stringify(stats.monthlyTrend) %>;
+    var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var months = monthlyTrend.map(function(d) { return monthNames[parseInt(d.month.split('-')[1]) - 1]; });
+    var incomeData = monthlyTrend.map(function(d) { return d.income; });
+    var expenseData = monthlyTrend.map(function(d) { return d.expense; });
+    var netData = <%- JSON.stringify(stats.monthlyNetProfit) %>.map(function(d) { return d.net; });
+
+    // Income vs Expense Line
+    new Chart(document.getElementById('incomeExpenseChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                { label: 'Income', data: incomeData, borderColor: '#43b29d', backgroundColor: 'rgba(67,178,157,0.1)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#43b29d' },
+                { label: 'Expenses', data: expenseData, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#e74c3c' }
+            ]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'top' } } }
+    });
+
+    // Net Profit Bar
+    new Chart(document.getElementById('netProfitChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{ label: 'Net Profit', data: netData, backgroundColor: netData.map(function(v) { return v >= 0 ? '#43b29d' : '#e74c3c'; }), borderRadius: 4 }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: false } }, plugins: { legend: { display: false } } }
+    });
+
+    // Income Stacked Bar
+    var incomeByCat = <%- JSON.stringify(stats.incomeByCatMonthly) %>;
+    var rawMonths = <%- JSON.stringify(stats.monthlyTrend) %>.map(function(d) { return d.month; });
+    var incomeCategories = [];
+    incomeByCat.forEach(function(r) { var cat = r.category || 'Other'; if (incomeCategories.indexOf(cat) === -1) incomeCategories.push(cat); });
+    var incomeDatasets = incomeCategories.map(function(cat, i) {
+        return { label: cat, data: rawMonths.map(function(m) { var match = incomeByCat.find(function(r) { return r.month === m && (r.category || 'Other') === cat; }); return match ? match.total : 0; }), backgroundColor: colors[i % colors.length] };
+    });
+    new Chart(document.getElementById('incomeStackedChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: months, datasets: incomeDatasets },
+        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } } }
+    });
+
+    // Expense Stacked Bar
+    var expenseByCat = <%- JSON.stringify(stats.expenseByCatMonthly) %>;
+    var expenseCategories = [];
+    expenseByCat.forEach(function(r) { var cat = r.category || 'Other'; if (expenseCategories.indexOf(cat) === -1) expenseCategories.push(cat); });
+    var expenseDatasets = expenseCategories.map(function(cat, i) {
+        return { label: cat, data: rawMonths.map(function(m) { var match = expenseByCat.find(function(r) { return r.month === m && (r.category || 'Other') === cat; }); return match ? match.total : 0; }), backgroundColor: colors[i % colors.length] };
+    });
+    new Chart(document.getElementById('expenseStackedChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: months, datasets: expenseDatasets },
+        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } } }
+    });
 });
 </script>
+
+</div><!-- close dashPasswordGate -->

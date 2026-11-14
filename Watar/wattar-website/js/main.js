@@ -668,4 +668,29 @@ function initScene(){
   frame();
 }
 
-document.addEventListener('DOMContentLoaded',()=>{setLanguage(lang);runLoader();initReveal();initBooking();initPlay();try{initScene()}catch(err){console.error('Wattar 3D unavailable:',err);document.documentElement.classList.add('no-webgl')}});
+/* ---------- enquiry form (same fields and endpoint as before) ---------- */
+function initContactForm(){
+  const form=document.getElementById('contactForm');if(!form)return;
+  const msg=document.getElementById('formMsg'),ok=document.getElementById('formSuccess'),sel=form.elements.instrument;
+  const MAP={oud:'Oud',piano:'Piano',guitar:'Guitar',violin:'Violin',drums:'Drums',voice:'Vocals',vocals:'Vocals'};
+  const pick=v=>{if(v)sel.value=v};
+  document.querySelectorAll('[data-pick]').forEach(a=>a.addEventListener('click',()=>pick(a.dataset.pick==='Voice'?'Vocals':a.dataset.pick)));
+  const mm=location.hash.match(/^#book-(\w+)/);if(mm){pick(MAP[mm[1]]);setTimeout(()=>document.getElementById('book').scrollIntoView(),50)}
+  const show=k=>{msg.dataset.i18n=k;msg.textContent=T[lang][k];msg.hidden=false};
+  form.addEventListener('submit',e=>{
+    e.preventDefault();msg.hidden=true;
+    const v=n=>(form.elements[n].value||'').trim();
+    const data={name:v('name'),phone:v('phone'),email:v('email'),instrument:v('instrument'),age:v('age'),message:v('message')};
+    form.querySelectorAll('.field').forEach(f=>f.classList.remove('err'));
+    if(!data.name||!data.phone){if(!data.name)form.elements.name.closest('.field').classList.add('err');if(!data.phone)form.elements.phone.closest('.field').classList.add('err');show('formErrRequired');return}
+    const btn=form.querySelector('[type=submit]'),label=btn.querySelector('span');
+    btn.disabled=true;label.dataset.i18n='formSending';label.textContent=T[lang].formSending;
+    const done=()=>{btn.disabled=false;label.dataset.i18n='formSubmit';label.textContent=T[lang].formSubmit};
+    if(location.protocol==='file:'){setTimeout(()=>{form.hidden=true;ok.hidden=false;done()},400);return}
+    fetch('/api/public/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+      .then(r=>r.json()).then(d=>{if(d.success){form.hidden=true;ok.hidden=false}else show('formErrServer')})
+      .catch(()=>show('formErrNet')).finally(done);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{setLanguage(lang);runLoader();initReveal();initContactForm();initPlay();try{initScene()}catch(err){console.error('Wattar 3D unavailable:',err);document.documentElement.classList.add('no-webgl')}});
